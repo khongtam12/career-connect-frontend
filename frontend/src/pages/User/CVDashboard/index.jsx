@@ -24,7 +24,7 @@ export default function CVDashboard() {
 
   const handleDelete = (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xoá CV này không?')) return
-    
+
     try {
       const newList = cvList.filter(cv => cv.id !== id)
       localStorage.setItem('cv_list', JSON.stringify(newList))
@@ -38,7 +38,6 @@ export default function CVDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Header />
 
       <main className="flex-1 max-w-screen-xl w-full mx-auto px-6 py-8 md:py-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -51,9 +50,9 @@ export default function CVDashboard() {
               Khởi tạo, chỉnh sửa và quản lý các mẫu CV của bạn
             </p>
           </div>
-          
-          <Button 
-            size="lg" 
+
+          <Button
+            size="lg"
             className="gap-2 shrink-0 bg-primary hover:bg-primary/90 text-white shadow-soft-md hover:shadow-soft-lg transition-all"
             onClick={() => navigate('/cv-builder')}
           >
@@ -71,7 +70,7 @@ export default function CVDashboard() {
             <p className="text-slate-500 max-w-md mb-6">
               Bạn chưa tạo CV nào trên hệ thống. Hãy bắt đầu tạo một CV thật chuyên nghiệp để ghi điểm với nhà tuyển dụng nhé!
             </p>
-            <Button 
+            <Button
               onClick={() => navigate('/cv-builder')}
               className="gap-2"
             >
@@ -85,16 +84,16 @@ export default function CVDashboard() {
               {cvList.map((cv, idx) => (
                 <motion.div
                   key={cv.id}
-                  layout 
+                  layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                   transition={{ duration: 0.25 }}
                 >
-                  <CVCard 
-                    cv={cv} 
-                    index={idx} 
-                    onDelete={handleDelete} 
+                  <CVCard
+                    cv={cv}
+                    index={idx}
+                    onDelete={handleDelete}
                   />
                 </motion.div>
               ))}

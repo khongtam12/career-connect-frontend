@@ -59,7 +59,7 @@ export default function EditorPage() {
           setTemplateId(found.templateId || 1)
           setCvName(found.name || 'CV của tôi')
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [editId])
 
@@ -84,7 +84,7 @@ export default function EditorPage() {
     if (existing >= 0) list[existing] = entry
     else list.unshift(entry)
     localStorage.setItem('cv_list', JSON.stringify(list))
-    
+
     setSaved(true)
     setTimeout(() => {
       setSaved(false)
@@ -183,15 +183,15 @@ export default function EditorPage() {
 
         {/* LEFT BAR: Templates */}
         <motion.div
-           initial={false}
-           animate={{ width: sidebarOpen ? 240 : 0 }}
-           className={cn(
-             'shrink-0 bg-white border-r border-border relative flex flex-col',
-             !sidebarOpen && 'invisible lg:visible'
-           )}
+          initial={false}
+          animate={{ width: sidebarOpen ? 240 : 0 }}
+          className={cn(
+            'shrink-0 bg-white border-r border-border relative flex flex-col',
+            !sidebarOpen && 'invisible lg:visible'
+          )}
         >
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-             <TemplateSelector selectedId={templateId} onSelect={setTemplateId} />
+            <TemplateSelector selectedId={templateId} onSelect={setTemplateId} />
           </div>
 
           <button
@@ -213,13 +213,13 @@ export default function EditorPage() {
                 <Bot size={14} /> AI Phân tích
               </TabsTrigger>
             </TabsList>
-            
+
             <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 custom-scrollbar relative">
               <TabsContent value="form" className="mt-0 h-full">
                 <CVForm data={cvData} onChange={setCvData} />
               </TabsContent>
               <TabsContent value="ai" className="mt-0 h-full">
-               <AIAssistant data={cvData} />
+                <AIAssistant data={cvData} />
               </TabsContent>
             </div>
           </Tabs>
@@ -227,10 +227,10 @@ export default function EditorPage() {
 
         {/* RIGHT AREA: Preview Board */}
         <div className="flex-1 overflow-auto bg-slate-200/50 p-8 flex justify-center items-start custom-scrollbar relative">
-          
+
           <div
             className="transition-all duration-300 origin-top shadow-soft-xl rounded-sm"
-            style={{ 
+            style={{
               width: `${zoom}%`,
               minWidth: '600px',
               maxWidth: '1200px'
