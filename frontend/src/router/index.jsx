@@ -8,6 +8,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import EmployerLayout from "../layouts/EmployerLayout";
 import Job from "../pages/Admin/Job";
 import About from "../pages/Employer/About";
+import JobManagement from "../pages/Employer/Jobs/index.jsx";
 import CVBuilder from "../pages/User/CVBuilder/index.jsx";
 import CVDashboard from "../pages/User/CVDashboard/index.jsx";
 
@@ -38,8 +39,12 @@ export const router = createBrowserRouter([
         children: [
             { index: true, element: <Home1 /> },
             {
-                path: '/employer/job',
+                path: '/employer/about',
                 element: <About />,
+            },
+            {
+                path: '/employer/jobs',
+                element: <JobManagement />,
             }
         ],
     },
