@@ -8,7 +8,18 @@ import AdminLayout from "../layouts/AdminLayout";
 import EmployerLayout from "../layouts/EmployerLayout";
 import Job from "../pages/Admin/Job";
 import About from "../pages/Employer/About";
+import CVBuilder from "../pages/User/CVBuilder/index.jsx";
+import CVDashboard from "../pages/User/CVDashboard/index.jsx";
+
 export const router = createBrowserRouter([
+    {
+        path: "/cv-dashboard",
+        element: <CVDashboard />
+    },
+    {
+        path: "/cv-builder",
+        element: <CVBuilder />
+    },
     {
         path: "/",
         element: <LayoutDefault />,
