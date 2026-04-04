@@ -11,16 +11,9 @@ import About from "../pages/Employer/About";
 import JobManagement from "../pages/Employer/Jobs/index.jsx";
 import CVBuilder from "../pages/User/CVBuilder/index.jsx";
 import CVDashboard from "../pages/User/CVDashboard/index.jsx";
-
+import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccountForm.jsx";
 export const router = createBrowserRouter([
-    {
-        path: "/cv-dashboard",
-        element: <CVDashboard />
-    },
-    {
-        path: "/cv-builder",
-        element: <CVBuilder />
-    },
+
     {
         path: "/",
         element: <LayoutDefault />,
@@ -28,7 +21,15 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 element: <Home />
-            }
+            },
+            {
+                path: "/cv-dashboard",
+                element: <CVDashboard />
+            },
+            {
+                path: "/cv-builder",
+                element: <CVBuilder />
+            },
         ]
     },
     {
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
             {
                 path: '/employer/jobs',
                 element: <JobManagement />,
+            },
+            {
+                path: '/employer/recruitment-account',
+                element: <RecruitmentAccountForm />
             }
         ],
     },
