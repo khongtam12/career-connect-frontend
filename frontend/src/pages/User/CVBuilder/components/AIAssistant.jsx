@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bot, Sparkles, X, Target, Copy, Zap, Briefcase } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -72,7 +73,7 @@ export default function AIAssistant({ data }) {
 
   return (
     <>
-      <div className="bg-card rounded-2xl border border-border shadow-soft-sm overflow-hidden animate-fade-in flex flex-col">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-soft-sm overflow-hidden animate-fade-in flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-br from-indigo-500 to-violet-600 px-5 py-4 flex items-center gap-3">
           <div className="size-10 rounded-xl bg-white/20 text-white flex items-center justify-center shadow-inner">
@@ -85,7 +86,7 @@ export default function AIAssistant({ data }) {
         </div>
 
         {/* Score */}
-        <div className="p-5 border-b border-border/60">
+        <div className="p-5 border-b border-zinc-200/60">
           <div className="flex justify-between items-end mb-2">
             <span className="text-xs font-bold text-foreground tracking-tight uppercase">Độ hoàn thiện CV</span>
             <span className={cn('text-xl font-black leading-none drop-shadow-sm', st.text.replace('text-', 'text-').replace('-700', '-600'))}>{score}%</span>
@@ -118,7 +119,7 @@ export default function AIAssistant({ data }) {
 
           <Button
             variant="flat"
-            className="w-full gap-2 border border-border/80 bg-slate-50 text-foreground hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+            className="w-full gap-2 border border-zinc-200/80 bg-slate-50 text-foreground hover:bg-slate-100 hover:text-indigo-600 transition-colors"
           >
             <Briefcase size={16} className="text-muted-foreground" />
             Gợi ý việc làm phù hợp
@@ -127,9 +128,10 @@ export default function AIAssistant({ data }) {
       </div>
 
       {/* Review Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pointer-events-auto">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -144,7 +146,7 @@ export default function AIAssistant({ data }) {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-2xl bg-card rounded-2xl shadow-soft-xl border border-border overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-2xl bg-white rounded-2xl shadow-soft-xl border border-zinc-200 overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
@@ -185,7 +187,7 @@ export default function AIAssistant({ data }) {
                   </h4>
                   <div className="space-y-3">
                     {PROFILE_SUGGESTIONS.map((s, i) => (
-                      <div key={i} className="group relative p-4 rounded-xl border border-border bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-200 transition-colors">
+                      <div key={i} className="group relative p-4 rounded-xl border border-zinc-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-200 transition-colors">
                         <p className="text-sm text-foreground/80 leading-relaxed pr-12">{s}</p>
                         <Button
                           variant="ghost"
@@ -221,7 +223,9 @@ export default function AIAssistant({ data }) {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   )
 }

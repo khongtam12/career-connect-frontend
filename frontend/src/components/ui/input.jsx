@@ -11,7 +11,7 @@ const inputVariants = cva(
     // Base
     'flex w-full min-w-0 bg-white text-foreground',
     'placeholder:text-muted-foreground/60',
-    'border border-input rounded-xl',
+    'border border-zinc-300 rounded-xl',
     'text-sm font-normal',
     'transition-all duration-150 ease-out',
     'outline-none',
@@ -60,7 +60,7 @@ function Textarea({ className, ...props }) {
       className={cn(
         'flex w-full min-w-0 bg-white text-foreground',
         'placeholder:text-muted-foreground/60',
-        'border border-input rounded-xl',
+        'border border-zinc-300 rounded-xl',
         'px-3.5 py-2.5 text-sm',
         'resize-y leading-relaxed',
         'transition-all duration-150 ease-out',

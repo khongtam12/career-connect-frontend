@@ -42,7 +42,7 @@ function TabsList({ className, ...props }) {
       data-slot="tabs-list"
       role="tablist"
       className={cn(
-        'flex items-center gap-0 border-b border-border',
+        'flex items-center gap-0 border-b border-zinc-200',
         'bg-transparent',
         className
       )}
@@ -73,7 +73,7 @@ function TabsTrigger({ value, className, children, ...props }) {
         // States
         isActive
           ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
+          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-zinc-200',
         className
       )}
       {...props}

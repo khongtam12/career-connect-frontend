@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,13 +12,13 @@ import {
   Save,
   PenLine,
   Bot,
-  User as UserIcon
+  User as UserIcon,
+  Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
-import Header from '@/component/user/Header'
 import TemplateSelector from './components/TemplateSelector'
 import CVForm from './components/CVForm'
 import CVPreview from './components/CVPreview'
@@ -37,6 +39,7 @@ export default function EditorPage() {
   const editId = searchParams.get('id')
   const isPrintMode = searchParams.get('print') === '1'
 
+  // States
   const [templateId, setTemplateId] = useState(1)
   const [cvData, setCvData] = useState(EMPTY_CV)
   const [cvName, setCvName] = useState('CV của tôi')
@@ -44,64 +47,111 @@ export default function EditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [zoom, setZoom] = useState(80)
   const [activeTab, setActiveTab] = useState('form')
-
+  
+  const [isValidating, setIsValidating] = useState(true)
   const [mounted, setMounted] = useState(false)
 
-  // Load existing CV
+  // Guard Clause Luồng Bảo Vệ (Protection Flow)
   useEffect(() => {
-    setMounted(true)
-    if (editId) {
-      try {
-        const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
-        const found = list.find(c => c.id === editId)
-        if (found) {
-          setCvData(found.data)
-          setTemplateId(found.templateId || 1)
-          setCvName(found.name || 'CV của tôi')
+    let isValid = false
+    try {
+      if (!editId) throw new Error('Cấm truy cập: Không có ID')
+
+      // Kiểm tra trong danh sách CV chính thức
+      const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
+      const savedCV = list.find(c => c.id === editId)
+
+      if (savedCV) {
+        setCvData(savedCV.data)
+        setTemplateId(savedCV.templateId || 1)
+        setCvName(savedCV.name || 'CV của tôi')
+        isValid = true
+      } else {
+        // Fallback kiểm tra xem có phải bản nháp (Draft) không
+        const draftKey = `draft_cv_${editId}`
+        const draftStr = localStorage.getItem(draftKey)
+        if (draftStr) {
+          const draftCV = JSON.parse(draftStr)
+          setCvData(draftCV.data)
+          setTemplateId(draftCV.templateId || 1)
+          setCvName(draftCV.name || 'CV của tôi')
+          isValid = true
+        } else {
+           throw new Error('Cấm truy cập: ID không hợp lệ trên bộ nhớ hệ thống')
         }
-      } catch (e) { }
+      }
+    } catch (err) {
+      console.warn('Flow Guard Blocked:', err.message)
+    } finally {
+      if (!isValid && !isPrintMode) {
+         // Force redirect to dashboard using replace to avoid history stack buildup
+         navigate('/cv-dashboard', { replace: true })
+      } else {
+         setIsValidating(false)
+         setMounted(true)
+      }
     }
-  }, [editId])
+  }, [editId, navigate, isPrintMode])
 
   // Auto-trigger print if arrived with ?print=1
   useEffect(() => {
-    if (isPrintMode && mounted) {
+    if (isPrintMode && mounted && !isValidating) {
       setTimeout(() => window.print(), 500)
     }
-  }, [isPrintMode, mounted])
+  }, [isPrintMode, mounted, isValidating])
 
   const handleSave = () => {
-    const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
-    const newId = editId && editId !== 'new' ? editId : `cv_${Date.now()}`
-    const entry = {
-      id: newId,
-      name: cvName,
-      templateId,
-      data: cvData,
-      updatedAt: new Date().toISOString(),
-    }
-    const existing = list.findIndex(c => c.id === newId)
-    if (existing >= 0) list[existing] = entry
-    else list.unshift(entry)
-    localStorage.setItem('cv_list', JSON.stringify(list))
+    try {
+      const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
+      const entry = {
+        id: editId,
+        name: cvName,
+        templateId,
+        data: cvData,
+        updatedAt: new Date().toISOString(),
+      }
 
-    setSaved(true)
-    setTimeout(() => {
-      setSaved(false)
-      navigate('/cv-dashboard')
-    }, 1200)
+      // Xử lý Upsert (Cập nhật hoặc Thêm mới)
+      const existingIdx = list.findIndex(c => c.id === editId)
+      if (existingIdx >= 0) {
+         list[existingIdx] = entry
+      } else {
+         list.unshift(entry)
+      }
+      
+      // Khóa lưu vào Storage
+      localStorage.setItem('cv_list', JSON.stringify(list))
+      
+      // Xóa bản nháp nếu lưu thành công, giải phóng bộ nhớ
+      localStorage.removeItem(`draft_cv_${editId}`)
+
+      setSaved(true)
+      setTimeout(() => {
+        setSaved(false)
+        navigate('/cv-dashboard')
+      }, 1200)
+
+    } catch(err) {
+      console.error('Lỗi khi lưu:', err)
+      alert('Không thể lưu CV. Vui lòng thử lại.')
+    }
   }
 
   const handleExportPDF = () => {
     window.print()
   }
 
-  // Hydration safeguard
-  if (!mounted) return <div className="min-h-screen bg-background" />
+  // Hydration & Guard safeguard: Render Soft Loading
+  if (isValidating || !mounted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] bg-zinc-50 w-full">
+        <Loader2 className="animate-spin text-primary shrink-0" size={32} />
+        <p className="mt-4 text-sm text-zinc-500 font-medium">Đang khởi tạo không gian thiết kế CV...</p>
+      </div>
+    )
+  }
 
-  /**
-   * Print View (only visible during print)
-   */
+  // Print Mode
   if (isPrintMode) {
     return (
       <div className="bg-white min-h-screen w-full flex justify-center">
@@ -112,134 +162,146 @@ export default function EditorPage() {
     )
   }
 
-  /**
-   * Standard Editor View
-   */
+  // Tiêu chuẩn UI Designer (Premium Aesthetic) - Nền tối, đổ bóng mượt
   return (
-    <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
-      {/* Navbar with embedded Toolbar */}
-      <Header
-        rightSlot={
-          <div className="flex items-center gap-3">
-            {/* Zoom controls */}
-            <div className="hidden md:flex items-center gap-1 border border-gray-200 rounded-md px-2 py-1">
-              <button
-                onClick={() => setZoom(z => Math.max(40, z - 10))}
-                className="text-gray-500 hover:text-gray-800 px-1 text-sm font-bold"
-              >−</button>
-              <span className="text-xs font-semibold w-10 text-center text-gray-600">{zoom}%</span>
-              <button
-                onClick={() => setZoom(z => Math.min(120, z + 10))}
-                className="text-gray-500 hover:text-gray-800 px-1 text-sm font-bold"
-              >+</button>
+    <div className="h-[calc(100vh-64px)] bg-zinc-100 flex flex-col font-sans overflow-hidden">
+
+      {/* Floating Toolbar (Header Bo Góc Cao Cấp) */}
+      <div className="flex-none px-6 py-4">
+         <div className="h-14 bg-white/70 backdrop-blur-md border border-white/60 shadow-soft-sm rounded-2xl flex items-center justify-between px-6 z-20 relative ring-1 ring-zinc-950/5">
+            
+            {/* LEFT: Back + Rename input */}
+            <div className="flex items-center gap-3">
+               <button
+                  onClick={() => navigate('/cv-dashboard')}
+                  className="size-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-600 transition-colors"
+                  aria-label="Về trang tổng quan"
+               >
+                  <ChevronLeft size={16} strokeWidth={2.5} />
+               </button>
+               <div className="h-4 w-[1px] bg-zinc-300 mx-1" />
+               <div className="flex items-center gap-2 bg-transparent focus-within:bg-zinc-100 px-3 py-1.5 rounded-lg transition-colors border border-transparent focus-within:border-zinc-200">
+                  <PenLine size={14} className="text-zinc-400" />
+                  <input
+                     value={cvName}
+                     onChange={e => setCvName(e.target.value)}
+                     className="bg-transparent border-none outline-none text-[15px] font-semibold text-zinc-800 placeholder-zinc-400 min-w-[200px]"
+                     placeholder="Ví dụ: Frontend Developer - Nguyễn Văn A"
+                  />
+               </div>
             </div>
 
-            {/* Xuất PDF */}
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded-md text-sm hover:bg-gray-50"
-            >
-              <Printer size={14} />
-              <span className="hidden sm:inline">Xuất PDF</span>
-            </button>
+            {/* RIGHT: Tools */}
+            <div className="flex items-center gap-4">
+               {/* Zoom Control */}
+               <div className="hidden lg:flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl shadow-inner border border-zinc-200/60">
+                 <Button variant="ghost" size="icon-xs" onClick={() => setZoom(z => Math.max(40, z - 10))} className="text-zinc-500 hover:text-zinc-900 rounded-lg">
+                   <ZoomOut size={14} />
+                 </Button>
+                 <span className="text-[13px] font-bold text-zinc-700 w-11 text-center font-mono">{zoom}%</span>
+                 <Button variant="ghost" size="icon-xs" onClick={() => setZoom(z => Math.min(150, z + 10))} className="text-zinc-500 hover:text-zinc-900 rounded-lg">
+                   <ZoomIn size={14} />
+                 </Button>
+               </div>
 
-            {/* Lưu CV */}
-            <button
-              onClick={handleSave}
-              className={cn(
-                'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-semibold transition-all duration-300 w-[110px] justify-center',
-                saved
-                  ? 'bg-green-500 text-white'
-                  : 'bg-green-500 text-white hover:bg-green-600'
-              )}
-            >
-              <Save size={14} />
-              {saved ? 'Đã lưu!' : 'Lưu CV'}
-            </button>
-          </div>
-        }
-      />
+               <div className="h-5 w-[1px] bg-zinc-300 hidden md:block" />
 
-      {/* Editor sub-header (Title) */}
-      <div className="h-12 bg-white border-b border-border flex items-center px-4 md:px-6 shrink-0 z-10 shadow-soft-xs relative gap-2">
-        <button
-          onClick={() => navigate('/cv-dashboard')}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-2"
-        >
-          &larr; Dashboard
-        </button>
-        <div className="h-4 w-px bg-border" />
-        <input
-          value={cvName}
-          onChange={e => setCvName(e.target.value)}
-          className="border-none bg-transparent outline-none font-semibold text-sm text-foreground focus:ring-0 w-[200px] ml-2"
-          placeholder="Nhập tên CV..."
-        />
-        <PenLine size={12} className="text-muted-foreground" />
+               {/* Export & Save Action */}
+               <Button variant="secondary" size="sm" onClick={handleExportPDF} className="gap-2 bg-white border-zinc-200 border text-zinc-700 hover:bg-zinc-50 shadow-sm hidden sm:flex">
+                  <Printer size={14} /> Xuất PDF
+               </Button>
+               <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSave}
+                  className={cn(
+                     'gap-2 min-w-[120px] transition-all duration-300 font-bold shadow-md hover:shadow-lg',
+                     saved ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/25 ring-2 ring-emerald-500/50 ring-offset-2' : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+                  )}
+               >
+                  {saved ? <span className="flex items-center gap-2"><Loader2 className="animate-spin" size={14}/> Đang lưu...</span> : <span className="flex items-center gap-2"><Save size={14}/> Lưu hồ sơ</span>}
+               </Button>
+            </div>
+         </div>
       </div>
 
       {/* Main Layout Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden px-6 pb-6 gap-6">
 
-        {/* LEFT BAR: Templates */}
-        <motion.div
-          initial={false}
-          animate={{ width: sidebarOpen ? 240 : 0 }}
-          className={cn(
-            'shrink-0 bg-white border-r border-border relative flex flex-col',
-            !sidebarOpen && 'invisible lg:visible'
-          )}
-        >
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            <TemplateSelector selectedId={templateId} onSelect={setTemplateId} />
-          </div>
+         {/* TRÁI: DOCK TEMPLATE LƠ LỬNG */}
+         <motion.div
+           initial={false}
+           animate={{ width: sidebarOpen ? 280 : 0, opacity: sidebarOpen ? 1 : 0 }}
+           className={cn(
+             'shrink-0 h-full relative rounded-2xl bg-white/60 backdrop-blur-3xl border border-white/60 shadow-soft-md flex flex-col',
+             !sidebarOpen && 'invisible'
+           )}
+         >
+           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              <TemplateSelector selectedId={templateId} onSelect={setTemplateId} />
+           </div>
 
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 size-6 rounded-full bg-white border border-border shadow-soft-sm flex items-center justify-center text-muted-foreground hover:text-foreground z-20"
-          >
-            {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-          </button>
-        </motion.div>
+           {/* Toggle Sidebar Button Outside */}
+           <button
+             onClick={() => setSidebarOpen(!sidebarOpen)}
+             className={cn(
+                "absolute top-1/2 -translate-y-1/2 min-w-6 min-h-12 rounded-r-xl bg-white/80 backdrop-blur-md border border-white/80 shadow-soft-md flex items-center justify-center text-zinc-500 hover:text-zinc-900 z-50 transition-all",
+                sidebarOpen ? "-right-6" : "-right-2"
+             )}
+           >
+             {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+           </button>
+         </motion.div>
 
-        {/* MIDDLE BAR: Form & AI */}
-        <div className="w-[400px] shrink-0 bg-white border-r border-border flex flex-col shadow-soft-md z-10">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="w-full h-12 border-b justify-start px-4 gap-6 shrink-0">
-              <TabsTrigger value="form" className="px-1 gap-2 border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none h-full bg-transparent pb-0 mb-0">
-                <PenLine size={14} /> Nhập liệu
-              </TabsTrigger>
-              <TabsTrigger value="ai" className="px-1 gap-2 border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none h-full bg-transparent pb-0 mb-0">
-                <Bot size={14} /> AI Phân tích
-              </TabsTrigger>
-            </TabsList>
+         {/* GIỮA: TRUNG TÂM KIỂM SOÁT (FORM + AI) */}
+         <div className="w-[440px] shrink-0 h-full rounded-2xl bg-white border border-zinc-200/70 shadow-soft-xl flex flex-col z-10 overflow-hidden ring-1 ring-zinc-950/5">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+               {/* Custom Tab List Component */}
+               <div className="h-14 border-b border-zinc-100 flex items-center px-2 bg-zinc-50/50 shrink-0">
+                  <TabsList className="h-10 w-full bg-zinc-100/80 p-1 flex justify-between gap-1 rounded-xl">
+                     <TabsTrigger 
+                        value="form" 
+                        className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm text-sm font-semibold transition-all"
+                     >
+                        <PenLine size={15} /> Nhập liệu CV
+                     </TabsTrigger>
+                     <TabsTrigger 
+                        value="ai" 
+                        className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm text-sm font-semibold transition-all relative overflow-hidden"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 data-[state=active]:opacity-100 transition-opacity" />
+                        <Bot size={15} /> AI Phân Tích
+                     </TabsTrigger>
+                  </TabsList>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto bg-zinc-50/30 p-5 custom-scrollbar relative">
+                  <TabsContent value="form" className="mt-0 h-full data-[state=inactive]:hidden focus:outline-none">
+                     <CVForm data={cvData} onChange={setCvData} />
+                  </TabsContent>
+                  <TabsContent value="ai" className="mt-0 h-full data-[state=inactive]:hidden focus:outline-none">
+                     <AIAssistant data={cvData} />
+                  </TabsContent>
+               </div>
+            </Tabs>
+         </div>
 
-            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 custom-scrollbar relative">
-              <TabsContent value="form" className="mt-0 h-full">
-                <CVForm data={cvData} onChange={setCvData} />
-              </TabsContent>
-              <TabsContent value="ai" className="mt-0 h-full">
-                <AIAssistant data={cvData} />
-              </TabsContent>
+         {/* PHẢI: XEM TRƯỚC BẢN IN LƠ LỬNG */}
+         <div className="flex-1 h-full rounded-2xl bg-zinc-200/50 border border-zinc-200/50 shadow-inner overflow-auto p-10 flex justify-center items-start custom-scrollbar relative items-center">
+            
+            <div
+               className="transition-all duration-300 origin-top bg-white print-area-shadow"
+               style={{ 
+                  width: `${zoom}%`,
+                  minWidth: '700px',
+                  maxWidth: '1200px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.02)'
+               }}
+            >
+               <CVPreview data={cvData} templateId={templateId} />
             </div>
-          </Tabs>
-        </div>
 
-        {/* RIGHT AREA: Preview Board */}
-        <div className="flex-1 overflow-auto bg-slate-200/50 p-8 flex justify-center items-start custom-scrollbar relative">
-
-          <div
-            className="transition-all duration-300 origin-top shadow-soft-xl rounded-sm"
-            style={{
-              width: `${zoom}%`,
-              minWidth: '600px',
-              maxWidth: '1200px'
-            }}
-          >
-            <CVPreview data={cvData} templateId={templateId} />
-          </div>
-
-        </div>
+         </div>
 
       </div>
 
