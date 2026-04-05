@@ -11,10 +11,10 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default:  'bg-card border-border shadow-soft-sm',
-        flat:     'bg-secondary border-border/50',
+        default:  'bg-white border-zinc-200 shadow-soft-sm',
+        flat:     'bg-zinc-50 border-zinc-200/50',
         glass:    'glass shadow-soft-sm',
-        elevated: 'bg-card border-border shadow-soft-md',
+        elevated: 'bg-white border-zinc-200 shadow-soft-md',
         ghost:    'bg-transparent border-transparent',
       },
     },
