@@ -33,7 +33,7 @@ const buttonVariants = cva(
           'active:translate-y-0',
         ],
         outline: [
-          'border border-border bg-transparent text-foreground',
+          'border border-zinc-200 bg-transparent text-foreground',
           'hover:bg-secondary hover:border-slate-300 hover:-translate-y-px',
           'active:translate-y-0',
         ],
