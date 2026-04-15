@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, FileText, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Header from '@/component/user/Header'
-import CVCard from '@/component/user/cv-shared/CVCard'
+import CVCard from '@/components/user/cv-shared/CVCard'
 
 export default function CVDashboard() {
   const navigate = useNavigate()

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import RecruiterHeader from '../component/employer/RecruiterHeader'
-import RecruiterSidebar from '../component/employer/RecruiterSidebar'
+import RecruiterHeader from '../components/employer/RecruiterHeader'
+import RecruiterSidebar from '../components/employer/RecruiterSidebar'
 
 export default function EmployerLayout() {
     return (

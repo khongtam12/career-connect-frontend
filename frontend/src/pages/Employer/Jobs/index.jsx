@@ -2,12 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import JobStatsCards from '../../../component/employer/jobs/JobStatsCards';
-import JobSearchFilter from '../../../component/employer/jobs/JobSearchFilter';
-import JobTable from '../../../component/employer/jobs/JobTable';
-import CreateJobDialog from '../../../component/employer/jobs/CreateJobDialog';
-import PushTopDialog from '../../../component/employer/jobs/PushTopDialog';
-import { MOCK_JOBS } from '../../../component/employer/jobs/mockData';
+import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
+import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
+import JobTable from '../../../components/employer/jobs/JobTable';
+import CreateJobDialog from '../../../components/employer/jobs/CreateJobDialog';
+import PushTopDialog from '../../../components/employer/jobs/PushTopDialog';
+import { MOCK_JOBS } from '../../../components/employer/jobs/mockData';
 
 // Import Quill CSS globally
 import 'react-quill-new/dist/quill.snow.css';

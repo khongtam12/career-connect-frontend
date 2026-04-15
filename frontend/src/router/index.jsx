@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import LayoutDefault from "../layouts/LayoutDefault";
-import Home from "../pages/User/Home";
+import Home from "../pages/Candidate/Home.jsx";
 import Dashboard from "../pages/Admin/Dashboard";
 import Home1 from "../pages/Employer/Home";
 import Error from "../pages/Error.jsx/Error";
@@ -9,11 +9,17 @@ import EmployerLayout from "../layouts/EmployerLayout";
 import Job from "../pages/Admin/Job";
 import About from "../pages/Employer/About";
 import JobManagement from "../pages/Employer/Jobs/index.jsx";
-import CVBuilder from "../pages/User/CVBuilder/index.jsx";
-import CVDashboard from "../pages/User/CVDashboard/index.jsx";
+import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
+import CVDashboard from "../pages/Candidate/CVDashboard/index.jsx";
 import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccountForm.jsx";
+import Login from "../pages/Employer/Login/login.jsx";
+import LoginAM from "../pages/Admin/Login/login.jsx";
+import LoginCD from "../pages/Candidate/Login/login.jsx";
 export const router = createBrowserRouter([
-
+    {
+        path: "/login",
+        element: <LoginCD />
+    },
     {
         path: "/",
         element: <LayoutDefault />,
@@ -33,12 +39,17 @@ export const router = createBrowserRouter([
         ]
     },
     {
+        path: "/employer/login",
+        element: <Login />
+    },
+    {
         path: "/employer",
         element: (
             <EmployerLayout />
         ),
         children: [
             { index: true, element: <Home1 /> },
+
             {
                 path: '/employer/about',
                 element: <About />,
@@ -54,10 +65,15 @@ export const router = createBrowserRouter([
         ],
     },
     {
+        path: "/admin/login",
+        element: <LoginAM />
+    },
+    {
         path: "/admin",
         element: (
             <AdminLayout />
         ),
+
         children: [
             { index: true, element: <Dashboard /> },
             {

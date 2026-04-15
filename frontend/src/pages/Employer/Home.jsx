@@ -1,12 +1,12 @@
 import React from 'react';
 
-import HeroWelcome from '../../component/employer/home/HeroWelcome';
-import PlatformIntro from '../../component/employer/home/PlatformIntro';
-import KeyFeatures from '../../component/employer/home/KeyFeatures';
-import HowItWorks from '../../component/employer/home/HowItWorks';
-import HiringTips from '../../component/employer/home/HiringTips';
-import RecommendedActions from '../../component/employer/home/RecommendedActions';
-import AnalyticsOverview from '../../component/employer/home/AnalyticsOverview';
+import HeroWelcome from '../../components/employer/home/HeroWelcome';
+import PlatformIntro from '../../components/employer/home/PlatformIntro';
+import KeyFeatures from '../../components/employer/home/KeyFeatures';
+import HowItWorks from '../../components/employer/home/HowItWorks';
+import HiringTips from '../../components/employer/home/HiringTips';
+import RecommendedActions from '../../components/employer/home/RecommendedActions';
+import AnalyticsOverview from '../../components/employer/home/AnalyticsOverview';
 
 export default function Home() {
   return (

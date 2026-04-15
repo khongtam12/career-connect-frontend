@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
-import Header from '@/component/user/Header'
 import TemplateSelector from './components/TemplateSelector'
 import CVForm from './components/CVForm'
 import CVPreview from './components/CVPreview'
