@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import CVCard from './components/CVCard'
+import CVCard from '../../../components/user/cv-shared/CVCard'
 
 /* ── Stat card (small widget) ── */
 function StatWidget({ icon: Icon, value, label, accent = false }) {

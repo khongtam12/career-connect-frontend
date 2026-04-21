@@ -38,8 +38,6 @@ export default function Login() {
     try {
       await login({ username, password, type: "ADMIN" });
       await handleLoginSuccess();
-      // const u = await getUser(token);
-      // console.log(user);
     } catch (err) {
       console.error(err);
       setError("Tên đăng nhập hoặc mật khẩu không hợp lệ");
