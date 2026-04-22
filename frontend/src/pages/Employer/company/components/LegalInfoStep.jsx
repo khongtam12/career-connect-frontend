@@ -13,8 +13,6 @@ export default function LegalInfoStep({ formData, handleInputChange, setLicenseF
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-
-        {/* TAX CODE SUBMITTED */}
         <div>
           <label className="text-sm font-semibold text-slate-700 mb-2 block">
             Mã số thuế xác thực <span className="text-rose-500">*</span>
@@ -29,7 +27,6 @@ export default function LegalInfoStep({ formData, handleInputChange, setLicenseF
           />
         </div>
 
-        {/* NOTE */}
         <div>
           <label className="text-sm font-semibold text-slate-700 mb-2 block">
             Ghi chú
@@ -43,8 +40,6 @@ export default function LegalInfoStep({ formData, handleInputChange, setLicenseF
             className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 shadow-sm"
           />
         </div>
-
-        {/* UPLOAD LICENSE */}
         <div className="md:col-span-2 mt-4">
           <label className="text-sm font-semibold text-slate-700 mb-3 block border-t pt-6 border-slate-100">
             Giấy phép kinh doanh <span className="text-rose-500">*</span>
@@ -52,7 +47,6 @@ export default function LegalInfoStep({ formData, handleInputChange, setLicenseF
 
           <div className="group border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 rounded-2xl p-10 text-center cursor-pointer transition-all duration-300">
 
-            {/* PREVIEW */}
             {formData.businessLicense ? (
               <div className="mb-4">
                 <p className="text-sm text-indigo-600 font-medium">
@@ -82,8 +76,6 @@ export default function LegalInfoStep({ formData, handleInputChange, setLicenseF
                 </p>
               </>
             )}
-
-            {/* INPUT */}
             <input
               type="file"
               accept="image/*,application/pdf"
@@ -93,10 +85,7 @@ export default function LegalInfoStep({ formData, handleInputChange, setLicenseF
                 const file = e.target.files[0];
                 if (!file) return;
 
-                // chỉ lưu file
                 setLicenseFile(file);
-
-                // hiển thị preview tên file
                 handleInputChange({
                   target: {
                     name: "businessLicense",
