@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function JobCard({ job, isFeatured = false }) {
   const [isSaved, setIsSaved] = React.useState(false);
@@ -71,9 +72,9 @@ export default function JobCard({ job, isFeatured = false }) {
             <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} />
             <span className="hidden sm:inline">{isSaved ? 'Đã lưu' : 'Lưu'}</span>
           </button>
-          <button className="flex-1 text-emerald-600 hover:bg-emerald-50 transition-all duration-200 text-sm font-semibold py-2.5 px-3 rounded-lg border-2 border-emerald-200 hover:border-emerald-400 group/btn">
+          <Link to={`/job/${job.id}`} className="flex-1 text-center text-emerald-600 hover:bg-emerald-50 transition-all duration-200 text-sm font-semibold py-2.5 px-3 rounded-lg border-2 border-emerald-200 hover:border-emerald-400 group/btn">
             Chi tiết →
-          </button>
+          </Link>
         </div>
       </div>
 
