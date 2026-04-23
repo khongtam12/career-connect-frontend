@@ -17,6 +17,8 @@ import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccount
 import Login from "../pages/Employer/Login/login.jsx";
 import LoginAM from "../pages/Admin/Login/login.jsx";
 import LoginCD from "../pages/Candidate/Login/login.jsx";
+import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
+import Candidates from "../pages/Employer/Candidates/index.jsx";
 export const router = createBrowserRouter([
     {
         path: "/login",
@@ -41,9 +43,12 @@ export const router = createBrowserRouter([
             {
                 path: "/jobs",
                 element: <Jobs />
+
+            },
+            {
                 path: "/job/:id",
                 element: <JobDetail />
-            },
+            }
         ]
     },
     {
@@ -69,6 +74,14 @@ export const router = createBrowserRouter([
             {
                 path: '/employer/recruitment-account',
                 element: <RecruitmentAccountForm />
+            },
+            {
+                path: "/employer/pricing",
+                element: <PricingSection />
+            },
+            {
+                path: "/employer/candidates",
+                element: <Candidates />
             }
         ],
     },

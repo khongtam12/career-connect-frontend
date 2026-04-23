@@ -9,15 +9,15 @@ import RecommendedActions from '../../components/employer/home/RecommendedAction
 import AnalyticsOverview from '../../components/employer/home/AnalyticsOverview';
 
 export default function Home() {
-  return (
-    <div className="max-w-[1440px] mx-auto space-y-6 pb-8">
-      <HeroWelcome />
-      <PlatformIntro />
-      <KeyFeatures />
-      <HowItWorks />
-      <HiringTips />
-      <RecommendedActions />
-      <AnalyticsOverview />
-    </div>
-  );
+   return (
+      <div className="max-w-[1440px] mx-auto space-y-6 pb-8">
+         <HeroWelcome />
+         <PlatformIntro />
+         <KeyFeatures />
+         <HowItWorks />
+         <HiringTips />
+         <RecommendedActions />
+         <AnalyticsOverview />
+      </div>
+   );
 }

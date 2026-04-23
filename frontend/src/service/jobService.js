@@ -52,10 +52,11 @@ export const getJobFilters = async () => {
 export const getJobStats = async () => {
   const response = await apiClient.get('/api/v1/job/stats');
   return response.data;
+}
 /**
- * Apply for a job — POST /api/v1/apply
- * @param {{ jobId: string, cvId: string, note?: string }} payload
- */
+* Apply for a job — POST /api/v1/apply
+* @param {{ jobId: string, cvId: string, note?: string }} payload
+*/
 export const applyForJob = async (payload) => {
   const res = await apiClient.post('/api/v1/apply', payload);
   return res.data;
