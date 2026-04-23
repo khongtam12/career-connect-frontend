@@ -133,11 +133,15 @@ export default function EditorPage() {
         status: 'PUBLISHED'
       }
 
+      console.log('📦 [CV Flow] Dữ liệu CV đã sẵn sàng gửi lên Backend:', payload);
+
       let result
       if (payload.id) {
         result = await cvService.updateCV(payload.id, payload)
+        console.log('✨ [CV Flow] Cập nhật CV thành công:', result);
       } else {
         result = await cvService.createCV(payload)
+        console.log('✨ [CV Flow] Tạo mới CV thành công:', result);
       }
 
       toast.success('Đã lưu CV thành công!')
@@ -147,7 +151,7 @@ export default function EditorPage() {
       }, 1200)
 
     } catch (err) {
-      console.error('Lỗi khi lưu:', err)
+      console.error('❌ [CV Flow] Lỗi khi lưu:', err)
       toast.error('Không thể lưu CV. Vui lòng thử lại.')
       setSaved(false)
     }

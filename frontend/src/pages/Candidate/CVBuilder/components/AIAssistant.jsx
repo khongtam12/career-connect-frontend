@@ -5,8 +5,9 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bot, Sparkles, X, Target, Copy, Zap, Briefcase } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { calcCVScore } from '@/lib/utils' // Wait, I remember I put calcCVScore in utils? Let me re-implement it just in case if it's missing or just keep it here to be safe.
+import { calcCVScore } from '@/lib/utils' 
 import { Button } from '@/components/ui/button'
+import * as cvService from '@/service/cvService'
 
 const PROFILE_SUGGESTIONS = [
   'Kỹ sư phần mềm với hơn 3 năm kinh nghiệm phát triển ứng dụng web full-stack. Có khả năng làm việc trong môi trường Agile, hiểu biết sâu về React, Node.js và các công nghệ đám mây. Luôn chủ động học hỏi và đóng góp cho sản phẩm kỹ thuật số chất lượng cao.',
@@ -15,55 +16,62 @@ const PROFILE_SUGGESTIONS = [
 
 export default function AIAssistant({ data }) {
   const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [aiResult, setAiResult] = useState(null)
   
-  // Need to compute score, I'll calculate it inline to ensure it works without depending on utils exports.
+  // Get editId from URL if possible
+  const editId = new URLSearchParams(window.location.search).get('id')
+
+  // Inline score calculation for the main panel
   const calcScore = (d) => {
     let score = 0
     const p = d.personal || {}
     const suggestions = []
-
     if (p.fullName) score += 10
     if (p.email) score += 8
-    if (p.phone) score += 5
-    if (p.address) score += 5
     if (p.jobTitle) score += 7
     if (p.summary && p.summary.length > 50) score += 10
     else suggestions.push('Bổ sung mục tiêu nghề nghiệp chi tiết hơn')
-
     const skills = d.skills || []
     if (skills.length >= 5) score += 15
-    else if (skills.length >= 1) { score += skills.length * 2; suggestions.push(`Thêm ít nhất ${5 - skills.length} kỹ năng nữa`) }
-    else suggestions.push('Thêm ít nhất 3–5 kỹ năng chính')
-
     const exp = d.experience || []
     if (exp.length > 0) score += 15
-    else suggestions.push('Thêm kinh nghiệm làm việc để nổi bật hơn')
-
-    const edu = d.education || []
-    if (edu.length > 0) score += 10
-    else suggestions.push('Bổ sung thông tin học vấn')
-
-    const projs = d.projects || []
-    if (projs.length >= 2) score += 10
-    else if (projs.length === 1) { score += 5; suggestions.push('Thêm thêm dự án cá nhân để nổi bật hơn') }
-    else suggestions.push('Thêm dự án cá nhân hoặc công tác để nổi bật hơn')
-
-    const certs = d.certificates || []
-    if (certs.length > 0) score += 5
-    else suggestions.push('Thêm chứng chỉ nghề nghiệp liên quan')
-
     return { score: Math.min(score, 100), suggestions }
   }
 
-  const { score, suggestions } = calcScore(data)
+  const { score: initialScore, suggestions: initialSuggestions } = calcScore(data)
   
+  const handleAIReview = async () => {
+    if (!editId) {
+      alert('Vui lòng lưu CV trước khi nhận Review từ AI!')
+      return
+    }
+    
+    setLoading(true)
+    setShowModal(true)
+    try {
+      const result = await cvService.reviewCV(editId)
+      console.log(">>> AI REVIEW RESULT FROM SERVER:", result)
+      setAiResult(result)
+    } catch (err) {
+      console.error(err)
+      alert('Không thể kết nối với AI Assistant. Vui lòng thử lại sau!')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const displayScore = aiResult ? aiResult.score : initialScore
+  const displayStrengths = aiResult ? aiResult.strengths : PROFILE_SUGGESTIONS
+  const displayImprovements = aiResult ? aiResult.improvements : initialSuggestions
+
   const statusConfig = {
     high:   { color: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', icon: '🌟', msg: 'Rất tốt! Tiếp tục phát huy' },
     medium: { color: 'bg-amber-500',   text: 'text-amber-700',   bg: 'bg-amber-50',   icon: '💡', msg: 'Khá tốt! Thêm vài mục nữa nhé' },
     low:    { color: 'bg-red-500',     text: 'text-red-700',     bg: 'bg-red-50',     icon: '⚡', msg: 'Hãy bổ sung thêm thông tin' }
   }
 
-  const statusKey = score >= 80 ? 'high' : score >= 50 ? 'medium' : 'low'
+  const statusKey = displayScore >= 80 ? 'high' : displayScore >= 50 ? 'medium' : 'low'
   const st = statusConfig[statusKey]
 
   const handleCopy = (text) => {
@@ -89,12 +97,12 @@ export default function AIAssistant({ data }) {
         <div className="p-5 border-b border-zinc-200/60">
           <div className="flex justify-between items-end mb-2">
             <span className="text-xs font-bold text-foreground tracking-tight uppercase">Độ hoàn thiện CV</span>
-            <span className={cn('text-xl font-black leading-none drop-shadow-sm', st.text.replace('text-', 'text-').replace('-700', '-600'))}>{score}%</span>
+            <span className={cn('text-xl font-black leading-none drop-shadow-sm', st.text.replace('text-', 'text-').replace('-700', '-600'))}>{displayScore}%</span>
           </div>
           <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden mb-2">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${score}%` }}
+              animate={{ width: `${displayScore}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className={cn('h-full rounded-full relative', st.color)}
             >
@@ -111,18 +119,10 @@ export default function AIAssistant({ data }) {
           <Button
             variant="default"
             className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-soft-md shadow-indigo-500/20"
-            onClick={() => setShowModal(true)}
+            onClick={handleAIReview}
           >
             <Sparkles size={16} />
             Nhận Review chi tiết
-          </Button>
-
-          <Button
-            variant="flat"
-            className="w-full gap-2 border border-zinc-200/80 bg-slate-50 text-foreground hover:bg-slate-100 hover:text-indigo-600 transition-colors"
-          >
-            <Briefcase size={16} className="text-muted-foreground" />
-            Gợi ý việc làm phù hợp
           </Button>
         </div>
       </div>
@@ -167,57 +167,60 @@ export default function AIAssistant({ data }) {
               </div>
 
               <div className="p-6 overflow-y-auto space-y-6">
-                {/* Score Banner */}
-                <div className={cn('p-4 rounded-xl border flex items-center gap-4', st.bg, st.text.replace('text-', 'border-').replace('-700', '-200'))}>
-                  <div className={cn('size-12 rounded-full flex items-center justify-center text-2xl bg-white shadow-soft-sm shrink-0')}>
-                    {st.icon}
+                {loading ? (
+                  <div className="py-20 flex flex-col items-center justify-center gap-4">
+                    <div className="size-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-indigo-600 font-bold animate-pulse">AI đang phân tích CV của bạn...</p>
                   </div>
-                  <div>
-                    <h3 className={cn('font-bold tracking-tight', st.text)}>Điểm đánh giá: {score}/100</h3>
-                    <p className={cn('text-sm mt-0.5 leading-snug', st.text.replace('-700', '-600'))}>
-                      {score >= 80 ? 'Hoàn hảo! Hồ sơ của bạn đủ mạnh để thu hút sự chú ý của nhà tuyển dụng.' : 'Hồ sơ còn nhiều tiềm năng, hãy xem các gợi ý bên dưới để hoàn thiện nhé.'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Content generation */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Target size={16} className="text-indigo-500" /> Gợi ý Mục tiêu nghề nghiệp
-                  </h4>
-                  <div className="space-y-3">
-                    {PROFILE_SUGGESTIONS.map((s, i) => (
-                      <div key={i} className="group relative p-4 rounded-xl border border-zinc-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-200 transition-colors">
-                        <p className="text-sm text-foreground/80 leading-relaxed pr-12">{s}</p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleCopy(s)}
-                          className="absolute top-3 right-3 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
-                          title="Copy text"
-                        >
-                          <Copy size={16} />
-                        </Button>
+                ) : (
+                  <>
+                    {/* Score Banner */}
+                    <div className={cn('p-4 rounded-xl border flex items-center gap-4', st.bg, st.text.replace('text-', 'border-').replace('-700', '-200'))}>
+                      <div className={cn('size-12 rounded-full flex items-center justify-center text-2xl bg-white shadow-soft-sm shrink-0')}>
+                        {st.icon}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Improvements */}
-                {suggestions.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <Zap size={16} className="text-amber-500" /> Điểm cần cải thiện
-                    </h4>
-                    <div className="space-y-2">
-                      {suggestions.map((s, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-red-100 bg-red-50/50">
-                          <div className="mt-0.5 size-1.5 rounded-full bg-red-400 shrink-0" />
-                          <p className="text-sm text-red-900/80 leading-tight">{s}</p>
-                        </div>
-                      ))}
+                      <div>
+                        <h3 className={cn('font-bold tracking-tight', st.text)}>Điểm đánh giá: {displayScore}/100</h3>
+                        <p className={cn('text-sm mt-0.5 leading-snug', st.text.replace('-700', '-600'))}>
+                          {aiResult ? 'Dựa trên phân tích nội dung thực tế của CV.' : 'Đánh giá dựa trên độ hoàn thiện các mục thông tin.'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* AI Results */}
+                    {aiResult && (
+                      <div className="space-y-6">
+                        {/* strengths */}
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                            <Target size={16} className="text-indigo-500" /> Ưu điểm hồ sơ
+                          </h4>
+                          <div className="space-y-3">
+                            {displayStrengths.map((s, i) => (
+                              <div key={i} className="group relative p-4 rounded-xl border border-zinc-200 bg-emerald-50/30">
+                                <p className="text-sm text-foreground/80 leading-relaxed">{s}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Improvements */}
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                            <Zap size={16} className="text-amber-500" /> Điểm cần cải thiện
+                          </h4>
+                          <div className="space-y-2">
+                            {displayImprovements.map((s, i) => (
+                              <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-red-100 bg-red-50/50">
+                                <div className="mt-0.5 size-1.5 rounded-full bg-red-400 shrink-0" />
+                                <p className="text-sm text-red-900/80 leading-tight">{s}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>
