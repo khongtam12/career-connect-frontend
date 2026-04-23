@@ -15,11 +15,10 @@ export default function JobCard({ job, isFeatured = false, onDetail }) {
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 ${
-        isFeatured
+      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 ${isFeatured
           ? 'border-emerald-200 bg-linear-to-br from-emerald-50 to-white'
           : 'border-gray-200 bg-white'
-      }`}
+        }`}
     >
       {/* Background */}
       <div
@@ -61,13 +60,10 @@ export default function JobCard({ job, isFeatured = false, onDetail }) {
             </span>
 
             {jobTypeLabel && (
-              <span
-                className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium ${
-                  jobTypeLabel === 'Full-time'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-blue-100 text-blue-700'
-                }`}
-              >
+              <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${jobTypeLabel === 'Full-time'
+                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}>
                 {jobTypeLabel === 'Full-time' ? '💼' : '🎓'} {jobTypeLabel}
               </span>
             )}
@@ -79,14 +75,12 @@ export default function JobCard({ job, isFeatured = false, onDetail }) {
 
         {/* Actions */}
         <div className="flex gap-2">
-          {/* Save */}
           <button
             onClick={() => setIsSaved(!isSaved)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-semibold text-sm ${
-              isSaved
-                ? 'bg-red-100 text-red-600'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${isSaved
+                ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
           >
             <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} />
             <span className="hidden sm:inline">

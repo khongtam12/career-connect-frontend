@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Wrench, BriefcaseBusiness, GraduationCap,
-  Rocket, Award, Plus, Trash2, ChevronDown, Camera
+  Rocket, Award, Plus, Trash2, ChevronDown, Camera, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import * as cvService from '../../../../service/cvService'
+import { toast } from 'react-toastify'
 
 /* ---------- config ---------- */
 const SECTIONS = [
@@ -80,16 +82,26 @@ function AddButton({ onClick, children }) {
 /* ---------- main component ---------- */
 export default function CVForm({ data, onChange }) {
   const [openSection, setOpenSection] = useState('personal')
+  const [uploading, setUploading] = useState(false)
 
   const updateP = (field, val) =>
     onChange({ ...data, personal: { ...data.personal, [field]: val } })
 
-  const handleAvatarUpload = (e) => {
+  const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => updateP('avatar', ev.target.result)
-    reader.readAsDataURL(file)
+    
+    setUploading(true)
+    try {
+      const url = await cvService.uploadCVAvatar(file)
+      updateP('avatar', url)
+      toast.success('Tải ảnh lên thành công')
+    } catch (err) {
+      console.error('Avatar upload failed:', err)
+      toast.error('Không thể tải ảnh lên. Vui lòng thử lại.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const updateArr = (key, idx, field, val) => {
@@ -172,10 +184,15 @@ export default function CVForm({ data, onChange }) {
                         {/* Avatar */}
                         <div className="flex items-center gap-4 p-4 rounded-xl bg-zinc-50 border border-zinc-200">
                           <div className="relative size-16 rounded-full border border-zinc-200 bg-white overflow-hidden shadow-sm shrink-0">
-                            {p.avatar
-                              ? <img src={p.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                              : <User size={22} className="absolute inset-0 m-auto text-zinc-300" />
-                            }
+                            {uploading ? (
+                              <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+                                <Loader2 className="animate-spin text-zinc-400" size={16} />
+                              </div>
+                            ) : p.avatar ? (
+                              <img src={p.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              <User size={22} className="absolute inset-0 m-auto text-zinc-300" />
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label
