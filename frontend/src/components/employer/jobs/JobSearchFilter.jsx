@@ -11,11 +11,13 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Đang tuyển' },
-  { value: 'paused', label: 'Tạm dừng' },
-  { value: 'closed', label: 'Đã đóng' },
-  { value: 'expired', label: 'Hết hạn' },
+  { value: 'all',      label: 'Tất cả trạng thái' },
+  { value: 'draft',    label: 'Nháp' },
+  { value: 'active',   label: 'Đang tuyển' },
+  { value: 'paused',   label: 'Tạm dừng' },
+  { value: 'closed',   label: 'Đã đóng' },
+  { value: 'expired',  label: 'Hết hạn' },
+  { value: 'rejected', label: 'Từ chối' },
 ];
 
 export default function JobSearchFilter({

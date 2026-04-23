@@ -1,5 +1,54 @@
 import apiClient from './apiClient';
 
+// ── EMPLOYER: Quản lý tin tuyển dụng ──
+
+export const createJob = async (payload) => {
+  const res = await apiClient.post('/api/v1/job/employer/create', payload);
+  return res.data;
+};
+
+export const updateJob = async (jobId, payload) => {
+  const res = await apiClient.put(`/api/v1/job/employer/${jobId}`, payload);
+  return res.data;
+};
+
+export const deleteJob = async (jobId) => {
+  const res = await apiClient.delete(`/api/v1/job/employer/${jobId}`);
+  return res.data;
+};
+
+export const getMyJobs = async ({ search, status, page = 1, size = 10 } = {}) => {
+  const params = { page, size };
+  if (search) params.search = search;
+  if (status && status !== 'all') params.status = status;
+  const res = await apiClient.get('/api/v1/job/employer/my-jobs', { params });
+  return res.data;
+};
+
+export const getMyStats = async () => {
+  const res = await apiClient.get('/api/v1/job/employer/stats');
+  return res.data;
+};
+
+export const pushJobToTop = async (jobId) => {
+  const res = await apiClient.put(`/api/v1/job/employer/${jobId}/push-top`);
+  return res.data;
+};
+
+export const changeJobStatus = async (jobId, status) => {
+  const res = await apiClient.put(`/api/v1/job/employer/${jobId}/status`, null, {
+    params: { status },
+  });
+  return res.data;
+};
+
+// ── PUBLIC: Xem / tìm kiếm ──
+
+export const getJobById = async (jobId) => {
+  const res = await apiClient.get(`/api/v1/job/${jobId}`);
+  return res.data;
+};
+
 export const getJobs = async ({ page = 0, size = 9, sortBy = 'createdAt', sortDir = 'desc' } = {}) => {
   const response = await apiClient.get('/api/v1/job', {
     params: { page, size, sortBy, sortDir },
@@ -52,9 +101,12 @@ export const getJobFilters = async () => {
 export const getJobStats = async () => {
   const response = await apiClient.get('/api/v1/job/stats');
   return response.data;
+};
+
+// ── CANDIDATE ──
+
 /**
  * Apply for a job — POST /api/v1/apply
- * @param {{ jobId: string, cvId: string, note?: string }} payload
  */
 export const applyForJob = async (payload) => {
   const res = await apiClient.post('/api/v1/apply', payload);
