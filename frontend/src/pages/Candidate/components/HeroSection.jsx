@@ -1,25 +1,28 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Search, MapPin, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { categoriesData } from '../../../data/categoriesData';
 
-export default function HeroSection() {
-  const [jobTitle, setJobTitle] = useState('');
-  const [location, setLocation] = useState('');
+export default function HeroSection({
+  filters,
+  onChange,
+  onSearch,
+  onCategorySelect,
+  categories = categoriesData,
+  locations = [],
+}) {
   const [categoryIndex, setCategoryIndex] = useState(0);
-
-  const handleSearch = () => {
-    console.log('Searching for:', jobTitle, 'in', location);
-  };
+  const visibleCategories = useMemo(
+    () => categories.slice(categoryIndex, categoryIndex + 5),
+    [categories, categoryIndex]
+  );
 
   const handleCategoryPrev = () => {
     setCategoryIndex(Math.max(0, categoryIndex - 1));
   };
 
   const handleCategoryNext = () => {
-    setCategoryIndex(Math.min(categoriesData.length - 5, categoryIndex + 1));
+    setCategoryIndex(Math.min(Math.max(categories.length - 5, 0), categoryIndex + 1));
   };
-
-  const visibleCategories = categoriesData.slice(categoryIndex, categoryIndex + 5);
 
   return (
     <div className="relative bg-linear-to-br from-teal-700 via-teal-600 to-emerald-700 text-white overflow-hidden">
@@ -53,15 +56,22 @@ export default function HeroSection() {
               <div className="bg-white rounded-2xl p-5 shadow-2xl backdrop-blur-xl border border-white border-opacity-10 hover:shadow-3xl transition-all duration-300">
                 <div className="space-y-1">
                   {visibleCategories.map((cat) => (
-                    <div
+                    <button
                       key={cat.id}
-                      className="group flex items-center justify-between p-3 hover:bg-emerald-50 rounded-xl cursor-pointer transition-all duration-200 hover:translate-x-1"
+                      type="button"
+                      onClick={() => onCategorySelect?.(cat)}
+                      className="group w-full flex items-center justify-between p-3 hover:bg-emerald-50 rounded-xl cursor-pointer transition-all duration-200 hover:translate-x-1"
                     >
-                      <span className="text-gray-800 font-medium text-sm group-hover:text-emerald-700 transition-colors">
-                        {cat.title}
-                      </span>
+                      <div>
+                        <span className="text-gray-800 font-medium text-sm group-hover:text-emerald-700 transition-colors">
+                          {cat.title}
+                        </span>
+                        {cat.jobCount && (
+                          <p className="text-xs text-gray-500 mt-1">{cat.jobCount}</p>
+                        )}
+                      </div>
                       <ChevronRight size={18} className="text-gray-300 group-hover:text-emerald-600 transition-colors" />
-                    </div>
+                    </button>
                   ))}
                 </div>
 
@@ -75,11 +85,11 @@ export default function HeroSection() {
                     <ChevronLeft size={20} className="text-gray-600" />
                   </button>
                   <span className="text-sm text-gray-500 font-semibold">
-                    {categoryIndex + 1}/{Math.ceil(categoriesData.length / 5)}
+                    {categoryIndex + 1}/{Math.ceil(categories.length / 5 || 1)}
                   </span>
                   <button
                     onClick={handleCategoryNext}
-                    disabled={categoryIndex >= categoriesData.length - 5}
+                    disabled={categoryIndex >= categories.length - 5}
                     className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-110"
                   >
                     <ChevronRight size={20} className="text-gray-600" />
@@ -97,27 +107,28 @@ export default function HeroSection() {
                     <input
                       type="text"
                       placeholder="Vị trí tuyển dụng, tên công ty"
-                      value={jobTitle}
-                      onChange={(e) => setJobTitle(e.target.value)}
+                      value={filters.keyword}
+                      onChange={(e) => onChange({ keyword: e.target.value })}
                       className="w-full px-5 py-3 text-gray-900 placeholder-gray-500 bg-transparent focus:outline-none text-sm sm:text-base font-medium"
                     />
                   </div>
                   <div className="w-full sm:w-auto relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                     <select
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      value={filters.location}
+                      onChange={(e) => onChange({ location: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 text-gray-900 bg-transparent focus:outline-none text-sm sm:text-base cursor-pointer font-medium"
                     >
-                      <option>Địa điểm</option>
-                      <option>Hà Nội</option>
-                      <option>Hồ Chí Minh</option>
-                      <option>Đà Nẵng</option>
-                      <option>Hải Phòng</option>
+                      <option value="">Địa điểm</option>
+                      {locations.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <button
-                    onClick={handleSearch}
+                    onClick={onSearch}
                     className="bg-linear-to-r from-emerald-500 to-teal-600 text-white font-bold px-6 sm:px-8 py-3 rounded-full hover:shadow-2xl transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 shadow-lg transform hover:scale-105 active:scale-95"
                   >
                     <Search size={18} />

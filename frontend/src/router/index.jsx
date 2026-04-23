@@ -11,6 +11,7 @@ import About from "../pages/Employer/About";
 import JobManagement from "../pages/Employer/Jobs/index.jsx";
 import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
 import CVDashboard from "../pages/Candidate/CVDashboard/index.jsx";
+import Jobs from "../pages/Candidate/Jobs.jsx";
 import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccountForm.jsx";
 import Login from "../pages/Employer/Login/login.jsx";
 import LoginAM from "../pages/Admin/Login/login.jsx";
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
             {
                 path: "/cv-builder",
                 element: <CVBuilder />
+            },
+            {
+                path: "/jobs",
+                element: <Jobs />
             },
         ]
     },

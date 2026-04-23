@@ -1,7 +1,10 @@
 import React from 'react';
 import { TrendingUp, BarChart3 } from 'lucide-react';
 
-export default function StatisticsSection() {
+export default function StatisticsSection({ stats }) {
+  const totalJobs = stats?.totalJobs ?? 64584;
+  const newJobs24h = stats?.newJobs24h ?? 3483;
+  const openJobs = stats?.openJobs ?? 20278;
   return (
     <section className="py-16 sm:py-20 bg-linear-to-br from-slate-900 via-slate-850 to-slate-900 text-white relative overflow-hidden">
       {/* Background Animated Elements */}
@@ -31,7 +34,7 @@ export default function StatisticsSection() {
             <div className="relative">
               <p className="text-slate-400 text-sm mb-2 font-medium">Việc làm đang tuyển</p>
               <p className="text-4xl sm:text-5xl font-black text-emerald-400 mb-2 group-hover:text-emerald-300 transition-colors">
-                64,584
+                {totalJobs.toLocaleString('vi-VN')}
               </p>
               <div className="h-1 w-12 bg-linear-to-r from-emerald-400 to-teal-400 rounded-full"></div>
             </div>
@@ -43,7 +46,7 @@ export default function StatisticsSection() {
             <div className="relative">
               <p className="text-slate-400 text-sm mb-2 font-medium">Việc làm mới 24h</p>
               <p className="text-4xl sm:text-5xl font-black text-emerald-400 mb-2 group-hover:text-emerald-300 transition-colors">
-                3,483
+                {newJobs24h.toLocaleString('vi-VN')}
               </p>
               <div className="h-1 w-12 bg-linear-to-r from-emerald-400 to-teal-400 rounded-full"></div>
             </div>
@@ -55,7 +58,7 @@ export default function StatisticsSection() {
             <div className="relative">
               <p className="text-slate-400 text-sm mb-2 font-medium">Công ty đang tuyển</p>
               <p className="text-4xl sm:text-5xl font-black text-emerald-400 mb-2 group-hover:text-emerald-300 transition-colors">
-                20,278
+                {openJobs.toLocaleString('vi-VN')}
               </p>
               <div className="h-1 w-12 bg-linear-to-r from-emerald-400 to-teal-400 rounded-full"></div>
             </div>
