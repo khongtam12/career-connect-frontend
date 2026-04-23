@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import CVCard from '../../../components/user/cv-shared/CVCard'
+import * as cvService from '../../../service/cvService'
+import { useUserStore } from '../../../stores/useUserStore'
+import { toast } from 'react-toastify'
 
 /* ── Stat card (small widget) ── */
 function StatWidget({ icon: Icon, value, label, accent = false }) {
@@ -139,15 +142,22 @@ export default function CVDashboard() {
   const [cvList, setCvList] = useState([])
   const [mounted, setMounted] = useState(false)
 
+  const { user } = useUserStore()
+
   useEffect(() => {
     setMounted(true)
-    try {
-      const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
-      setCvList(list)
-    } catch (e) {
-      console.error('Failed to parse cv_list:', e)
+    const fetchCVs = async () => {
+      if (!user) return
+      try {
+        const data = await cvService.getMyCVs()
+        setCvList(data)
+      } catch (e) {
+        console.error('Failed to fetch CVs:', e)
+        toast.error('Không thể tải danh sách CV')
+      }
     }
-  }, [])
+    fetchCVs()
+  }, [user])
 
   const handleCreate = () => {
     try {
@@ -176,15 +186,16 @@ export default function CVDashboard() {
     }
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa CV này? Hành động này không thể hoàn tác.')) return
     try {
+      await cvService.deleteCV(id)
       const next = cvList.filter(cv => cv.id !== id)
-      localStorage.setItem('cv_list', JSON.stringify(next))
       setCvList(next)
+      toast.success('Đã xóa CV thành công')
     } catch (e) {
       console.error('Lỗi khi xóa CV:', e)
-      alert('Đã xảy ra lỗi khi xóa CV. Vui lòng thử lại.')
+      toast.error('Đã xảy ra lỗi khi xóa CV. Vui lòng thử lại.')
     }
   }
 
