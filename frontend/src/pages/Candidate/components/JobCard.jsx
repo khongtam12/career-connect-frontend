@@ -2,8 +2,11 @@ import React from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function JobCard({ job, isFeatured = false }) {
+export default function JobCard({ job, isFeatured = false, onDetail }) {
   const [isSaved, setIsSaved] = React.useState(false);
+  const companyName = job.companyName || job.company || job.companyId || 'Doanh nghiep';
+  const jobTypeLabel = job.type || formatJobType(job.jobType);
+  const salaryLabel = job.salary || formatSalary(job.salaryMin, job.salaryMax);
 
   return (
     <div
@@ -21,14 +24,14 @@ export default function JobCard({ job, isFeatured = false }) {
         <div className="flex gap-4 mb-4">
           {/* Logo with Gradient Background */}
           <div className={`w-14 h-14 rounded-xl bg-linear-to-br ${job.color || 'from-emerald-500 to-teal-600'} shrink-0 flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-            {job.company.charAt(0)}
+            {companyName.charAt(0)}
           </div>
           
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-2 group-hover:text-emerald-600 cursor-pointer transition-colors">
               {job.title}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1.5 truncate font-medium">{job.company}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1.5 truncate font-medium">{companyName}</p>
           </div>
         </div>
 
@@ -36,7 +39,7 @@ export default function JobCard({ job, isFeatured = false }) {
         <div className="space-y-3.5 my-4">
           {/* Salary - Large and Bold */}
           <div>
-            <p className="text-xl sm:text-2xl font-black text-emerald-600">{job.salary}</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-600">{salaryLabel}</p>
           </div>
 
           {/* Location and Type */}
@@ -44,13 +47,13 @@ export default function JobCard({ job, isFeatured = false }) {
             <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-700 font-medium hover:bg-gray-200 transition-colors">
               📍 {job.location}
             </span>
-            {job.type && (
+            {jobTypeLabel && (
               <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
-                job.type === 'Full-time' 
-                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
+                jobTypeLabel === 'Full-time'
+                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}>
-                {job.type === 'Full-time' ? '💼' : '🎓'} {job.type}
+                {jobTypeLabel === 'Full-time' ? '💼' : '🎓'} {jobTypeLabel}
               </span>
             )}
           </div>
@@ -72,6 +75,10 @@ export default function JobCard({ job, isFeatured = false }) {
             <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} />
             <span className="hidden sm:inline">{isSaved ? 'Đã lưu' : 'Lưu'}</span>
           </button>
+          <button
+            onClick={() => onDetail?.(job)}
+            className="flex-1 text-emerald-600 hover:bg-emerald-50 transition-all duration-200 text-sm font-semibold py-2.5 px-3 rounded-lg border-2 border-emerald-200 hover:border-emerald-400 group/btn"
+          >
           <Link to={`/job/${job.id}`} className="flex-1 text-center text-emerald-600 hover:bg-emerald-50 transition-all duration-200 text-sm font-semibold py-2.5 px-3 rounded-lg border-2 border-emerald-200 hover:border-emerald-400 group/btn">
             Chi tiết →
           </Link>
@@ -85,3 +92,30 @@ export default function JobCard({ job, isFeatured = false }) {
     </div>
   );
 }
+
+const formatJobType = (jobType) => {
+  if (!jobType) return '';
+  const map = {
+    FULL_TIME: 'Full-time',
+    PART_TIME: 'Part-time',
+    INTERNSHIP: 'Internship',
+    REMOTE: 'Remote',
+    FREELANCE: 'Freelance',
+  };
+  return map[jobType] || jobType;
+};
+
+const formatSalary = (min, max) => {
+  if (!min && !max) return 'Thoa thuan';
+  if (min && max) return `${formatSalaryValue(min)} - ${formatSalaryValue(max)}`;
+  if (min) return `Tu ${formatSalaryValue(min)}`;
+  return `Den ${formatSalaryValue(max)}`;
+};
+
+const formatSalaryValue = (value) => {
+  if (value >= 1000000) {
+    const millions = Math.round((value / 1000000) * 10) / 10;
+    return `${millions} trieu`;
+  }
+  return `${value}`;
+};
