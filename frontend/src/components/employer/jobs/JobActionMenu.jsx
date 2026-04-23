@@ -6,38 +6,43 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Typography,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import DoNotDisturbOnOutlinedIcon from '@mui/icons-material/DoNotDisturbOnOutlined';
+import SendRoundedIcon from '@mui/icons-material/SendRounded';
 
-export default function JobActionMenu({ job, onEdit, onPushTop, onDelete }) {
+// chuyển trạng thái employer được phép
+const TRANSITIONS = {
+  DRAFT:  [{ to: 'PENDING', label: 'Gửi duyệt',     Icon: SendRoundedIcon,            color: '#6366f1' }],
+  ACTIVE: [
+    { to: 'PAUSED', label: 'Tạm dừng',    Icon: PauseCircleOutlineIcon,    color: '#f59e0b' },
+    { to: 'CLOSED', label: 'Đóng tin',     Icon: DoNotDisturbOnOutlinedIcon, color: '#9ca3af' },
+  ],
+  PAUSED: [{ to: 'ACTIVE', label: 'Tiếp tục đăng', Icon: PlayCircleOutlineIcon,     color: '#10b981' }],
+};
+
+export default function JobActionMenu({ job, onEdit, onPushTop, onDelete, onChangeStatus }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  const handleOpen = (e) => {
-    e.stopPropagation();
-    setAnchorEl(e.currentTarget);
-  };
-
+  const handleOpen = (e) => { e.stopPropagation(); setAnchorEl(e.currentTarget); };
   const handleClose = () => setAnchorEl(null);
+  const handle = (fn) => { handleClose(); fn?.(job); };
 
-  const handleAction = (action) => {
-    handleClose();
-    action?.(job);
-  };
+  const transitions = TRANSITIONS[(job.status || '').toUpperCase()] || [];
 
   return (
     <>
       <IconButton
         size="small"
         onClick={handleOpen}
-        sx={{
-          color: '#6b7280',
-          p: 0.2,
-          '&:hover': { color: '#374151', bgcolor: '#f3f4f6' },
-        }}
+        sx={{ color: '#6b7280', p: 0.2, '&:hover': { color: '#374151', bgcolor: '#f3f4f6' } }}
       >
         <MoreVertIcon sx={{ fontSize: 18 }} />
       </IconButton>
@@ -51,51 +56,58 @@ export default function JobActionMenu({ job, onEdit, onPushTop, onDelete }) {
         slotProps={{
           paper: {
             sx: {
-              borderRadius: '8px',
-              boxShadow: '0 8px 22px rgba(15, 23, 42, 0.16)',
-              minWidth: 174,
-              border: '1px solid #eceff3',
+              borderRadius: '10px',
+              boxShadow: '0 8px 24px rgba(15,23,42,0.12)',
+              minWidth: 190,
+              border: '1px solid #f3f4f6',
               mt: 0.6,
-              '& .MuiMenuItem-root': {
-                fontSize: '0.84rem',
-                py: 0.75,
-                px: 1.2,
-              },
-              '& .MuiListItemIcon-root': { minWidth: 28 },
+              '& .MuiMenuItem-root': { fontSize: '0.84rem', py: 0.8, px: 1.4 },
+              '& .MuiListItemIcon-root': { minWidth: 30 },
             },
           },
         }}
       >
-        <MenuItem dense onClick={() => handleAction(onEdit)}>
+        <MenuItem dense onClick={() => handle(onEdit)}>
           <ListItemIcon>
-            <EditOutlinedIcon sx={{ fontSize: 18, color: '#6b7280' }} />
+            <EditOutlinedIcon sx={{ fontSize: 17, color: '#6b7280' }} />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem' }}>
-            Chỉnh sửa
-          </ListItemText>
+          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem' }}>Chỉnh sửa</ListItemText>
         </MenuItem>
 
-        <MenuItem dense onClick={() => handleAction(onPushTop)}>
+        <MenuItem dense onClick={() => handle(onPushTop)}>
           <ListItemIcon>
-            <RocketLaunchOutlinedIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+            <RocketLaunchOutlinedIcon sx={{ fontSize: 17, color: '#f59e0b' }} />
           </ListItemIcon>
-          <ListItemText
-            primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 700 }}
-            sx={{ color: '#d97706' }}
-          >
+          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600, color: '#d97706' }}>
             Đẩy tin lên TOP
           </ListItemText>
         </MenuItem>
 
+        {transitions.length > 0 && (
+          <>
+            <Divider sx={{ my: 0.5 }}>
+              <Typography sx={{ fontSize: '0.7rem', color: '#9ca3af' }}>Đổi trạng thái</Typography>
+            </Divider>
+            {transitions.map(({ to, label, Icon, color }) => (
+              <MenuItem key={to} dense onClick={() => { handleClose(); onChangeStatus?.(job, to); }}>
+                <ListItemIcon>
+                  <Icon sx={{ fontSize: 17, color }} />
+                </ListItemIcon>
+                <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color }}>
+                  {label}
+                </ListItemText>
+              </MenuItem>
+            ))}
+          </>
+        )}
+
         <Divider />
 
-        <MenuItem dense onClick={() => handleAction(onDelete)}>
+        <MenuItem dense onClick={() => handle(onDelete)}>
           <ListItemIcon>
-            <DeleteOutlineIcon sx={{ fontSize: 18, color: '#ef4444' }} />
+            <DeleteOutlineIcon sx={{ fontSize: 17, color: '#ef4444' }} />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem' }} sx={{ color: '#ef4444' }}>
-            Xóa
-          </ListItemText>
+          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color: '#ef4444' }}>Xóa</ListItemText>
         </MenuItem>
       </Menu>
     </>

@@ -74,6 +74,7 @@ export default function JobTable({
   onEdit,
   onPushTop,
   onDelete,
+  onChangeStatus,
 }) {
   return (
     <Paper
@@ -201,14 +202,18 @@ export default function JobTable({
                         textAlign: 'center',
                       }}
                     >
-                      <Typography
-                        sx={{ fontWeight: 700, fontSize: '0.82rem', lineHeight: 1.2 }}
-                      >
-                        {job.salaryMin} - {job.salaryMax}
-                      </Typography>
-                      <Typography sx={{ fontSize: '0.7rem', fontWeight: 500 }}>
-                        triệu
-                      </Typography>
+                      {job.salaryNegotiable ? (
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                          Thỏa thuận
+                        </Typography>
+                      ) : (
+                        <>
+                          <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', lineHeight: 1.2 }}>
+                            {Math.round((job.salaryMin || 0) / 1_000_000)} - {Math.round((job.salaryMax || 0) / 1_000_000)}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.7rem', fontWeight: 700 }}>triệu</Typography>
+                        </>
+                      )}
                     </Box>
                   </TableCell>
 
@@ -253,14 +258,14 @@ export default function JobTable({
                       const color = expired ? 'red' : '#6b7280';
 
                       return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarTodayOutlinedIcon
-                        sx={{ fontSize: 14, color }}
-                      />
-                      <Typography sx={{ fontSize: '0.82rem', color}}>
-                        {job.deadline}
-                      </Typography>
-                    </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <CalendarTodayOutlinedIcon
+                            sx={{ fontSize: 14, color }}
+                          />
+                          <Typography sx={{ fontSize: '0.82rem', color }}>
+                            {job.deadline}
+                          </Typography>
+                        </Box>
                       );
                     })()}
                   </TableCell>
@@ -277,6 +282,7 @@ export default function JobTable({
                       onEdit={onEdit}
                       onPushTop={onPushTop}
                       onDelete={onDelete}
+                      onChangeStatus={onChangeStatus}
                     />
                   </TableCell>
                 </TableRow>

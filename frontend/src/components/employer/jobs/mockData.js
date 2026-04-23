@@ -95,11 +95,19 @@ export const MOCK_JOBS = [
 
 // Mapping status key → label & color
 export const STATUS_MAP = {
-  active: { label: 'Đang tuyển', color: 'success' },
-  paused: { label: 'Tạm dừng', color: 'warning' },
-  closed: { label: 'Đã đóng', color: 'default' },
-  expired: { label: 'Hết hạn', color: 'error' },
+  draft:    { label: 'Nháp',       color: 'draft'   },
+  pending:  { label: 'Chờ duyệt', color: 'pending' },
+  active:   { label: 'Đang tuyển', color: 'success' },
+  paused:   { label: 'Tạm dừng',  color: 'paused'  },
+  closed:   { label: 'Đã đóng',   color: 'default' },
+  rejected: { label: 'Từ chối',   color: 'error'   },
+  expired:  { label: 'Hết hạn',   color: 'expired' },
 };
+
+// Hỗ trợ enum BE viết hoa (DRAFT, PENDING, ...)
+export const STATUS_MAP_UPPER = Object.fromEntries(
+  Object.entries(STATUS_MAP).map(([k, v]) => [k.toUpperCase(), v])
+);
 
 // Danh sách ngành nghề
 export const INDUSTRIES = [
