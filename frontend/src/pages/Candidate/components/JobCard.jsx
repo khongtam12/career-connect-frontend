@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {getJobById} from "../../../service/jobService";
+
 
 
 export default function JobCard({ job, isFeatured = false, onDetail }) {
