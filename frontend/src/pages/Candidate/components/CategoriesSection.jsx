@@ -1,8 +1,9 @@
 import React from 'react';
-import { categoriesData } from '../../../data/categoriesData';
 import { ArrowRight } from 'lucide-react';
+import { categoriesData } from '../../../data/categoriesData';
 
-export default function CategoriesSection() {
+export default function CategoriesSection({ categories = [], onCategorySelect, onViewAll }) {
+  const items = categories.length > 0 ? categories : categoriesData;
   return (
     <section className="py-16 sm:py-20 bg-linear-to-b from-white via-blue-50 to-white relative overflow-hidden">
       {/* Background Decoration */}
@@ -17,17 +18,23 @@ export default function CategoriesSection() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Top ngành nghề nổi bật</h2>
           <p className="text-gray-600 text-lg">
             Bạn muốn tìm việc mới?{' '}
-            <a href="#" className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline">
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline"
+            >
               Xem danh sách việc làm →
-            </a>
+            </button>
           </p>
         </div>
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categoriesData.map((category, index) => (
-            <div
+          {items.map((category, index) => (
+            <button
               key={category.id}
+              type="button"
+              onClick={() => onCategorySelect?.(category)}
               className={`group relative p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-2 cursor-pointer overflow-hidden ${
                 category.featured
                   ? 'border-3 border-emerald-500 bg-linear-to-br from-emerald-50 via-white to-teal-50 shadow-lg'
@@ -42,7 +49,7 @@ export default function CategoriesSection() {
               <div className="relative">
                 {/* Icon */}
                 <div className="text-5xl mb-4 group-hover:scale-125 transition-transform duration-300 origin-left">
-                  {category.icon}
+                  {category.icon || '💼'}
                 </div>
 
                 {/* Title */}
@@ -52,7 +59,7 @@ export default function CategoriesSection() {
 
                 {/* Job Count */}
                 <p className="text-sm sm:text-base text-emerald-600 font-bold group-hover:text-emerald-700 transition-colors flex items-center gap-2">
-                  {category.jobCount}
+                  {category.jobCount || 'Xem việc làm'}
                   <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                 </p>
               </div>
@@ -66,13 +73,17 @@ export default function CategoriesSection() {
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                 <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12"></div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
-          <button className="inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg">
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg"
+          >
             Khám phá tất cả ngành nghề
             <ArrowRight size={20} />
           </button>

@@ -1,10 +1,12 @@
 import React from 'react';
-import { jobsData } from '../../../data/jobsData';
 import JobCard from './JobCard';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
-export default function FeaturedJobsSection() {
-  const featuredJobs = jobsData.filter((job) => job.featured).slice(0, 6);
+export default function FeaturedJobsSection({ jobs = [], total = 0, onViewAll, onSelect }) {
+  const featuredJobs = jobs.slice(0, 6);
+  const handleViewAll = () => {
+    onViewAll?.();
+  };
 
   return (
     <section className="py-16 sm:py-20 bg-linear-to-b from-white to-gray-50 relative overflow-hidden">
@@ -34,15 +36,19 @@ export default function FeaturedJobsSection() {
               key={job.id}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <JobCard job={job} isFeatured={true} />
+              <JobCard job={job} isFeatured={true} onDetail={onSelect} />
             </div>
           ))}
         </div>
 
         {/* Load More Button */}
         <div className="flex justify-center">
-          <button className="group inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg">
-            Xem tất cả {jobsData.length} việc làm
+          <button
+            type="button"
+            onClick={handleViewAll}
+            className="group inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg"
+          >
+            Xem tất cả {total || jobs.length} việc làm
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
