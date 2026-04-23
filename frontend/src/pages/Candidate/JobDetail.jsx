@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {getJobById} from "../../service/jobService";
+import { TransformJob } from './utils/transformJob';
 import {
   MapPin,
   DollarSign,
@@ -20,7 +22,7 @@ import {
   Award,
   CheckCircle2,
 } from 'lucide-react';
-import { jobsData } from '../../data/jobsData';
+
 import ApplyJobModal from './components/ApplyJobModal';
 
 /* ── Reusable info‑row for sidebar ── */
@@ -55,10 +57,20 @@ export default function JobDetail() {
   const [isSaved, setIsSaved] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
 
-  const job = useMemo(
-    () => jobsData.find((j) => String(j.id) === String(id)),
-    [id]
-  );
+  const [job, setJob] = useState(null);
+
+useEffect(() => {
+  const fetchJob = async () => {
+    try {
+      const data = await getJobById(id);
+      setJob(TransformJob(data));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchJob();
+}, [id]);
 
   if (!job) {
     return (
