@@ -154,7 +154,12 @@ export default function EditorPage() {
   }
 
   const handleExportPDF = () => {
-    window.print()
+    if (!editId || editId.startsWith('cv_')) {
+      toast.error('Vui lòng lưu CV trước khi xuất PDF chuyên nghiệp')
+      return
+    }
+    const url = `${import.meta.env.VITE_BACKEND_URL}/api/v1/cvs/${editId}/pdf`
+    window.open(url, '_blank')
   }
 
   // Hydration & Guard safeguard: Render Soft Loading
