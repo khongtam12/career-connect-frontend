@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
@@ -7,24 +7,141 @@ import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
 import JobTable from '../../../components/employer/jobs/JobTable';
 import CreateJobDialog from '../../../components/employer/jobs/CreateJobDialog';
 import PushTopDialog from '../../../components/employer/jobs/PushTopDialog';
-import { MOCK_JOBS } from '../../../components/employer/jobs/mockData';
+import {
+  getMyJobs,
+  getMyStats,
+  createJob,
+  updateJob,
+  deleteJob,
+  pushJobToTop,
+  changeJobStatus,
+} from '../../../service/jobService';
 
 // Import Quill CSS globally
 import 'react-quill-new/dist/quill.snow.css';
 
 const ITEMS_PER_PAGE = 10;
 
+// jobType: { label (hiển thị tiếng Việt), value (enum gửi BE) }
+const JOB_TYPE = [
+  { label: 'Toàn thời gian', value: 'FULL_TIME'   },
+  { label: 'Bán thời gian', value: 'PART_TIME'   },
+  { label: 'Thực tập',      value: 'INTERNSHIP'  },
+  { label: 'Freelance',      value: 'FREELANCE'   },
+  { label: 'Remote',         value: 'REMOTE'      },
+];
+
+// enum BE → label tiếng Việt
+const jobTypeLabel = (enumVal) =>
+  JOB_TYPE.find((t) => t.value === enumVal)?.label ?? enumVal ?? '';
+
+// label tiếng Việt → enum BE (khi submit)
+const jobTypeValue = (label) =>
+  JOB_TYPE.find((t) => t.label === label)?.value ?? label ?? '';
+
+/**
+ * Chuyển đổi job từ BE response → format mà FE components đang dùng
+ */
+function mapJobFromApi(job) {
+  return {
+    id: job.jobId,
+    title: job.title || '',
+    isTop: job.isTop || job.top || false,
+    location: job.location || '',
+    jobType: job.jobType || '',
+    type: jobTypeLabel(job.jobType),
+    salaryMin: job.salaryMin || 0,
+    salaryMax: job.salaryMax || 0,
+    salaryNegotiable: job.salaryNegotiable || false,
+    applicants: job.applicants || 0,
+    views: job.views || 0,
+    deadline: job.deadline || 'Chưa cập nhật',
+    status: job.status || 'active',
+    // Extended fields
+    experience: job.experience || '',
+    industry: job.industry || '',
+    rank: job.rank || '',
+    education: job.education || '',
+    quantity: job.quantity || '',
+    ageRange: job.ageRange || '',
+    requirementTags: job.requirementTags || [],
+    benefitTags: job.benefitTags || [],
+    specialties: job.specialties || [],
+    description: job.description || '',
+    candidateRequirements: job.candidateRequirements || '',
+    salaryDetail: job.salaryDetail || '',
+    benefitsDetail: job.benefitsDetail || '',
+    workSchedule: job.workSchedule || '',
+    relatedCategories: job.relatedCategories || [],
+    skills: job.skills || [],
+  };
+}
+
 export default function JobManagement() {
-  const [jobs, setJobs] = useState(MOCK_JOBS);
+  const [jobs, setJobs] = useState([]);
+  const [stats, setStats] = useState({ active: 0, paused: 0, closed: 0, totalApplicants: 0 });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState('create');
   const [editingJob, setEditingJob] = useState(null);
   const [pushTopDialogOpen, setPushTopDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [walletBalance, setWalletBalance] = useState(15500000);
+
+  // ── Snackbar notification ──
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+  const showSnack = (message, severity = 'success') =>
+    setSnack({ open: true, message, severity });
+  const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
+
+  // ── Fetch jobs ──
+  const fetchJobs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyJobs({
+        search: searchTerm || undefined,
+        status: statusFilter,
+        page,
+        size: ITEMS_PER_PAGE,
+      });
+      const mapped = (data.content || []).map(mapJobFromApi);
+      setJobs(mapped);
+      setTotalPages(data.totalPages || 1);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách tin:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, statusFilter, page]);
+
+  // ── Fetch stats ──
+  const fetchStats = useCallback(async () => {
+    try {
+      const data = await getMyStats();
+      setStats({
+        active: data.active || 0,
+        paused: data.paused || 0,
+        closed: data.closed || 0,
+        totalApplicants: data.totalApplicants || 0,
+      });
+    } catch (err) {
+      console.error('Lỗi khi tải thống kê:', err);
+    }
+  }, []);
+
+  // ── Load on mount & when filters change ──
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const toISODateInput = (deadline) => {
     if (!deadline || typeof deadline !== 'string') return '';
@@ -39,7 +156,6 @@ export default function JobManagement() {
       return `${year}-${month}-${day}`;
     }
 
-    // Fallback attempt
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '';
     const yyyy = String(date.getFullYear());
@@ -48,85 +164,92 @@ export default function JobManagement() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // Tính stats
-  const stats = useMemo(() => ({
-    active: jobs.filter((j) => j.status === 'active').length,
-    paused: jobs.filter((j) => j.status === 'paused').length,
-    closed: jobs.filter((j) => j.status === 'closed').length,
-    totalApplicants: jobs.reduce((acc, j) => acc + (j.applicants || 0), 0),
-  }), [jobs]);
-
-  // Lọc + tìm kiếm
-  const filteredJobs = useMemo(() => {
-    let result = [...jobs];
-
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter((j) => j.title.toLowerCase().includes(term));
-    }
-
-    if (statusFilter !== 'all') {
-      result = result.filter((j) => j.status === statusFilter);
-    }
-
-    return result;
-  }, [jobs, searchTerm, statusFilter]);
-
-  // Phân trang
-  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / ITEMS_PER_PAGE));
-  const paginatedJobs = filteredJobs.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
-
-  // Handlers
+  // ── Handlers ──
   const handleRefresh = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setPage(1);
+    fetchStats();
   };
 
-  const handleCreateJob = (formData) => {
-    const newJob = {
-      id: Date.now(),
-      title: formData.title || 'Vị trí mới',
-      isTop: false,
-      location: formData.address || 'Chưa cập nhật',
-      type: formData.jobType || 'Toàn thời gian',
-      salaryMin: parseInt(formData.salaryMin) || 0,
-      salaryMax: parseInt(formData.salaryMax) || 0,
-      applicants: 0,
-      views: 0,
-      deadline: formData.deadline
-        ? new Date(formData.deadline).toLocaleDateString('vi-VN')
-        : 'Chưa cập nhật',
-      status: 'active',
-    };
-    setJobs((prev) => [newJob, ...prev]);
-    setDialogOpen(false);
-  };
-
-  const handleUpdateJob = (job, formData) => {
-    if (!job) return;
-
-    setJobs((prev) => prev.map((j) => {
-      if (j.id !== job.id) return j;
-      return {
-        ...j,
-        title: formData.title || j.title,
-        location: formData.address || j.location,
-        type: formData.jobType || j.type,
-        salaryMin: formData.salaryMin !== '' ? (parseInt(formData.salaryMin) || 0) : j.salaryMin,
-        salaryMax: formData.salaryMax !== '' ? (parseInt(formData.salaryMax) || 0) : j.salaryMax,
-        deadline: formData.deadline
-          ? new Date(formData.deadline).toLocaleDateString('vi-VN')
-          : j.deadline,
+  const handleCreateJob = async (formData, isDraft = false) => {
+    try {
+      const payload = {
+        title: formData.title,
+        industry: formData.industry,
+        address: formData.address,
+        jobType: jobTypeValue(formData.jobType),
+        experience: formData.experience,
+        salaryMin: formData.salaryNegotiable ? 0 : parseFloat(String(formData.salaryMin).replace(/,/g, '')) || 0,
+        salaryMax: formData.salaryNegotiable ? 0 : parseFloat(String(formData.salaryMax).replace(/,/g, '')) || 0,
+        salaryNegotiable: formData.salaryNegotiable || false,
+        deadline: formData.deadline || null,
+        rank: formData.rank,
+        education: formData.education,
+        quantity: formData.quantity ? parseInt(formData.quantity) : null,
+        ageRange: formData.ageRange,
+        requirementTags: formData.requirementTags || [],
+        benefitTags: formData.benefitTags || [],
+        specialties: formData.specialties || [],
+        description: formData.description,
+        candidateRequirements: formData.candidateRequirements,
+        salaryDetail: formData.salaryDetail,
+        benefitsDetail: formData.benefitsDetail,
+        workSchedule: formData.workSchedule,
+        relatedCategories: formData.relatedCategories || [],
+        skills: formData.skills || [],
+        saveAsDraft: isDraft,
       };
-    }));
+      await createJob(payload);
+      setDialogOpen(false);
+      fetchJobs();
+      fetchStats();
+      showSnack(isDraft ? 'Đã lưu bản nháp!' : 'Đăng tin tuyển dụng thành công!');
+    } catch (err) {
+      console.error('Lỗi khi tạo tin:', err);
+      showSnack((isDraft ? 'Lưu nháp thất bại: ' : 'Tạo tin thất bại: ') + (err.response?.data?.error || err.message), 'error');
+    }
+  };
 
-    setDialogOpen(false);
-    setEditingJob(null);
-    setDialogMode('create');
+  const handleUpdateJob = async (job, formData) => {
+    if (!job) return;
+    try {
+      const payload = {
+        title: formData.title,
+        industry: formData.industry,
+        address: formData.address,
+        jobType: jobTypeValue(formData.jobType),
+        experience: formData.experience,
+        salaryMin: formData.salaryNegotiable ? 0 : parseFloat(String(formData.salaryMin).replace(/,/g, '')) || 0,
+        salaryMax: formData.salaryNegotiable ? 0 : parseFloat(String(formData.salaryMax).replace(/,/g, '')) || 0,
+        salaryNegotiable: formData.salaryNegotiable ?? false,
+        deadline: formData.deadline || null,
+        rank: formData.rank,
+        education: formData.education,
+        quantity: formData.quantity ? parseInt(formData.quantity) : null,
+        ageRange: formData.ageRange,
+        requirementTags: formData.requirementTags || [],
+        benefitTags: formData.benefitTags || [],
+        specialties: formData.specialties || [],
+        description: formData.description,
+        candidateRequirements: formData.candidateRequirements,
+        salaryDetail: formData.salaryDetail,
+        benefitsDetail: formData.benefitsDetail,
+        workSchedule: formData.workSchedule,
+        relatedCategories: formData.relatedCategories || [],
+        skills: formData.skills || [],
+      };
+      await updateJob(job.id, payload);
+      setDialogOpen(false);
+      setEditingJob(null);
+      setDialogMode('create');
+      fetchJobs();
+      fetchStats();
+      showSnack('Cập nhật tin tuyển dụng thành công!');
+    } catch (err) {
+      console.error('Lỗi khi cập nhật tin:', err);
+      showSnack('Cập nhật thất bại: ' + (err.response?.data?.error || err.message), 'error');
+    }
   };
 
   const handleEdit = (job) => {
@@ -140,29 +263,46 @@ export default function JobManagement() {
     setPushTopDialogOpen(true);
   };
 
-  const handleConfirmPushTop = (job, pushPackage) => {
-    if (!job || !pushPackage || walletBalance < pushPackage.price) return;
-
-    setWalletBalance((prev) => prev - pushPackage.price);
-    setJobs((prev) => {
-      const updated = prev.map((j) =>
-        j.id === job.id
-          ? { ...j, isTop: true, views: (j.views || 0) + 300 }
-          : j
-      );
-
-      const target = updated.find((j) => j.id === job.id);
-      return target
-        ? [target, ...updated.filter((j) => j.id !== job.id)]
-        : updated;
-    });
-
-    setPushTopDialogOpen(false);
-    setSelectedJob(null);
+  const handleConfirmPushTop = async (job) => {
+    if (!job) return;
+    try {
+      await pushJobToTop(job.id);
+      setPushTopDialogOpen(false);
+      setSelectedJob(null);
+      fetchJobs();
+      fetchStats();
+    } catch (err) {
+      console.error('Lỗi khi đẩy tin:', err);
+      showSnack('Đẩy tin thất bại: ' + (err.response?.data?.error || err.message), 'error');
+    }
   };
 
-  const handleDelete = (job) => {
-    setJobs((prev) => prev.filter((j) => j.id !== job.id));
+  const handleDelete = async (job) => {
+    if (!window.confirm('Bạn có chắc muốn xóa tin tuyển dụng này?')) return;
+    try {
+      await deleteJob(job.id);
+      fetchJobs();
+      fetchStats();
+      showSnack('Xóa tin tuyển dụng thành công!');
+    } catch (err) {
+      console.error('Lỗi khi xóa tin:', err);
+      showSnack('Xóa thất bại: ' + (err.response?.data?.error || err.message), 'error');
+    }
+  };
+
+  const handleChangeStatus = async (job, newStatus) => {
+    try {
+      await changeJobStatus(job.id, newStatus);
+      fetchJobs();
+      fetchStats();
+      const STATUS_LABEL = {
+        PAUSED: 'Tạm dừng', ACTIVE: 'Tiếp tục đăng', CLOSED: 'Đóng tin', PENDING: 'Gửi duyệt',
+      };
+      showSnack(`Đã chuyển trạng thái: ${STATUS_LABEL[newStatus] || newStatus}`);
+    } catch (err) {
+      console.error('Lỗi khi đổi trạng thái:', err);
+      showSnack('Không thể đổi trạng thái: ' + (err.response?.data?.error || err.message), 'error');
+    }
   };
 
   return (
@@ -254,13 +394,14 @@ export default function JobManagement() {
 
       {/* Job Table */}
       <JobTable
-        jobs={paginatedJobs}
+        jobs={jobs}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         onEdit={handleEdit}
         onPushTop={handlePushTop}
         onDelete={handleDelete}
+        onChangeStatus={handleChangeStatus}
       />
 
       {/* Create Job Dialog */}
@@ -270,21 +411,38 @@ export default function JobManagement() {
         initialValues={dialogMode === 'edit' && editingJob ? {
           title: editingJob.title || '',
           address: editingJob.location || '',
-          jobType: editingJob.type || '',
+          jobType: jobTypeLabel(editingJob.jobType) || editingJob.type || '',
           salaryMin: editingJob.salaryMin ?? '',
           salaryMax: editingJob.salaryMax ?? '',
+          salaryNegotiable: editingJob.salaryNegotiable || false,
           deadline: toISODateInput(editingJob.deadline),
+          experience: editingJob.experience || '',
+          industry: editingJob.industry || '',
+          rank: editingJob.rank || '',
+          education: editingJob.education || '',
+          quantity: editingJob.quantity ?? '',
+          ageRange: editingJob.ageRange || '',
+          requirementTags: editingJob.requirementTags || [],
+          benefitTags: editingJob.benefitTags || [],
+          specialties: editingJob.specialties || [],
+          description: editingJob.description || '',
+          candidateRequirements: editingJob.candidateRequirements || '',
+          salaryDetail: editingJob.salaryDetail || '',
+          benefitsDetail: editingJob.benefitsDetail || '',
+          workSchedule: editingJob.workSchedule || '',
+          relatedCategories: editingJob.relatedCategories || [],
+          skills: editingJob.skills || [],
         } : undefined}
         onClose={() => {
           setDialogOpen(false);
           setEditingJob(null);
           setDialogMode('create');
         }}
-        onSubmit={(formData) => {
+        onSubmit={(formData, isDraft) => {
           if (dialogMode === 'edit') {
             handleUpdateJob(editingJob, formData);
           } else {
-            handleCreateJob(formData);
+            handleCreateJob(formData, isDraft);
           }
         }}
       />
@@ -299,6 +457,34 @@ export default function JobManagement() {
         }}
         onConfirm={handleConfirmPushTop}
       />
+
+      {/* thông báo */}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={closeSnack}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={closeSnack}
+          severity={snack.severity}
+          sx={{
+            borderRadius: 2,
+            fontSize: '0.84rem',
+            fontWeight: 500,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: snack.severity === 'success' ? '#bbf7d0' : '#fecaca',
+            bgcolor: snack.severity === 'success' ? '#f0fdf4' : '#fff5f5',
+            color: snack.severity === 'success' ? '#15803d' : '#dc2626',
+            '& .MuiAlert-icon': {
+              color: snack.severity === 'success' ? '#16a34a' : '#ef4444',
+            },
+          }}
+        >
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
