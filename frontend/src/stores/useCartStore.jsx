@@ -3,33 +3,30 @@ import { persist } from 'zustand/middleware';
 
 export const useCartStore = create(
     persist(
-        (set, get) => ({
-            quantities: {}, // Global cart quantities { packageId: qty }
-            selectedDurations: {}, // Global selected durations { packageId: durationText }
+        (set) => ({
+            quantities: {}, // Single-item cart { packageId: 1 }
+            selectedDurations: {}, // Selected duration for the current package
 
-            // Add item to cart with specific quantity and duration
-            addToCart: (id, qty, duration) => {
-                set((state) => ({
+            // Only keep one package in the cart for each checkout flow
+            addToCart: (id, _qty, duration) => {
+                set(() => ({
                     quantities: {
-                        ...state.quantities,
-                        [id]: (state.quantities[id] || 0) + qty
+                        [id]: 1
                     },
                     selectedDurations: {
-                        ...state.selectedDurations,
                         [id]: duration
                     }
                 }));
             },
 
-            // Update quantity of an item already in the cart
-            updateCartQuantity: (id, delta) => {
+            // Quantity is fixed at 1, keep the API stable for the current UI
+            updateCartQuantity: (id) => {
                 set((state) => {
-                    const currentQty = state.quantities[id] || 0;
-                    const newQty = Math.max(1, currentQty + delta);
+                    if (!state.quantities[id]) return state;
                     return {
                         quantities: {
                             ...state.quantities,
-                            [id]: newQty
+                            [id]: 1
                         }
                     };
                 });

@@ -6,7 +6,7 @@ import RecruiterSidebar from '../components/employer/RecruiterSidebar'
 export default function EmployerLayout() {
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const hideSidebarPaths = ['/employer', '/employer/pricing', '/employer/promotions'];
+    const hideSidebarPaths = ['/employer', '/employer/pricing', '/employer/promotions', '/employer/payment'];
     const noPaddingPaths = ['/employer', '/employer/pricing', '/employer/promotions', '/employer/candidates'];
     const shouldHideSidebar = hideSidebarPaths.includes(location.pathname);
     const shouldRemovePadding = noPaddingPaths.includes(location.pathname);
