@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, FileText, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { applyForJob } from '../../../service/jobService';
+import * as cvService from '../../../service/cvService';
+import { useUserStore } from '../../../stores/useUserStore';
 
 export default function ApplyJobModal({ open, onClose, job }) {
   const [cvList, setCvList] = useState([]);
@@ -12,23 +14,29 @@ export default function ApplyJobModal({ open, onClose, job }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Load CVs from localStorage
+  const { user } = useUserStore();
+
+  // Load CVs from API
   useEffect(() => {
-    if (open) {
-      try {
-        const list = JSON.parse(localStorage.getItem('cv_list') || '[]');
-        setCvList(list);
-        if (list.length > 0) setSelectedCvId(list[0].id);
-      } catch {
-        setCvList([]);
-      }
+    if (open && user) {
+      const fetchCVs = async () => {
+        try {
+          const list = await cvService.getMyCVs();
+          setCvList(list);
+          if (list.length > 0) setSelectedCvId(list[0].id);
+        } catch {
+          setCvList([]);
+        }
+      };
+      fetchCVs();
+      
       // Reset states
       setNote('');
       setAgreed(false);
       setSuccess(false);
       setError('');
     }
-  }, [open]);
+  }, [open, user]);
 
   const handleSubmit = async () => {
     if (!selectedCvId) {

@@ -30,8 +30,8 @@ const Header = ({ rightSlot }) => {
                 <span>Việc làm</span>
                 <ChevronDown size={16} />
               </div>
-              <Link to="/cv-builder" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
-                <span>Tạo CV</span>
+              <Link to="/cv-dashboard" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                <span>Hồ sơ & CV</span>
                 <ChevronDown size={16} />
               </Link>
               <div className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
@@ -55,17 +55,23 @@ const Header = ({ rightSlot }) => {
           <div className="flex items-center space-x-3">
             {rightSlot ?? (
               <>
-                <button className="hidden sm:block border border-emerald-500 text-emerald-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-50 transition-colors">
-                  Đăng ký
-                </button>
+                <Link to="/register">
+                  <button className="hidden sm:block border border-emerald-500 text-emerald-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-50 transition-colors">
+                    Đăng ký
+                  </button>
+                </Link>
 
-                <button className="hidden sm:block bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-700 transition-colors">
-                  Đăng nhập
-                </button>
+                <Link to="/login">
+                  <button className="hidden sm:block bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-700 transition-colors">
+                    Đăng nhập
+                  </button>
+                </Link>
 
-                <button className="hidden md:block text-gray-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-300">
-                  Đăng tuyển &amp; tìm hộ sơ
-                </button>
+                <Link to="/employer/login">
+                  <button className="hidden md:block text-gray-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-300">
+                    Đăng tuyển &amp; tìm hộ sơ
+                  </button>
+                </Link>
               </>
             )}
           </div>

@@ -23,6 +23,9 @@ import TemplateSelector from './components/TemplateSelector'
 import CVForm from './components/CVForm'
 import CVPreview from './components/CVPreview'
 import AIAssistant from './components/AIAssistant'
+import * as cvService from '../../../service/cvService'
+import { useUserStore } from '../../../stores/useUserStore'
+import { toast } from 'react-toastify'
 
 const EMPTY_CV = {
   personal: { fullName: '', email: '', phone: '', address: '', dob: '', jobTitle: '', linkedin: '', summary: '', avatar: null },
@@ -53,45 +56,50 @@ export default function EditorPage() {
 
   // Guard Clause Luồng Bảo Vệ (Protection Flow)
   useEffect(() => {
-    let isValid = false
-    try {
-      if (!editId) throw new Error('Cấm truy cập: Không có ID')
-
-      // Kiểm tra trong danh sách CV chính thức
-      const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
-      const savedCV = list.find(c => c.id === editId)
-
-      if (savedCV) {
-        setCvData(savedCV.data)
-        setTemplateId(savedCV.templateId || 1)
-        setCvName(savedCV.name || 'CV của tôi')
-        isValid = true
-      } else {
-        // Fallback kiểm tra xem có phải bản nháp (Draft) không
-        const draftKey = `draft_cv_${editId}`
-        const draftStr = localStorage.getItem(draftKey)
-        if (draftStr) {
-          const draftCV = JSON.parse(draftStr)
-          setCvData(draftCV.data)
-          setTemplateId(draftCV.templateId || 1)
-          setCvName(draftCV.name || 'CV của tôi')
-          isValid = true
-        } else {
-           throw new Error('Cấm truy cập: ID không hợp lệ trên bộ nhớ hệ thống')
-        }
+    const loadCV = async () => {
+      if (!editId || editId.startsWith('cv_')) {
+        setIsValidating(false)
+        setMounted(true)
+        return
       }
-    } catch (err) {
-      console.warn('Flow Guard Blocked:', err.message)
-    } finally {
-      if (!isValid && !isPrintMode) {
-         // Force redirect to dashboard using replace to avoid history stack buildup
-         navigate('/cv-dashboard', { replace: true })
-      } else {
-         setIsValidating(false)
-         setMounted(true)
+
+      try {
+        const data = await cvService.getCVById(editId)
+        if (data) {
+          // Map backend flat structure to frontend nested personal object
+          const mappedData = {
+            personal: {
+              fullName: data.fullName || '',
+              email: data.email || '',
+              phone: data.phone || '',
+              address: data.address || '',
+              dob: data.dob || '',
+              jobTitle: data.jobTitle || '',
+              linkedin: data.linkedin || '',
+              summary: data.summary || '',
+              avatar: data.avatarUrl || null
+            },
+            skills: data.skills || [],
+            experience: data.experiences || [],
+            education: data.educations || [],
+            projects: data.projects || [],
+            certificates: data.certificates || []
+          }
+          setCvData(mappedData)
+          setTemplateId(data.templateId || 1)
+          setCvName(data.name || 'CV của tôi')
+        }
+      } catch (err) {
+        console.warn('Flow Guard Blocked:', err.message)
+        navigate('/cv-dashboard', { replace: true })
+      } finally {
+        setIsValidating(false)
+        setMounted(true)
       }
     }
-  }, [editId, navigate, isPrintMode])
+
+    loadCV()
+  }, [editId, navigate])
 
   // Auto-trigger print if arrived with ?print=1
   useEffect(() => {
@@ -100,45 +108,62 @@ export default function EditorPage() {
     }
   }, [isPrintMode, mounted, isValidating])
 
-  const handleSave = () => {
+  const { user } = useUserStore()
+
+  const handleSave = async () => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để lưu CV')
+      return
+    }
+
+    setSaved(true)
     try {
-      const list = JSON.parse(localStorage.getItem('cv_list') || '[]')
-      const entry = {
-        id: editId,
+      const payload = {
+        ...cvData.personal,
+        avatarUrl: cvData.personal.avatar,
+        skills: cvData.skills,
+        experiences: cvData.experience,
+        educations: cvData.education,
+        projects: cvData.projects,
+        certificates: cvData.certificates,
+        id: editId && !editId.startsWith('cv_') ? editId : null,
+        userId: user.id,
         name: cvName,
         templateId,
-        data: cvData,
-        updatedAt: new Date().toISOString(),
+        status: 'PUBLISHED'
       }
 
-      // Xử lý Upsert (Cập nhật hoặc Thêm mới)
-      const existingIdx = list.findIndex(c => c.id === editId)
-      if (existingIdx >= 0) {
-         list[existingIdx] = entry
+      console.log('📦 [CV Flow] Dữ liệu CV đã sẵn sàng gửi lên Backend:', payload);
+
+      let result
+      if (payload.id) {
+        result = await cvService.updateCV(payload.id, payload)
+        console.log('✨ [CV Flow] Cập nhật CV thành công:', result);
       } else {
-         list.unshift(entry)
+        result = await cvService.createCV(payload)
+        console.log('✨ [CV Flow] Tạo mới CV thành công:', result);
       }
-      
-      // Khóa lưu vào Storage
-      localStorage.setItem('cv_list', JSON.stringify(list))
-      
-      // Xóa bản nháp nếu lưu thành công, giải phóng bộ nhớ
-      localStorage.removeItem(`draft_cv_${editId}`)
 
-      setSaved(true)
+      toast.success('Đã lưu CV thành công!')
       setTimeout(() => {
         setSaved(false)
         navigate('/cv-dashboard')
       }, 1200)
 
-    } catch(err) {
-      console.error('Lỗi khi lưu:', err)
-      alert('Không thể lưu CV. Vui lòng thử lại.')
+    } catch (err) {
+      console.error('❌ [CV Flow] Lỗi khi lưu:', err)
+      toast.error('Không thể lưu CV. Vui lòng thử lại.')
+      setSaved(false)
     }
   }
 
   const handleExportPDF = () => {
-    window.print()
+    if (!editId || editId.startsWith('cv_')) {
+      toast.error('Vui lòng lưu CV trước khi xuất PDF chuyên nghiệp')
+      return
+    }
+    const url = `${import.meta.env.VITE_BACKEND_URL}/api/v1/cvs/${editId}/pdf`
+    window.open(url, '_blank')
   }
 
   // Hydration & Guard safeguard: Render Soft Loading
