@@ -33,7 +33,7 @@ export default function FeaturedJobsSection({ jobs = [], total = 0, onViewAll, o
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           {featuredJobs.map((job, index) => (
             <div 
-              key={job.id}
+              key={job.jobId || job.id}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <JobCard job={job} isFeatured={true} onDetail={onSelect} />

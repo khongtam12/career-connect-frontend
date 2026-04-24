@@ -53,7 +53,8 @@ export default function Jobs() {
       setJobs(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
-      setPage(response.number || 0);
+      const responsePage = typeof response.page === 'number' ? response.page : 1;
+      setPage(Math.max(responsePage - 1, 0));
       const nextSelected = response.content?.[0] || null;
       setSelectedJob((prev) => {
         if (!nextSelected) return null;
