@@ -18,6 +18,7 @@ import Login from "../pages/Employer/Login/login.jsx";
 import LoginAM from "../pages/Admin/Login/login.jsx";
 import LoginCD from "../pages/Candidate/Login/login.jsx";
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
+import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/index.jsx";
 export const router = createBrowserRouter([
     {
@@ -78,6 +79,10 @@ export const router = createBrowserRouter([
             {
                 path: "/employer/pricing",
                 element: <PricingSection />
+            },
+            {
+                path: "/employer/payment",
+                element: <CheckoutPage />
             },
             {
                 path: "/employer/candidates",

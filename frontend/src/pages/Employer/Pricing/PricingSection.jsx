@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Card,
     CardContent,
@@ -28,10 +29,7 @@ import {
 import {
     ChevronLeft as ChevronLeftIcon,
     ChevronRight as ChevronRightIcon,
-    ShoppingCart as ShoppingCartIcon,
     InfoOutlined as InfoIcon,
-    Add as AddIcon,
-    Remove as RemoveIcon,
     Close as CloseIcon,
 } from '@mui/icons-material';
 
@@ -45,29 +43,19 @@ import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import StarsIcon from '@mui/icons-material/Stars';
 import { toast } from 'react-toastify';
-import { useCartStore } from '../../../stores/useCartStore';
 
 const PricingSection = () => {
+    const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [selectedTab, setSelectedTab] = useState(0);
     const [rawPackages, setRawPackages] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // Global Cart Store
-    const { 
-        quantities, 
-        selectedDurations, 
-        addToCart: addToGlobalCart, 
-        updateCartQuantity, 
-        removeFromCart, 
-        clearCart 
-    } = useCartStore();
+    const [selectedDurations, setSelectedDurations] = useState({});
 
     // Modal states
     const [openUrgentModal, setOpenUrgentModal] = useState(false);
     const [openPointsModal, setOpenPointsModal] = useState(false);
     const [openImageModal, setOpenImageModal] = useState(false);
-    const [openCartModal, setOpenCartModal] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
 
     const banners = [
@@ -89,12 +77,6 @@ const PricingSection = () => {
                 const data = await getPackage();
                 setRawPackages(data);
                 
-                // Initialize local quantities to 1 for all packages
-                const initialLocals = {};
-                data.forEach(p => {
-                    initialLocals[p.packageId] = 1;
-                });
-                setLocalQuantities(initialLocals);
             } catch (error) {
                 console.error("Failed to fetch packages:", error);
             } finally {
@@ -131,6 +113,33 @@ const PricingSection = () => {
         return 'Chọn thời lượng';
     };
 
+    const parseDurationToWeeks = (durationText) => {
+        const durationValue = Number.parseFloat(String(durationText).replace(',', '.'));
+        return Number.isNaN(durationValue) ? 1 : durationValue;
+    };
+
+    const getDurationDaysFromText = (durationText) => {
+        return Math.round(parseDurationToWeeks(durationText) * 7);
+    };
+
+    const getCalculatedPrice = (item, durationText) => {
+        const baseWeeks = Math.max((item?.durationDays || 7) / 7, 1);
+        const selectedWeeks = parseDurationToWeeks(durationText || getDurationText(item?.durationDays));
+        const durationMultiplier = selectedWeeks / baseWeeks;
+
+        return Math.round((item?.price || 0) * durationMultiplier);
+    };
+
+    const getCalculatedOldPrice = (item, durationText) => {
+        if (!item?.oldPrice) return null;
+
+        const baseWeeks = Math.max((item?.durationDays || 7) / 7, 1);
+        const selectedWeeks = parseDurationToWeeks(durationText || getDurationText(item?.durationDays));
+        const durationMultiplier = selectedWeeks / baseWeeks;
+
+        return Math.round(item.oldPrice * durationMultiplier);
+    };
+
     const pricingData = Object.entries(categoryLabels).map(([key, label]) => ({
         section: label,
         items: rawPackages.filter(p => p.category === key).map(p => ({
@@ -144,73 +153,49 @@ const PricingSection = () => {
             isLargeThumbnail: p.category === 'POINTS'
         }))
     }));
-
-
-    const [localQuantities, setLocalQuantities] = useState({});
-
-    const updateLocalQuantity = (id, delta) => {
-        setLocalQuantities(prev => ({
-            ...prev,
-            [id]: Math.max(1, (prev[id] || 1) + delta)
-        }));
-    };
-
-    const addToCart = (id) => {
-        const qty = localQuantities[id] || 1;
+    const handleBuyNow = (id) => {
         const item = rawPackages.find(p => p.packageId === id);
         const duration = selectedDurations[id] || getDurationText(item?.durationDays);
 
-        addToGlobalCart(id, qty, duration);
-        toast.success(`Đã thêm ${qty} ${item?.name} vào giỏ hàng`);
-
-        // Reset local quantity to 1 after adding to cart
-        setLocalQuantities(prev => ({ ...prev, [id]: 1 }));
-    };
-
-    const updateDuration = (id, value) => {
-        // We still use useCartStore's set logic but it's handled via addToGlobalCart or we can add a specific action
-        // For convenience in the UI, we'll use a local state for the UI dropdown, 
-        // and only commit the duration when clicking 'Add to Cart' OR update the store directly.
-        // Actually, let's keep selectedDurations in the store.
-        useCartStore.setState((state) => ({
-            selectedDurations: {
-                ...state.selectedDurations,
-                [id]: value
-            }
-        }));
-    };
-
-    const handleCheckout = () => {
-        const cartItems = Object.entries(quantities)
-            .filter(([_, q]) => q > 0)
-            .map(([id, q]) => {
-                const item = rawPackages.find(p => p.packageId === id);
-                return {
-                    id,
-                    name: item?.name,
-                    quantity: q,
-                    duration: selectedDurations[id] || getDurationText(item?.durationDays),
-                    price: item?.price
-                };
-            });
-
-        if (cartItems.length === 0) {
-            toast.error("Vui lòng chọn sản phẩm vào giỏ hàng!");
+        if (!item) {
+            toast.error('Không tìm thấy gói cần thanh toán');
             return;
         }
 
-        console.log("Submitting order:", cartItems);
-        toast.success("Đã gửi đơn hàng thành công!");
-        // Reset quantities after order
-        clearCart();
+        navigate('/employer/payment', {
+            state: {
+                selectedDurationLabel: duration,
+                totalPrice: getCalculatedPrice(item, duration),
+                jobPackage: {
+                    ...item,
+                    price: getCalculatedPrice(item, duration),
+                    oldPrice: getCalculatedOldPrice(item, duration),
+                    durationDays: getDurationDaysFromText(duration),
+                },
+            },
+        });
+    };
+
+    const updateDuration = (id, value) => {
+        setSelectedDurations((prev) => ({
+            ...prev,
+            [id]: value,
+        }));
     };
 
     const PricingCard = ({ item }) => (
+        (() => {
+            const selectedDuration = selectedDurations[item.id] || item.duration;
+            const calculatedPrice = getCalculatedPrice(item, selectedDuration);
+            const calculatedOldPrice = getCalculatedOldPrice(item, selectedDuration);
+            const jobPostLimit = Math.max(item.jobPostLimit || 1, 1);
+
+            return (
         <Card
             sx={{
                 mb: 3,
                 borderRadius: '12px',
-                boxShadow: localQuantities[item.id] > 0 ? '0 10px 15px -3px rgb(147 51 234 / 0.1)' : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                 border: item.cardBorder ? `2px solid` : '1px solid #e5e7eb',
                 borderColor: item.cardBorder ? (item.cardBorder === 'border-yellow-400' ? '#facc15' : '#ea580c') : '#e5e7eb',
                 position: 'relative',
@@ -284,17 +269,9 @@ const PricingSection = () => {
                     <div className="w-full lg:w-[380px] grid grid-cols-3 gap-2 sm:gap-4 items-center border-l border-gray-100 lg:pl-6">
                         {/* Quantity */}
                         <div className="flex flex-col">
-                            <Typography variant="caption" className="text-gray-400 text-center mb-1">Số lượng</Typography>
-                            <div className="flex items-center justify-center border rounded-lg px-1 border-gray-200 bg-white">
-                                <IconButton size="small" onClick={() => updateLocalQuantity(item.id, -1)} disabled={(localQuantities[item.id] || 1) <= 1}>
-                                    <RemoveIcon sx={{ fontSize: 14 }} />
-                                </IconButton>
-                                <span className={`mx-2 text-sm font-bold min-w-[20px] text-center ${localQuantities[item.id] > 0 ? 'text-purple-600' : 'text-gray-700'}`}>
-                                    {localQuantities[item.id] || 1}
-                                </span>
-                                <IconButton size="small" onClick={() => updateLocalQuantity(item.id, 1)}>
-                                    <AddIcon sx={{ fontSize: 14 }} />
-                                </IconButton>
+                            <Typography variant="caption" className="text-gray-400 text-center mb-1">Số tin có thể đăng</Typography>
+                            <div className="flex items-center justify-center border rounded-lg px-3 py-2 border-gray-200 bg-gray-50 text-sm font-bold text-purple-600">
+                                {jobPostLimit} tin
                             </div>
                         </div>
 
@@ -334,13 +311,13 @@ const PricingSection = () => {
                         {/* Price */}
                         <div className="flex flex-col items-end">
                             <Typography variant="caption" className="text-gray-400 mb-1">Giá bán</Typography>
-                            {item.oldPrice && (
+                            {calculatedOldPrice && (
                                 <Typography variant="caption" className="text-gray-400 line-through text-[10px]">
-                                    ₫ {(item.oldPrice * Math.max(1, localQuantities[item.id] || 0)).toLocaleString('vi-VN')}
+                                    ₫ {calculatedOldPrice.toLocaleString('vi-VN')}
                                 </Typography>
                             )}
                             <Typography className="text-purple-700 font-black text-base sm:text-lg">
-                                {item.price === 0 ? '₫ 0' : `₫ ${(item.price * Math.max(1, localQuantities[item.id] || 0)).toLocaleString('vi-VN')}`}
+                                {calculatedPrice === 0 ? '₫ 0' : `₫ ${calculatedPrice.toLocaleString('vi-VN')}`}
                             </Typography>
                         </div>
                     </div>
@@ -349,17 +326,17 @@ const PricingSection = () => {
                     <div className="flex items-center justify-end lg:pl-4">
                         <Button
                             variant="outlined"
-                            onClick={() => addToCart(item.id)}
-                            disabled={(localQuantities[item.id] || 0) === 0}
-                            startIcon={<ShoppingCartIcon />}
-                            className={`${(localQuantities[item.id] || 0) > 0 ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-200' : 'bg-purple-50 text-purple-700 border-purple-200'} font-black text-xs capitalize whitespace-nowrap py-2.5 px-5 rounded-xl transition-all active:scale-95`}
+                            onClick={() => handleBuyNow(item.id)}
+                            className="bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-200 font-black text-xs capitalize whitespace-nowrap py-2.5 px-5 rounded-xl transition-all active:scale-95 hover:bg-purple-700"
                         >
-                            Thêm vào giỏ
+                            Thanh toán ngay
                         </Button>
                     </div>
                 </div>
             </div>
         </Card>
+            );
+        })()
     );
 
     if (loading) {
@@ -608,144 +585,6 @@ const PricingSection = () => {
                 </Box>
             </Dialog>
 
-            {/* Cart Modal */}
-            <Dialog
-                open={openCartModal}
-                onClose={() => setOpenCartModal(false)}
-                PaperProps={{ 
-                    sx: { 
-                        borderRadius: '24px', 
-                        p: 0,
-                        position: 'fixed',
-                        bottom: 90,
-                        left: 40,
-                        margin: 0,
-                        width: '400px',
-                        maxWidth: 'calc(100vw - 80px)',
-                        boxShadow: '0 10px 40px -1px rgba(0,0,0,0.2)',
-                    } 
-                }}
-                sx={{
-                    '& .MuiDialog-container': {
-                        alignItems: 'flex-start',
-                        justifyContent: 'flex-start',
-                    },
-                    '& .MuiBackdrop-root': {
-                        backgroundColor: 'transparent'
-                    }
-                }}
-            >
-                <DialogTitle className="flex justify-between items-center bg-gray-50/50 border-b p-4 px-6">
-                    <div className="flex items-center gap-2">
-                        <ShoppingCartIcon className="text-purple-600" />
-                        <Typography className="font-black text-gray-800">
-                            Giỏ hàng ({Object.values(quantities).reduce((a, b) => a + b, 0)})
-                        </Typography>
-                    </div>
-                    <IconButton onClick={() => setOpenCartModal(false)} size="small">
-                        <CloseIcon />
-                    </IconButton>
-                </DialogTitle>
-                <DialogContent className="p-0">
-                    <div className="min-h-[300px] flex flex-col items-center justify-center p-8">
-                        {Object.values(quantities).reduce((a, b) => a + b, 0) === 0 ? (
-                            <div className="text-center">
-                                <Box className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 p-6 overflow-hidden">
-                                    <ShoppingCartIcon sx={{ fontSize: 64, color: '#bfdbfe' }} />
-                                </Box>
-                                <Typography className="text-gray-400 font-bold">Chưa có sản phẩm</Typography>
-                            </div>
-                        ) : (
-                            <div className="w-full">
-                                <div className="max-h-[400px] overflow-y-auto">
-                                    {Object.entries(quantities).map(([id, q]) => {
-                                        if (q === 0) return null;
-                                        const item = rawPackages.find(p => p.packageId === id);
-                                        if (!item) return null;
-                                        return (
-                                            <div key={id} className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                                <div className="flex items-center gap-4 text-left">
-                                                    <div className="w-16 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                                                    </div>
-                                                    <div>
-                                                        <Typography className="font-bold text-gray-800 text-sm truncate max-w-[200px]">{item.name}</Typography>
-                                                        <Typography className="text-purple-600 font-black text-xs">₫ {item.price.toLocaleString('vi-VN')}</Typography>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center border rounded-lg px-1 bg-white">
-                                                        <IconButton size="small" onClick={() => updateCartQuantity(id, -1)} disabled={q <= 1}><RemoveIcon sx={{ fontSize: 12 }} /></IconButton>
-                                                        <span className="mx-2 text-xs font-bold text-purple-600">{q}</span>
-                                                        <IconButton size="small" onClick={() => updateCartQuantity(id, 1)}><AddIcon sx={{ fontSize: 12 }} /></IconButton>
-                                                    </div>
-                                                    <IconButton size="small" color="error" onClick={() => removeFromCart(id)}>
-                                                        <CloseIcon sx={{ fontSize: 16 }} />
-                                                    </IconButton>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <div className="p-6 bg-purple-50 flex items-center justify-between">
-                                    <Typography className="font-bold text-gray-600 text-sm italic">Tổng cộng</Typography>
-                                    <Typography className="font-black text-purple-700 text-xl">
-                                        ₫ {Object.entries(quantities).reduce((acc, [id, q]) => {
-                                            const item = rawPackages.find(p => p.packageId === id);
-                                            return acc + (item ? item.price * q : 0);
-                                        }, 0).toLocaleString('vi-VN')}
-                                    </Typography>
-                                </div>
-                                <div className="p-4 flex justify-center">
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => setOpenCartModal(false)}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl px-8"
-                                    >
-                                        Tiếp tục mua hàng
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Bottom Sticky Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.1)] px-6 py-4 z-50">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="outlined"
-                            onClick={() => setOpenCartModal(true)}
-                            className="text-purple-700 border-purple-200 rounded-xl px-6 py-2 font-black text-xs capitalize shadow-sm hover:bg-purple-50"
-                            startIcon={<ShoppingCartIcon />}
-                            endIcon={<Typography component="span" sx={{ fontSize: 10, ml: 1, color: '#9333ea' }}>{Object.values(quantities).reduce((a, b) => a + b, 0) > 0 ? '▼' : '▲'}</Typography>}
-                        >
-                            {Object.values(quantities).reduce((a, b) => a + b, 0)} sản phẩm
-                        </Button>
-                    </div>
-
-                    <div className="flex items-center gap-8">
-                        <div className="text-right">
-                            <div className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Tổng giá (Chưa bao gồm thuế VAT)</div>
-                            <div className="text-purple-700 font-black text-2xl">
-                                ₫ {Object.entries(quantities).reduce((acc, [id, q]) => {
-                                    const item = rawPackages.find(p => p.packageId === id);
-                                    return acc + (item ? item.price * q : 0);
-                                }, 0).toLocaleString('vi-VN')}
-                            </div>
-                        </div>
-                        <Button
-                            variant="contained"
-                            onClick={handleCheckout}
-                            className="bg-purple-700 hover:bg-purple-800 text-white font-black px-12 py-3.5 rounded-2xl shadow-xl shadow-purple-200 capitalize tracking-wide transition-all transform active:scale-95"
-                        >
-                            Đặt hàng →
-                        </Button>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
