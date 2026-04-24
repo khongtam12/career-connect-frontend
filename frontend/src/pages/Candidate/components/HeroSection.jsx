@@ -11,6 +11,7 @@ export default function HeroSection({
   locations = [],
 }) {
   const [categoryIndex, setCategoryIndex] = useState(0);
+  const [activeCategory, setActiveCategory] = useState(null);
   const visibleCategories = useMemo(
     () => categories.slice(categoryIndex, categoryIndex + 5),
     [categories, categoryIndex]
@@ -24,6 +25,22 @@ export default function HeroSection({
     setCategoryIndex(Math.min(Math.max(categories.length - 5, 0), categoryIndex + 1));
   };
 
+  const keywordMap = useMemo(() => ({
+    'Kinh doanh - Bán hàng': ['Nhân viên kinh doanh', 'Nhân viên bán hàng', 'Nhân viên tư vấn', 'Telesales', 'Sales Admin', 'Sales Online'],
+    'Marketing/PR - Quảng cáo': ['Content Marketing', 'Digital Marketing', 'PR Executive', 'SEO Specialist', 'Performance Marketing'],
+    'Chăm sóc khách hàng (Customer...)': ['CSKH', 'Call Center', 'Customer Success', 'Support Agent'],
+    'Nhân sự - Hành chính - Pháp chế': ['HR Generalist', 'Recruiter', 'C&B', 'Hành chính văn phòng'],
+    'Công nghệ Thông tin': ['Frontend Developer', 'Backend Engineer', 'Fullstack', 'QA/QC', 'DevOps'],
+    'Tài chính - Ngân hàng - Bảo...': ['Kế toán tổng hợp', 'Chuyên viên tín dụng', 'Kiểm toán nội bộ', 'Tư vấn tài chính'],
+    'Bất động sản': ['Môi giới bất động sản', 'Sales BĐS', 'Chuyên viên tư vấn dự án'],
+    'Kế toán - Kiểm toán': ['Kế toán nội bộ', 'Kế toán thuế', 'Kiểm toán viên'],
+  }), []);
+
+  const resolvedActiveCategory = activeCategory || visibleCategories[0] || null;
+  const activeKeywords = Array.isArray(resolvedActiveCategory?.keywords)
+    ? resolvedActiveCategory.keywords
+    : keywordMap[resolvedActiveCategory?.title] || [];
+
   return (
     <div className="relative bg-linear-to-br from-teal-700 via-teal-600 to-emerald-700 text-white overflow-hidden">
       {/* Animated Background Elements */}
@@ -33,7 +50,7 @@ export default function HeroSection({
       </div>
 
       {/* Main Hero Section */}
-      <div className="relative py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+      <div className="relative py-10 sm:py-14 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Hero Title with Animation */}
           <div className="text-center mb-12">
@@ -50,29 +67,63 @@ export default function HeroSection({
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Sidebar - Categories */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-4">
               <div className="bg-white rounded-2xl p-5 shadow-2xl backdrop-blur-xl border border-white border-opacity-10 hover:shadow-3xl transition-all duration-300">
-                <div className="space-y-1">
-                  {visibleCategories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => onCategorySelect?.(cat)}
-                      className="group w-full flex items-center justify-between p-3 hover:bg-emerald-50 rounded-xl cursor-pointer transition-all duration-200 hover:translate-x-1"
-                    >
-                      <div>
-                        <span className="text-gray-800 font-medium text-sm group-hover:text-emerald-700 transition-colors">
-                          {cat.title}
-                        </span>
-                        {cat.jobCount && (
-                          <p className="text-xs text-gray-500 mt-1">{cat.jobCount}</p>
-                        )}
-                      </div>
-                      <ChevronRight size={18} className="text-gray-300 group-hover:text-emerald-600 transition-colors" />
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-5">
+                  <div className="space-y-1">
+                    {visibleCategories.map((cat) => {
+                      const isActive = (resolvedActiveCategory?.id || resolvedActiveCategory?.industryId) === (cat.id || cat.industryId);
+                      return (
+                        <button
+                          key={cat.id || cat.industryId}
+                          type="button"
+                          onClick={() => onCategorySelect?.(cat)}
+                          onMouseEnter={() => setActiveCategory(cat)}
+                          onFocus={() => setActiveCategory(cat)}
+                          className={`group w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 hover:translate-x-1 ${
+                            isActive ? 'bg-emerald-50' : 'hover:bg-emerald-50'
+                          }`}
+                        >
+                          <div>
+                            <span className={`text-gray-800 font-medium text-sm transition-colors ${
+                              isActive ? 'text-emerald-700' : 'group-hover:text-emerald-700'
+                            }`}>
+                              {cat.title || cat.name}
+                            </span>
+                            {cat.jobCount && (
+                              <p className="text-xs text-gray-500 mt-1">{cat.jobCount}</p>
+                            )}
+                          </div>
+                          <ChevronRight size={18} className={`transition-colors ${
+                            isActive ? 'text-emerald-600' : 'text-gray-300 group-hover:text-emerald-600'
+                          }`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Hover keywords panel */}
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="text-sm font-bold text-gray-900 mb-3">Được tìm kiếm nhiều</div>
+                    <div className="flex flex-wrap gap-2">
+                      {activeKeywords.length === 0 ? (
+                        <span className="text-xs text-gray-500">Chưa có dữ liệu từ khóa</span>
+                      ) : (
+                        activeKeywords.map((keyword) => (
+                          <button
+                            key={keyword}
+                            type="button"
+                            onClick={() => onChange({ keyword })}
+                            className="text-xs font-semibold text-gray-700 border border-rose-200 bg-white px-3 py-1.5 rounded-full hover:border-rose-300 hover:text-rose-600 transition-colors"
+                          >
+                            {keyword}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Category Navigation */}
@@ -98,10 +149,10 @@ export default function HeroSection({
               </div>
             </div>
 
-            {/* Center - Search Box */}
-            <div className="lg:col-span-2">
+            {/* Right Content */}
+            <div className="lg:col-span-8">
               {/* Search Box with Glassmorphism */}
-              <div className="bg-white backdrop-blur-xl rounded-full shadow-2xl p-4 mb-8 border border-white border-opacity-20 hover:shadow-3xl transition-all duration-300">
+              <div className="bg-white backdrop-blur-xl rounded-full shadow-2xl p-4 mb-6 border border-white border-opacity-20 hover:shadow-3xl transition-all duration-300">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 relative">
                     <input
@@ -112,7 +163,7 @@ export default function HeroSection({
                       className="w-full px-5 py-3 text-gray-900 placeholder-gray-500 bg-transparent focus:outline-none text-sm sm:text-base font-medium"
                     />
                   </div>
-                  <div className="w-full sm:w-auto relative">
+                  <div className="w-full sm:w-56 relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                     <select
                       value={filters.location}
@@ -137,27 +188,46 @@ export default function HeroSection({
                 </div>
               </div>
 
-              {/* Description Text */}
-              <div className="text-center">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-emerald-100">Tiêp lợi thế, nơi thành công</h2>
-                <p className="text-teal-100 text-sm sm:text-base leading-relaxed">
-                  Kết nối nhân tài với cơ hội tuyệt vời - Nền tảng tuyển dụng số 1 Việt Nam
-                </p>
-              </div>
-            </div>
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="lg:col-span-3">
+                  <div className="relative w-full h-56 sm:h-64 lg:h-72 rounded-2xl overflow-hidden shadow-2xl group">
+                    <img
+                      src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=900"
+                      alt="Career Connect Hero"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/50 via-black/10 to-transparent"></div>
+                    <div className="absolute top-6 left-6 text-white">
+                      <h2 className="text-xl sm:text-2xl font-bold mb-2">Tiếp lợi thế,\n nối thành công</h2>
+                      <p className="text-sm text-emerald-100">CareerConnect - Hệ sinh thái nhân sự\n tiên phong ứng dụng công nghệ</p>
+                    </div>
+                    <span className="absolute bottom-4 right-4 text-white text-sm font-semibold backdrop-blur-md bg-black/30 px-4 py-2 rounded-full border border-white/20">
+                      Welcome onboard! 🚀
+                    </span>
+                  </div>
+                </div>
 
-            {/* Right Side - Image */}
-            <div className="lg:col-span-1 hidden lg:flex">
-              <div className="relative w-full h-64 rounded-2xl overflow-hidden shadow-2xl group">
-                <img 
-                  src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=600"
-                  alt="Career Connect Hero"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent"></div>
-                <span className="absolute bottom-4 right-4 text-white text-sm font-semibold backdrop-blur-md bg-black/30 px-4 py-2 rounded-full border border-white/20">
-                  Welcome onboard! 🚀
-                </span>
+                <div className="lg:col-span-2">
+                  <div className="bg-emerald-900/60 rounded-2xl border border-emerald-400/20 p-5 h-full shadow-2xl">
+                    <div className="flex items-center justify-between text-emerald-100 mb-3">
+                      <span className="text-sm font-semibold">Thị trường việc làm hôm nay</span>
+                      <span className="text-xs font-bold">24/04/2026</span>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-emerald-100">Việc làm đang tuyển</span>
+                        <span className="text-lg font-bold text-white">64.584</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-emerald-100">Việc làm mới hôm nay</span>
+                        <span className="text-lg font-bold text-white">3.483</span>
+                      </div>
+                    </div>
+                    <div className="mt-5 rounded-xl bg-emerald-700/40 p-4 text-xs text-emerald-100">
+                      Gợi ý: Theo dõi ngành nghề bạn quan tâm để nhận thông báo sớm nhất.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

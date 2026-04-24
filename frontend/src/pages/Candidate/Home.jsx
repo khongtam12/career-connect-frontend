@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeroSection from './components/HeroSection';
-import CategoriesSection from './components/CategoriesSection';
-import FeaturedJobsSection from './components/FeaturedJobsSection';
+import BestJobsSection from './components/BestJobsSection';
 import StatisticsSection from './components/StatisticsSection';
 import CTASection from './components/CTASection';
 import HowItWorks from './components/HowItWorks';
-import JobSection from './components/JobSection';
 import { getJobFilters, getJobStats, searchJobs } from '../../service/jobService';
 import { categoriesData } from '../../data/categoriesData';
 
@@ -65,7 +63,8 @@ export default function Home() {
       setJobs(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
-      setPage(response.number || 0);
+      const responsePage = typeof response.page === 'number' ? response.page : 1;
+      setPage(Math.max(responsePage - 1, 0));
     } catch (error) {
       console.error('Failed to fetch jobs', error);
     } finally {
@@ -75,6 +74,12 @@ export default function Home() {
 
   const handleFilterChange = (next) => {
     setFilters((prev) => ({ ...prev, ...next }));
+  };
+
+  const handleQuickFilter = (next) => {
+    const nextFilters = { ...filters, ...next };
+    setFilters(nextFilters);
+    applyFilters(0, nextFilters);
   };
 
   const handleSearch = () => {
@@ -131,37 +136,13 @@ export default function Home() {
         locations={filterOptions.locations}
       />
 
-      {/* Top Job Categories */}
-      <CategoriesSection
-        categories={mappedCategories}
-        onCategorySelect={handleCategorySelect}
-        onViewAll={() => navigate('/jobs')}
-      />
-
-      {/* Featured Jobs */}
-      <FeaturedJobsSection
+      <BestJobsSection
         jobs={jobs}
         total={totalElements}
-        onViewAll={() => navigate('/jobs')}
-        onSelect={(job) => {
-          if (!job) return;
-          navigate(`/jobs?jobId=${job.jobId || job.id}`);
-        }}
-      />
-
-      {/* Job List + Filters */}
-      <JobSection
-        jobs={jobs}
-        totalElements={totalElements}
         filters={filters}
         filterOptions={filterOptions}
-        onChange={handleFilterChange}
-        onApply={handleSearch}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        loading={loading}
-        showDetailPanel={false}
+        onQuickFilter={handleQuickFilter}
+        onViewAll={() => navigate('/jobs')}
       />
 
       {/* How It Works */}

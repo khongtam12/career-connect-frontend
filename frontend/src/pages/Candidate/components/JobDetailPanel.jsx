@@ -11,8 +11,8 @@ export default function JobDetailPanel({ job }) {
 
   const salaryLabel = formatSalary(job.salaryMin, job.salaryMax);
   const jobTypeLabel = formatJobType(job.jobType);
-  const requirements = splitToList(job.requirement);
-  const benefits = splitToList(job.benefit);
+  const requirements = splitToList(job.candidateRequirements || job.requirement || job.requirementTags);
+  const benefits = splitToList(job.benefitsDetail || job.benefit || job.benefitTags);
   const description = splitToList(job.description);
 
   return (
@@ -120,6 +120,12 @@ const formatSalaryValue = (value) => {
 
 const splitToList = (text) => {
   if (!text) return [];
+  if (Array.isArray(text)) {
+    return text
+      .map((item) => (typeof item === 'string' ? item.trim() : String(item)))
+      .filter(Boolean);
+  }
+  if (typeof text !== 'string') return [];
   return text
     .split(/\n|\r|\r\n|\u2022|-|\*|\u2023/)
     .map((item) => item.trim())
@@ -128,6 +134,12 @@ const splitToList = (text) => {
 
 const splitComma = (text) => {
   if (!text) return [];
+  if (Array.isArray(text)) {
+    return text
+      .map((item) => (typeof item === 'string' ? item.trim() : String(item)))
+      .filter(Boolean);
+  }
+  if (typeof text !== 'string') return [];
   return text
     .split(',')
     .map((item) => item.trim())
