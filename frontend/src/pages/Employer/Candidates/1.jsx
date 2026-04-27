@@ -77,56 +77,55 @@ const CVManagement = () => {
     const [openRejectModal, setOpenRejectModal] = useState(false);
 
     return (
-        <div className="flex flex-col h-full bg-gray-50/50">
+        <div className="flex flex-col h-full min-h-[calc(100vh-80px)] bg-gray-50/50">
             {/* Top Search & Filter Bar */}
-            <div className="bg-white p-3 border-b border-gray-100 flex gap-3 items-center flex-wrap shrink-0">
-                <div className="flex-1 min-w-[200px] relative">
-                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <div className="bg-white p-4 border-b border-gray-100 flex gap-4 items-center flex-wrap">
+                <div className="flex-1 min-w-[250px] relative">
+                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input 
                         type="text" 
                         placeholder="Tìm kiếm theo vị trí ứng tuyển..."
-                        className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white outline-none transition-all text-sm font-medium"
+                        className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white outline-none transition-all text-sm font-medium"
                     />
                 </div>
                 
                 <Select
                     size="small"
                     defaultValue="all_status"
-                    sx={{ borderRadius: '8px', minWidth: '150px', backgroundColor: '#f9fafb', fontSize: '0.875rem' }}
+                    sx={{ borderRadius: '10px', minWidth: '160px', backgroundColor: '#f9fafb' }}
                 >
-                    <MenuItem value="all_status" sx={{ fontSize: '0.875rem' }}>Tất cả trạng thái</MenuItem>
-                    <MenuItem value="pending" sx={{ fontSize: '0.875rem' }}>Chờ xử lý</MenuItem>
-                    <MenuItem value="interviewing" sx={{ fontSize: '0.875rem' }}>Đang phỏng vấn</MenuItem>
-                    <MenuItem value="rejected" sx={{ fontSize: '0.875rem' }}>Đã từ chối</MenuItem>
+                    <MenuItem value="all_status">Tất cả trạng thái</MenuItem>
+                    <MenuItem value="pending">Chờ xử lý</MenuItem>
+                    <MenuItem value="interviewing">Đang phỏng vấn</MenuItem>
+                    <MenuItem value="rejected">Đã từ chối</MenuItem>
                 </Select>
 
                 <Select
                     size="small"
                     defaultValue="all_time"
-                    sx={{ borderRadius: '8px', minWidth: '120px', backgroundColor: '#f9fafb', fontSize: '0.875rem' }}
+                    sx={{ borderRadius: '10px', minWidth: '160px', backgroundColor: '#f9fafb' }}
                 >
-                    <MenuItem value="all_time" sx={{ fontSize: '0.875rem' }}>Mọi lúc</MenuItem>
-                    <MenuItem value="today" sx={{ fontSize: '0.875rem' }}>Hôm nay</MenuItem>
-                    <MenuItem value="this_week" sx={{ fontSize: '0.875rem' }}>Tuần này</MenuItem>
-                    <MenuItem value="this_month" sx={{ fontSize: '0.875rem' }}>Tháng này</MenuItem>
+                    <MenuItem value="all_time">Mọi lúc</MenuItem>
+                    <MenuItem value="today">Hôm nay</MenuItem>
+                    <MenuItem value="this_week">Tuần này</MenuItem>
+                    <MenuItem value="this_month">Tháng này</MenuItem>
                 </Select>
 
                 <Button 
                     variant="contained" 
                     startIcon={<FiFilter />}
-                    size="small"
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 capitalize font-bold shadow-md shadow-blue-200"
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 capitalize font-bold shadow-md shadow-blue-200"
                 >
                     Lọc
                 </Button>
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex overflow-hidden min-h-0">
+            <div className="flex-1 flex overflow-hidden">
                 {/* Left Sidebar: Candidate List */}
-                <div className="w-[300px] border-r border-gray-100 bg-white overflow-y-auto flex flex-col shrink-0">
-                    <div className="p-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 sticky top-0 z-10 shrink-0">
-                        <Typography className="text-gray-600 font-bold text-xs uppercase tracking-wide">
+                <div className="w-[350px] border-r border-gray-100 bg-white overflow-y-auto flex flex-col">
+                    <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 sticky top-0 z-10">
+                        <Typography className="text-gray-600 font-bold text-sm">
                             Danh sách ứng tuyển ({candidatesData.length})
                         </Typography>
                     </div>
@@ -136,35 +135,33 @@ const CVManagement = () => {
                             <div 
                                 key={c.id}
                                 onClick={() => setSelectedCandidate(c)}
-                                className={`p-3 cursor-pointer border-b border-gray-50 transition-all ${selectedCandidate.id === c.id ? 'bg-blue-50/40 border-l-4 border-l-blue-600' : 'hover:bg-gray-50 border-l-4 border-transparent'}`}
+                                className={`p-4 cursor-pointer border-b border-gray-50 transition-all ${selectedCandidate.id === c.id ? 'bg-blue-50/40 border-l-4 border-l-blue-600' : 'hover:bg-gray-50'}`}
                             >
-                                <div className="flex gap-2.5">
+                                <div className="flex gap-3">
                                     <Avatar 
                                         src={c.avatar} 
-                                        sx={{ width: 36, height: 36, borderRadius: '8px', fontWeight: 'bold', fontSize: '13px' }}
+                                        sx={{ width: 44, height: 44, borderRadius: '10px', fontWeight: 'bold' }}
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start mb-0.5">
-                                            <Typography className="font-bold text-gray-800 text-[12px] truncate" title={c.name}>
+                                        <div className="flex justify-between items-start mb-1">
+                                            <Typography className="font-bold text-gray-800 text-sm truncate" title={c.name}>
                                                 {c.name}
                                             </Typography>
-                                            <Typography className="text-gray-400 text-[8px] whitespace-nowrap ml-1 mt-0.5">
+                                            <Typography className="text-gray-400 text-[10px] whitespace-nowrap ml-2">
                                                 {c.appliedDate}
                                             </Typography>
                                         </div>
-                                        <Typography className="text-gray-600 text-[10px] mb-1 line-clamp-1">{c.role}</Typography>
+                                        <Typography className="text-gray-600 text-xs mb-1 line-clamp-1">{c.role}</Typography>
                                         
-                                        <div className="flex flex-col gap-1 mt-1.5">
-                                            <Typography className="text-gray-500 text-[10px] flex items-center gap-1 whitespace-nowrap">
-                                                <FiClock className="text-gray-400 text-[9px]"/> {c.experience}
+                                        <div className="flex justify-between items-end mt-2">
+                                            <Typography className="text-gray-500 text-[11px] flex items-center gap-1">
+                                                <FiClock className="text-gray-400"/> {c.experience}
                                             </Typography>
-                                            <div className="flex justify-end">
-                                                <Chip 
-                                                    label={c.status} 
-                                                    size="small" 
-                                                    className={`${getStatusColor(c.status)} font-bold text-[9px] h-[15px] px-1`}
-                                                />
-                                            </div>
+                                            <Chip 
+                                                label={c.status} 
+                                                size="small" 
+                                                className={`${getStatusColor(c.status)} font-bold text-[10px] h-5`}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -174,35 +171,34 @@ const CVManagement = () => {
                 </div>
 
                 {/* Right: Candidate Detail & CV Preview */}
-                <div className="flex-1 bg-gray-50 overflow-y-auto p-4 flex flex-col gap-4 min-w-0">
+                <div className="flex-1 bg-gray-50 overflow-y-auto p-6 flex flex-col gap-6">
                      
                      {/* Candidate Header Card */}
-                     <Card className="p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white shrink-0">
-                        <div className="flex gap-4 items-center">
+                     <Card className="p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 bg-white">
+                        <div className="flex gap-5 items-center">
                             <Avatar 
                                 src={selectedCandidate.avatar} 
-                                sx={{ width: 64, height: 64, borderRadius: '16px' }}
+                                sx={{ width: 80, height: 80, borderRadius: '20px' }}
                             />
                             <div>
-                                <Typography variant="h6" className="font-bold text-gray-900 mb-0.5 text-base">
-                                    {selectedCandidate.name} <span className="text-gray-500 text-sm font-medium">({selectedCandidate.age} tuổi)</span>
+                                <Typography variant="h5" className="font-bold text-gray-900 mb-1">
+                                    {selectedCandidate.name} <span className="text-gray-500 text-lg font-medium">({selectedCandidate.age} tuổi)</span>
                                 </Typography>
-                                <Typography className="text-blue-700 font-medium text-xs mb-1.5">
+                                <Typography className="text-blue-700 font-medium text-sm mb-2">
                                     Ứng tuyển: {selectedCandidate.role}
                                 </Typography>
-                                <div className="flex items-center gap-4 text-gray-500 text-xs">
-                                    <span className="flex items-center gap-1"><FiMapPin className="text-[14px]" /> {selectedCandidate.location}</span>
-                                    <span className="flex items-center gap-1"><FiClock className="text-[14px]" /> {selectedCandidate.experience}</span>
+                                <div className="flex items-center gap-4 text-gray-500 text-sm">
+                                    <span className="flex items-center gap-1"><FiMapPin /> {selectedCandidate.location}</span>
+                                    <span className="flex items-center gap-1"><FiClock /> {selectedCandidate.experience}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 min-w-[200px] w-full lg:w-auto mt-2 lg:mt-0">
+                        <div className="flex flex-col gap-3 min-w-[220px] w-full xl:w-auto">
                             <Button 
                                 variant="outlined" 
                                 startIcon={<FiDownload />} 
-                                size="small"
-                                className="w-full border-gray-200 text-gray-700 font-bold rounded-lg capitalize hover:bg-gray-50 py-1 text-xs"
+                                className="w-full border-gray-200 text-gray-700 font-bold rounded-xl capitalize hover:bg-gray-50 py-2"
                             >
                                 Tải CV xuống
                             </Button>
@@ -210,8 +206,7 @@ const CVManagement = () => {
                                 <Button 
                                     variant="contained" 
                                     startIcon={<FiCalendar />}
-                                    size="small"
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg capitalize shadow-sm py-1 text-xs"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl capitalize shadow-sm py-2"
                                     onClick={() => setOpenInterviewModal(true)}
                                 >
                                     Lên lịch PV
@@ -219,8 +214,7 @@ const CVManagement = () => {
                                 <Button 
                                     variant="contained" 
                                     startIcon={<FiXCircle />}
-                                    size="small"
-                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg capitalize shadow-none elevation-0 border border-red-100 py-1 text-xs"
+                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl capitalize shadow-none elevation-0 border border-red-100 py-2"
                                     onClick={() => setOpenRejectModal(true)}
                                 >
                                     Từ chối
@@ -230,23 +224,23 @@ const CVManagement = () => {
                      </Card>
 
                      {/* CV PDF Viewer Area */}
-                     <Card className="flex-1 rounded-xl shadow-sm border border-gray-100 bg-white overflow-hidden flex flex-col min-h-[400px]">
-                        <div className="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center shrink-0">
-                            <Typography className="font-bold text-gray-700 text-sm flex items-center gap-2">
+                     <Card className="flex-1 rounded-2xl shadow-sm border border-gray-100 bg-white overflow-hidden flex flex-col min-h-[600px]">
+                        <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <Typography className="font-bold text-gray-700 flex items-center gap-2">
                                 Hồ sơ đính kèm (PDF)
                             </Typography>
                         </div>
-                        <div className="flex-1 w-full bg-gray-200 relative min-h-0">
+                        <div className="flex-1 w-full bg-gray-200 relative">
                             {/* Embedded PDF Viewer */}
                             <object 
                                 data={selectedCandidate.cvUrl} 
                                 type="application/pdf" 
                                 className="absolute inset-0 w-full h-full"
                             >
-                                <div className="flex items-center justify-center h-full flex-col gap-2 text-gray-500 bg-white">
-                                    <FiDownload size={32} className="text-gray-400"/>
-                                    <Typography className="text-sm">Không thể hiển thị PDF trực tiếp. Vui lòng tải xuống.</Typography>
-                                    <Button variant="outlined" size="small" startIcon={<FiDownload />}>Tải CV</Button>
+                                <div className="flex items-center justify-center h-full flex-col gap-3 text-gray-500 bg-white">
+                                    <FiDownload size={48} className="text-gray-400"/>
+                                    <Typography>Không thể hiển thị PDF trực tiếp. Vui lòng tải xuống.</Typography>
+                                    <Button variant="outlined" startIcon={<FiDownload />}>Tải CV</Button>
                                 </div>
                             </object>
                         </div>
