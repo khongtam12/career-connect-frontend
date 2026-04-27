@@ -4,9 +4,10 @@ import {
   FiDownload, FiCheckCircle, FiCalendar, FiXCircle 
 } from 'react-icons/fi';
 import { 
-  Typography, Button, Select, MenuItem, Chip, Avatar,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Card
+  Typography, Button, Select, MenuItem, Chip, Avatar, Card
 } from '@mui/material';
+import ScheduleInterviewModal from './components/ScheduleInterviewModal';
+import RejectApplicationModal from './components/RejectApplicationModal';
 
 const candidatesData = [
   {
@@ -211,7 +212,7 @@ const CVManagement = () => {
                                     variant="contained" 
                                     startIcon={<FiCalendar />}
                                     size="small"
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg capitalize shadow-sm py-1 text-xs"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg capitalize shadow-sm py-1 text-sm"
                                     onClick={() => setOpenInterviewModal(true)}
                                 >
                                     Lên lịch PV
@@ -254,104 +255,18 @@ const CVManagement = () => {
                 </div>
             </div>
 
-            {/* Modal: Schedule Interview */}
-            <Dialog 
+            {/* Modals */}
+            <ScheduleInterviewModal 
                 open={openInterviewModal} 
-                onClose={() => setOpenInterviewModal(false)}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: '16px' } }}
-            >
-                <DialogTitle className="font-bold text-xl border-b border-gray-100 pb-3">
-                    Lên lịch phỏng vấn
-                </DialogTitle>
-                <DialogContent className="pt-5 flex flex-col gap-5">
-                    <Typography className="text-gray-600 text-sm">
-                        Thiết lập lịch phỏng vấn cho ứng viên <span className="font-bold">{selectedCandidate.name}</span>. Thông báo sẽ được gửi qua email.
-                    </Typography>
-                    
-                    <div className="flex gap-4">
-                        <TextField 
-                            label="Ngày phỏng vấn" 
-                            type="date" 
-                            fullWidth 
-                            InputLabelProps={{ shrink: true }}
-                            size="small"
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                        />
-                        <TextField 
-                            label="Thời gian" 
-                            type="time" 
-                            fullWidth 
-                            InputLabelProps={{ shrink: true }}
-                            size="small"
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                        />
-                    </div>
-                    
-                    <TextField 
-                        label="Địa điểm / Link họp online" 
-                        placeholder="VD: Tầng 3, Tòa nhà ABC hoặc Link Google Meet"
-                        fullWidth 
-                        size="small"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
-                    
-                    <TextField 
-                        label="Lời nhắn / Ghi chú cho ứng viên" 
-                        multiline
-                        rows={3}
-                        placeholder="Trang phục, yêu cầu chuẩn bị..."
-                        fullWidth 
-                        size="small"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
-                </DialogContent>
-                <DialogActions className="p-4 border-t border-gray-100">
-                    <Button onClick={() => setOpenInterviewModal(false)} className="text-gray-500 font-bold capitalize">
-                        Hủy
-                    </Button>
-                    <Button variant="contained" className="bg-emerald-600 hover:bg-emerald-700 font-bold capitalize rounded-xl px-6">
-                        Xác nhận Lên Lịch
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                onClose={() => setOpenInterviewModal(false)} 
+                candidateName={selectedCandidate.name} 
+            />
 
-            {/* Modal: Reject Application */}
-            <Dialog 
+            <RejectApplicationModal 
                 open={openRejectModal} 
-                onClose={() => setOpenRejectModal(false)}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: '16px' } }}
-            >
-                <DialogTitle className="font-bold text-xl border-b border-gray-100 pb-3 text-red-600 flex items-center gap-2">
-                    <FiXCircle /> Từ chối hồ sơ
-                </DialogTitle>
-                <DialogContent className="pt-5 flex flex-col gap-4">
-                    <Typography className="text-gray-600 text-sm mb-2">
-                        Bạn đang từ chối hồ sơ của <span className="font-bold">{selectedCandidate.name}</span>. Vui lòng cung cấp lý do để ứng viên có thể cải thiện trong tương lai.
-                    </Typography>
-                    
-                    <TextField 
-                        label="Lý do từ chối (Bắt buộc)" 
-                        multiline
-                        rows={4}
-                        placeholder="VD: Kinh nghiệm chưa phù hợp với yêu cầu vị trí hiện tại..."
-                        fullWidth 
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
-                </DialogContent>
-                <DialogActions className="p-4 border-t border-gray-100">
-                    <Button onClick={() => setOpenRejectModal(false)} className="text-gray-500 font-bold capitalize">
-                        Hủy
-                    </Button>
-                    <Button variant="contained" color="error" className="font-bold capitalize rounded-xl px-6 bg-red-600 hover:bg-red-700 shadow-none">
-                        Xác nhận Từ Chối
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                onClose={() => setOpenRejectModal(false)} 
+                candidateName={selectedCandidate.name} 
+            />
 
         </div>
     );
