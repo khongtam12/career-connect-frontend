@@ -20,6 +20,8 @@ import LoginCD from "../pages/Candidate/Login/login.jsx";
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/index.jsx";
+import RecruiterList from "../pages/Admin/RecruiterManagement/RecruiterList";
+import PendingApprovals from "../pages/Employer/company/PendingApprovals";
 export const router = createBrowserRouter([
     {
         path: "/login",
@@ -105,6 +107,14 @@ export const router = createBrowserRouter([
             {
                 path: '/admin/job',
                 element: <Job />,
+            },
+            {
+                path: '/admin/recruiters',
+                element: <RecruiterList />,
+            },
+            {
+                path: '/admin/company-approvals',
+                element: <PendingApprovals />,
             }
         ],
     },
