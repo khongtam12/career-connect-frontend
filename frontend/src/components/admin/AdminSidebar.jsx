@@ -16,7 +16,8 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     {
       title: 'QUẢN LÝ DỮ LIỆU',
       items: [
-        { name: 'Nhà tuyển dụng (B2B)', icon: <FiBriefcase />, path: '/admin/companies', active: false },
+        { name: 'Quản lý Recruiter', icon: <FiBriefcase />, path: '/admin/recruiters', active: false },
+        { name: 'Phê duyệt Công ty', icon: <FiUsers />, path: '/admin/company-approvals', active: false },
         { name: 'Ứng viên (B2C)', icon: <FiUsers />, path: '/admin/candidates', active: false },
         { name: 'Tài chính & Hóa đơn', icon: <FiDollarSign />, path: '/admin/billing', active: false },
       ]
