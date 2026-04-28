@@ -22,6 +22,8 @@ import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/index.jsx";
 import RecruiterList from "../pages/Admin/RecruiterManagement/RecruiterList";
 import PendingApprovals from "../pages/Employer/company/PendingApprovals";
+import CandidateManagement from "../pages/Admin/CandidateManagement/index.jsx";
+
 export const router = createBrowserRouter([
     {
         path: "/login",
@@ -111,6 +113,10 @@ export const router = createBrowserRouter([
             {
                 path: '/admin/recruiters',
                 element: <RecruiterList />,
+            },
+            {
+                path: '/admin/candidates',
+                element: <CandidateManagement />,
             },
             {
                 path: '/admin/company-approvals',
