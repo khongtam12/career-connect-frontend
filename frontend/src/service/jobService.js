@@ -120,3 +120,8 @@ export const applyForJob = async (payload) => {
   const res = await apiClient.post('/api/v1/apply', payload);
   return res.data;
 };
+
+export const getMyApplications = async () => {
+  const res = await apiClient.get('/api/v1/apply/my-applications');
+  return res.data;
+};

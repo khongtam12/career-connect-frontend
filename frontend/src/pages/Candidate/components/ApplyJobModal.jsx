@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FileText, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { applyForJob } from '../../../service/jobService';
+import { addAppliedJob } from '../utils/jobTracker';
 import * as cvService from '../../../service/cvService';
 import { useUserStore } from '../../../stores/useUserStore';
 
@@ -53,10 +54,11 @@ export default function ApplyJobModal({ open, onClose, job }) {
 
     try {
       await applyForJob({
-        jobId: String(job.id),
+        jobId: String(job?.jobId || job?.id),
         cvId: selectedCvId,
         note: note.trim() || undefined,
       });
+      addAppliedJob(job);
       setSuccess(true);
     } catch (err) {
       const msg =
