@@ -7,6 +7,7 @@ import CTASection from './components/CTASection';
 import HowItWorks from './components/HowItWorks';
 import { getJobFilters, getJobStats, searchJobs } from '../../service/jobService';
 import { categoriesData } from '../../data/categoriesData';
+import { getAppliedJobs, getSavedJobs } from './utils/jobTracker';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ export default function Home() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [appliedJobs, setAppliedJobs] = useState([]);
 
   const mappedCategories = useMemo(() => {
     if (filterOptions.industries.length === 0) {
@@ -124,6 +127,17 @@ export default function Home() {
     applyFilters(0, filters);
   }, []);
 
+  useEffect(() => {
+    const syncManagedJobs = () => {
+      setSavedJobs(getSavedJobs());
+      setAppliedJobs(getAppliedJobs());
+    };
+
+    syncManagedJobs();
+    window.addEventListener('jobTrackerUpdated', syncManagedJobs);
+    return () => window.removeEventListener('jobTrackerUpdated', syncManagedJobs);
+  }, []);
+
   return (
     <div className="bg-white">
       {/* Hero Section with Search */}
@@ -143,6 +157,8 @@ export default function Home() {
         filterOptions={filterOptions}
         onQuickFilter={handleQuickFilter}
         onViewAll={() => navigate('/jobs')}
+        savedJobs={savedJobs}
+        appliedJobs={appliedJobs}
       />
 
       {/* How It Works */}

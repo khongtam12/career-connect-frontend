@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import JobCard from './JobCard';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Briefcase, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const filterOptionsList = [
   { value: 'location', label: 'Địa điểm' },
@@ -30,15 +31,24 @@ export default function BestJobsSection({
   filterOptions,
   onQuickFilter,
   onViewAll,
+  savedJobs = [],
+  appliedJobs = [],
 }) {
   const [activeFilterType, setActiveFilterType] = useState('location');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isManagementOpen, setIsManagementOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const managementRef = useRef(null);
+  const managementCount = savedJobs.length + appliedJobs.length;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (managementRef.current && !managementRef.current.contains(event.target)) {
+        setIsManagementOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -148,6 +158,45 @@ export default function BestJobsSection({
                     >
                       {item.label}
                       {activeFilterType === item.value && <span className="text-emerald-600">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div ref={managementRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsManagementOpen((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-100"
+              >
+                <Briefcase size={16} />
+                Quản lý tìm việc
+                {managementCount > 0 && (
+                  <span className="rounded-full bg-emerald-600 text-white text-xs px-2 py-0.5">
+                    {managementCount}
+                  </span>
+                )}
+                <ChevronDown size={16} className={`transition-transform ${isManagementOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isManagementOpen && (
+                <div className="absolute left-0 top-12 z-20 w-64 rounded-2xl border border-emerald-100 bg-white p-2 shadow-xl">
+                  {[
+                    { key: 'saved', label: 'Việc làm đã lưu', count: savedJobs.length },
+                    { key: 'applied', label: 'Việc làm đã ứng tuyển', count: appliedJobs.length },
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        navigate(item.key === 'saved' ? '/saved-jobs' : '/applied-jobs');
+                        setIsManagementOpen(false);
+                      }}
+                      className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-xs text-gray-400">{item.count}</span>
                     </button>
                   ))}
                 </div>
