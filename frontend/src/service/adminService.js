@@ -24,3 +24,5 @@ export const patchRecruiterStatus = async (id, status) => {
     const res = await apiClient.patch(`/api/v1/admin/recruiters/${id}/status`, { status });
     return res.data;
 };
+
+
