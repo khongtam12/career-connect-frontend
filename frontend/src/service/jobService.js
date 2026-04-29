@@ -120,3 +120,30 @@ export const applyForJob = async (payload) => {
   const res = await apiClient.post('/api/v1/apply', payload);
   return res.data;
 };
+
+export const getJobsByAdmin = async (search, status, page = 0, size = 10) => {
+  const params = { page, size };
+  if (search) params.search = search;
+  if (status && status !== 'all') params.status = status;
+  const res = await apiClient.get('/api/v1/job/admin/filter', { params });
+  return res.data;
+};
+
+export const adminChangeJobStatus = async (jobId, status, adminId) => {
+  // We specify jobId in path and status as request param
+  const res = await apiClient.put(`/api/v1/job/admin/${jobId}/status`, null, {
+    params: { status },
+    headers: { 'X-Admin-Id': adminId || 'ADMIN001' }
+  });
+  return res.data;
+};
+
+
+export const adminDeleteJob = async (jobId, adminId) => {
+  const res = await apiClient.delete(`/api/v1/job/admin/${jobId}`, {
+    headers: {
+      'X-Admin-Id': adminId || 'ADMIN001'
+    }
+  });
+  return res.data;
+};

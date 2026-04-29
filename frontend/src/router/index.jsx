@@ -6,7 +6,7 @@ import Home1 from "../pages/Employer/Home";
 import Error from "../pages/Error.jsx/Error";
 import AdminLayout from "../layouts/AdminLayout";
 import EmployerLayout from "../layouts/EmployerLayout";
-import Job from "../pages/Admin/Job";
+import Job from "../pages/Admin/RecruitmentNewsManagement/Job.jsx";
 import About from "../pages/Employer/About";
 import JobManagement from "../pages/Employer/Jobs/index.jsx";
 import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
@@ -107,7 +107,7 @@ export const router = createBrowserRouter([
         children: [
             { index: true, element: <Dashboard /> },
             {
-                path: '/admin/job',
+                path: '/admin/jobs',
                 element: <Job />,
             },
             {
