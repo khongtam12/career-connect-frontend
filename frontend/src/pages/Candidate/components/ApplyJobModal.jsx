@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, FileText, CheckCircle2, AlertTriangle, Loader2, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { applyForJob } from '../../../service/jobService';
+import { applyForJob,uploadApplicationFile } from '../../../service/applicationService';
 import { addAppliedJob } from '../utils/jobTracker';
 import * as cvService from '../../../service/cvService';
 import { useUserStore } from '../../../stores/useUserStore';
@@ -9,6 +9,11 @@ import { useUserStore } from '../../../stores/useUserStore';
 export default function ApplyJobModal({ open, onClose, job }) {
   const [cvList, setCvList] = useState([]);
   const [selectedCvId, setSelectedCvId] = useState('');
+  
+  // --- Thêm state cho tính năng Upload ---
+  const [uploadMode, setUploadMode] = useState('library'); // 'library' | 'local'
+  const [localFile, setLocalFile] = useState(null);
+  
   const [note, setNote] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -36,39 +41,94 @@ export default function ApplyJobModal({ open, onClose, job }) {
       setAgreed(false);
       setSuccess(false);
       setError('');
+      setUploadMode('library');
+      setLocalFile(null);
     }
   }, [open, user]);
 
   const handleSubmit = async () => {
-    if (!selectedCvId) {
-      setError('Vui lòng chọn CV để ứng tuyển.');
-      return;
-    }
-    if (!agreed) {
-      setError('Vui lòng đồng ý với điều khoản sử dụng.');
-      return;
-    }
+  if (uploadMode === 'library' && !selectedCvId) {
+    setError('Vui lòng chọn CV để ứng tuyển.');
+    return;
+  }
 
-    setLoading(true);
-    setError('');
+  if (uploadMode === 'local' && !localFile) {
+    setError('Vui lòng tải lên CV của bạn.');
+    return;
+  }
 
-    try {
-      await applyForJob({
-        jobId: String(job?.jobId || job?.id),
-        cvId: selectedCvId,
-        note: note.trim() || undefined,
-      });
-      addAppliedJob(job);
-      setSuccess(true);
-    } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        'Đã xảy ra lỗi khi nộp hồ sơ. Vui lòng thử lại.';
-      setError(msg);
-    } finally {
-      setLoading(false);
+  if (!agreed) {
+    setError('Vui lòng đồng ý với điều khoản sử dụng.');
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+
+  try {
+    let cvId;
+    let url;
+
+    if (uploadMode === 'library') {
+      cvId = selectedCvId;
+
+      const selectedCv = cvList.find((cv) => cv.id === selectedCvId);
+      url = selectedCv?.url || undefined;
+    } else {
+      const uploaded = await uploadApplicationFile(localFile);
+      cvId = uploaded.data.id;
+      url = uploaded.data.url;
+  
+
     }
-  };
+    console.log("job",job);
+    console.log("company",job.companyId);
+    console.log("industry",job.industryId);
+
+    const payload = {
+      jobId: String(job.id),
+      cvId,
+      companyId: job.companyId,
+      industryId: job.industryId,
+      url,
+      note: note.trim() || undefined,
+    };
+
+    await applyForJob(payload);
+    setSuccess(true);
+  } catch (err) {
+    const msg =
+      err?.response?.data?.message ||
+      'Đã xảy ra lỗi khi nộp hồ sơ. Vui lòng thử lại.';
+    setError(msg);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleFileChange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setError('Chỉ hỗ trợ file PDF, DOC, DOCX.');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    setError('File tối đa 5MB.');
+    return;
+  }
+
+  setLocalFile(file);
+  setError('');
+};
 
   if (!open) return null;
 
@@ -144,79 +204,132 @@ export default function ApplyJobModal({ open, onClose, job }) {
 
                   {/* ─── Body ─── */}
                   <div className="px-6 py-6 max-h-[65vh] overflow-y-auto space-y-6">
-                    {/* CV Selection */}
+                    
+                    {/* CV Selection / Upload Area */}
                     <div>
-                      <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
-                        <FileText size={18} className="text-emerald-600" />
-                        Chọn CV để ứng tuyển
-                      </label>
+                      <div className="flex gap-6 mb-4 border-b border-gray-200">
+                        <button
+                          className={`pb-2 text-sm font-bold transition-colors ${
+                            uploadMode === 'library'
+                              ? 'text-emerald-600 border-b-2 border-emerald-600'
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                          onClick={() => setUploadMode('library')}
+                        >
+                          CV đã tạo trên hệ thống
+                        </button>
+                        <button
+                          className={`pb-2 text-sm font-bold transition-colors ${
+                            uploadMode === 'local'
+                              ? 'text-emerald-600 border-b-2 border-emerald-600'
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                          onClick={() => setUploadMode('local')}
+                        >
+                          Tải CV từ máy tính
+                        </button>
+                      </div>
 
-                      {cvList.length === 0 ? (
-                        <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
-                          <FileText
-                            size={36}
-                            className="text-gray-300 mx-auto mb-3"
-                          />
-                          <p className="text-sm text-gray-500 mb-1">
-                            Bạn chưa có CV nào trong thư viện.
-                          </p>
-                          <a
-                            href="/cv-builder"
-                            className="text-sm text-emerald-600 font-semibold hover:underline"
-                          >
-                            Tạo CV ngay →
-                          </a>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {cvList.map((cv) => (
-                            <label
-                              key={cv.id}
-                              className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                                selectedCvId === cv.id
-                                  ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                              }`}
+                      {uploadMode === 'library' ? (
+                        // Danh sách CV có sẵn
+                        cvList.length === 0 ? (
+                          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                            <FileText size={36} className="text-gray-300 mx-auto mb-3" />
+                            <p className="text-sm text-gray-500 mb-1">
+                              Bạn chưa có CV nào trong thư viện.
+                            </p>
+                            <a
+                              href="/cv-builder"
+                              className="text-sm text-emerald-600 font-semibold hover:underline"
                             >
-                              <input
-                                type="radio"
-                                name="cv-select"
-                                value={cv.id}
-                                checked={selectedCvId === cv.id}
-                                onChange={() => setSelectedCvId(cv.id)}
-                                className="sr-only"
-                              />
-                              <div
-                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              Tạo CV ngay →
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {cvList.map((cv) => (
+                              <label
+                                key={cv.id}
+                                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                                   selectedCvId === cv.id
-                                    ? 'border-emerald-500'
-                                    : 'border-gray-300'
+                                    ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                               >
+                                <input
+                                  type="radio"
+                                  name="cv-select"
+                                  value={cv.id}
+                                  checked={selectedCvId === cv.id}
+                                  onChange={() => setSelectedCvId(cv.id)}
+                                  className="sr-only"
+                                />
+                                <div
+                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                    selectedCvId === cv.id
+                                      ? 'border-emerald-500'
+                                      : 'border-gray-300'
+                                  }`}
+                                >
+                                  {selectedCvId === cv.id && (
+                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-800 truncate">
+                                    {cv.name || 'CV chưa đặt tên'}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-0.5">
+                                    Cập nhật:{' '}
+                                    {cv.updatedAt
+                                      ? new Date(cv.updatedAt).toLocaleDateString('vi-VN')
+                                      : 'Không rõ'}
+                                  </p>
+                                </div>
                                 {selectedCvId === cv.id && (
-                                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                                  <span className="text-xs text-emerald-600 font-bold bg-emerald-100 px-2 py-1 rounded-lg">
+                                    Đã chọn
+                                  </span>
                                 )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-800 truncate">
-                                  {cv.name || 'CV chưa đặt tên'}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  Cập nhật:{' '}
-                                  {cv.updatedAt
-                                    ? new Date(cv.updatedAt).toLocaleDateString(
-                                        'vi-VN'
-                                      )
-                                    : 'Không rõ'}
-                                </p>
-                              </div>
-                              {selectedCvId === cv.id && (
-                                <span className="text-xs text-emerald-600 font-bold bg-emerald-100 px-2 py-1 rounded-lg">
-                                  Đã chọn
-                                </span>
-                              )}
-                            </label>
-                          ))}
+                              </label>
+                            ))}
+                          </div>
+                        )
+                      ) : (
+                        // Giao diện upload file từ local
+                        <div 
+                          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
+                            localFile ? 'border-emerald-500 bg-emerald-50' : 'border-gray-300 hover:bg-gray-50'
+                          }`}
+                          onClick={() => document.getElementById('cv-upload').click()}
+                        >
+                          <UploadCloud size={36} className={`mx-auto mb-3 ${localFile ? 'text-emerald-500' : 'text-gray-400'}`} />
+                          {localFile ? (
+                            <>
+                              <p className="text-sm font-semibold text-emerald-700 truncate px-4">
+                                {localFile.name}
+                              </p>
+                              <p className="text-xs text-emerald-600 mt-1">
+                                ({(localFile.size / 1024 / 1024).toFixed(2)} MB) - Nhấn để chọn file khác
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-semibold text-gray-700">
+                                Nhấn để tải lên CV của bạn
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Hỗ trợ định dạng .pdf, .doc, .docx (Tối đa 5MB)
+                              </p>
+                            </>
+                          )}
+                          <input
+                            id="cv-upload"
+                            type="file"
+                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
                         </div>
                       )}
                     </div>
@@ -228,8 +341,7 @@ export default function ApplyJobModal({ open, onClose, job }) {
                         Thư giới thiệu:
                       </label>
                       <p className="text-xs text-gray-500 mb-3">
-                        Một thư giới thiệu ngắn gọn, chỉn chu sẽ giúp bạn gây
-                        ấn tượng hơn với nhà tuyển dụng.
+                        Một thư giới thiệu ngắn gọn, chỉn chu sẽ giúp bạn gây ấn tượng hơn với nhà tuyển dụng.
                       </p>
                       <textarea
                         value={note}
@@ -247,9 +359,7 @@ export default function ApplyJobModal({ open, onClose, job }) {
                         Lưu ý:
                       </p>
                       <p className="text-xs text-amber-600 leading-relaxed">
-                        Hãy luôn cẩn trọng trong quá trình tìm việc và chủ động
-                        nghiên cứu về thông tin công ty, vị trí việc làm trước
-                        khi ứng tuyển.
+                        Hãy luôn cẩn trọng trong quá trình tìm việc và chủ động nghiên cứu về thông tin công ty, vị trí việc làm trước khi ứng tuyển.
                       </p>
                     </div>
 
@@ -263,7 +373,7 @@ export default function ApplyJobModal({ open, onClose, job }) {
                       />
                       <span className="text-xs text-gray-600 leading-relaxed">
                         Tôi đã đọc và đồng ý với{' '}
-                        <span className="text-emerald-600 font-semibold">
+                        <span className="text-emerald-600 font-semibold hover:underline">
                           "Thoả thuận sử dụng dữ liệu cá nhân"
                         </span>{' '}
                         của Nhà tuyển dụng.
@@ -287,9 +397,9 @@ export default function ApplyJobModal({ open, onClose, job }) {
                   <div className="px-6 pb-6">
                     <button
                       onClick={handleSubmit}
-                      disabled={loading || !selectedCvId}
+                      disabled={loading || (uploadMode === 'library' ? !selectedCvId : !localFile)}
                       className={`w-full py-3.5 rounded-xl font-bold text-white text-base transition-all duration-200 flex items-center justify-center gap-2 ${
-                        loading || !selectedCvId
+                        loading || (uploadMode === 'library' ? !selectedCvId : !localFile)
                           ? 'bg-gray-300 cursor-not-allowed'
                           : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'
                       }`}

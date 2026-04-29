@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import JobManagementPanel from './components/JobManagementPanel';
 import { getAppliedJobs, getSavedJobs } from './utils/jobTracker';
-import { getJobById, getMyApplications } from '../../service/jobService';
+import { getJobById } from '../../service/jobService';
+import { getMyApplications } from '../../service/applicationService';
 
 export default function AppliedJobs() {
   const navigate = useNavigate();
