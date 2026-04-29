@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {getJobById} from "../../service/jobService";
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 import ApplyJobModal from './components/ApplyJobModal';
+import { isJobSaved, toggleSavedJob } from './utils/jobTracker';
 
 /* ── Reusable info‑row for sidebar ── */
 function InfoRow({ icon: Icon, label, value, iconColor = 'text-emerald-600' }) {
@@ -59,18 +60,23 @@ export default function JobDetail() {
 
   const [job, setJob] = useState(null);
 
-useEffect(() => {
-  const fetchJob = async () => {
-    try {
-      const data = await getJobById(id);
-      setJob(TransformJob(data));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const data = await getJobById(id);
+        setJob(TransformJob(data));
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  fetchJob();
-}, [id]);
+    fetchJob();
+  }, [id]);
+
+  useEffect(() => {
+    if (!job) return;
+    setIsSaved(isJobSaved(job.id || job.jobId));
+  }, [job]);
 
   if (!job) {
     return (
@@ -181,7 +187,7 @@ useEffect(() => {
                       Ứng tuyển ngay
                     </button>
                     <button
-                      onClick={() => setIsSaved(!isSaved)}
+                      onClick={() => setIsSaved(toggleSavedJob(job))}
                       className={`flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${
                         isSaved
                           ? 'border-red-300 bg-red-50 text-red-600'

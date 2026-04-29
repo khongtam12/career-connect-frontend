@@ -121,6 +121,7 @@ export const applyForJob = async (payload) => {
   return res.data;
 };
 
+
 export const getJobsByAdmin = async (search, status, page = 0, size = 10) => {
   const params = { page, size };
   if (search) params.search = search;
@@ -145,5 +146,10 @@ export const adminDeleteJob = async (jobId, adminId) => {
       'X-Admin-Id': adminId || 'ADMIN001'
     }
   });
+  return res.data;
+};
+
+export const getMyApplications = async () => {
+  const res = await apiClient.get('/api/v1/apply/my-applications');
   return res.data;
 };
