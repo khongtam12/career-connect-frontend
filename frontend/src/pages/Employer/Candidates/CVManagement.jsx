@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FiSearch, FiFilter, FiMapPin, FiClock, 
-  FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash 
+  FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash, FiRefreshCw 
 } from 'react-icons/fi';
 import ScheduleInterviewModal from './components/ScheduleInterviewModal';
 import RejectApplicationModal from './components/RejectApplicationModal';
@@ -264,6 +264,15 @@ const CVManagement = () => {
                         <FiXCircle className="text-xs" /> Xóa lọc
                     </button>
                 )}
+                <button 
+                    onClick={() => {
+                        setLoading(true);
+                        fetchCandidates();
+                    }}
+                    className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg px-4 py-2 text-sm font-bold transition-colors ml-auto"
+                >
+                    <FiRefreshCw className="text-xs" /> Làm mới
+                </button>
             </div>
 
             {/* Main Content Area */}

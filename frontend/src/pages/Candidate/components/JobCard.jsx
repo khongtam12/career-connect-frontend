@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { isJobSaved, toggleSavedJob } from '../utils/jobTracker';
 
+export default function JobCard({ job, isFeatured = false, onDetail, isSaved, onToggleSave }) {
+  const jobId = job?.jobId || job?.id;
+  const [localSaved, setLocalSaved] = React.useState(() => isJobSaved(jobId));
+  const resolvedSaved = typeof isSaved === 'boolean' ? isSaved : localSaved;
 
+  useEffect(() => {
+    setLocalSaved(isJobSaved(jobId));
+  }, [jobId]);
 
-export default function JobCard({ job, isFeatured = false, onDetail }) {
-  const [isSaved, setIsSaved] = React.useState(false);
+  useEffect(() => {
+    const handleUpdate = () => setLocalSaved(isJobSaved(jobId));
+    window.addEventListener('jobTrackerUpdated', handleUpdate);
+    return () => window.removeEventListener('jobTrackerUpdated', handleUpdate);
+  }, [jobId]);
 
   const companyName =
     job.companyName || job.company || job.companyId || 'Doanh nghiep';
@@ -76,15 +87,22 @@ export default function JobCard({ job, isFeatured = false, onDetail }) {
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={() => setIsSaved(!isSaved)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${isSaved
+            onClick={() => {
+              if (onToggleSave) {
+                onToggleSave(job, !resolvedSaved);
+                return;
+              }
+              const next = toggleSavedJob(job);
+              setLocalSaved(next);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${resolvedSaved
                 ? 'bg-red-100 text-red-600 hover:bg-red-200'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
           >
-            <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={resolvedSaved ? 'currentColor' : 'none'} />
             <span className="hidden sm:inline">
-              {isSaved ? 'Đã lưu' : 'Lưu'}
+              {resolvedSaved ? 'Đã lưu' : 'Lưu'}
             </span>
           </button>
 

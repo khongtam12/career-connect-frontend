@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FileText, CheckCircle2, AlertTriangle, Loader2, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { applyForJob,uploadApplicationFile } from '../../../service/applicationService';
+import { addAppliedJob } from '../utils/jobTracker';
 import * as cvService from '../../../service/cvService';
 import { useUserStore } from '../../../stores/useUserStore';
 

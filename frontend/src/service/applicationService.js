@@ -20,6 +20,12 @@ export const uploadApplicationFile = async (file) => {
   return res.data;
 };
 
+// get my applications
+export const getMyApplications = async () => {
+  const res = await apiClient.get('/api/v1/apply/my-applications');
+  return res.data;
+};
+
 
 //employer
 export const getCandidatesForEmployer = async () => {

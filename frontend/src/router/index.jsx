@@ -13,6 +13,8 @@ import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
 import CVDashboard from "../pages/Candidate/CVDashboard/index.jsx";
 import Jobs from "../pages/Candidate/Jobs.jsx";
 import JobDetail from "../pages/Candidate/JobDetail.jsx";
+import SavedJobs from "../pages/Candidate/SavedJobs.jsx";
+import AppliedJobs from "../pages/Candidate/AppliedJobs.jsx";
 import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccountForm.jsx";
 import Login from "../pages/Employer/Login/login.jsx";
 import LoginAM from "../pages/Admin/Login/login.jsx";
@@ -20,6 +22,10 @@ import LoginCD from "../pages/Candidate/Login/login.jsx";
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
+import RecruiterList from "../pages/Admin/RecruiterManagement/RecruiterList";
+import PendingApprovals from "../pages/Employer/company/PendingApprovals";
+import CandidateManagement from "../pages/Admin/CandidateManagement/index.jsx";
+
 export const router = createBrowserRouter([
     {
         path: "/login",
@@ -49,6 +55,14 @@ export const router = createBrowserRouter([
             {
                 path: "/job/:id",
                 element: <JobDetail />
+            },
+            {
+                path: "/saved-jobs",
+                element: <SavedJobs />
+            },
+            {
+                path: "/applied-jobs",
+                element: <AppliedJobs />
             }
         ]
     },
@@ -105,6 +119,18 @@ export const router = createBrowserRouter([
             {
                 path: '/admin/job',
                 element: <Job />,
+            },
+            {
+                path: '/admin/recruiters',
+                element: <RecruiterList />,
+            },
+            {
+                path: '/admin/candidates',
+                element: <CandidateManagement />,
+            },
+            {
+                path: '/admin/company-approvals',
+                element: <PendingApprovals />,
             }
         ],
     },
