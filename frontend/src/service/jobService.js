@@ -110,13 +110,3 @@ export const getJobStats = async () => {
 
 
 
-// ── CANDIDATE ──
-
-/**
- * Apply for a job — POST /api/v1/apply
- */
-
-export const applyForJob = async (payload) => {
-  const res = await apiClient.post('/api/v1/apply', payload);
-  return res.data;
-};

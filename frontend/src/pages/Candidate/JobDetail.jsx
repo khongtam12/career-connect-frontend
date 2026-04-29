@@ -63,6 +63,7 @@ useEffect(() => {
   const fetchJob = async () => {
     try {
       const data = await getJobById(id);
+      console.log("data",data);
       setJob(TransformJob(data));
     } catch (err) {
       console.error(err);

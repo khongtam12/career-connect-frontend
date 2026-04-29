@@ -19,7 +19,7 @@ import LoginAM from "../pages/Admin/Login/login.jsx";
 import LoginCD from "../pages/Candidate/Login/login.jsx";
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
-import Candidates from "../pages/Employer/Candidates/index.jsx";
+import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
 export const router = createBrowserRouter([
     {
         path: "/login",
