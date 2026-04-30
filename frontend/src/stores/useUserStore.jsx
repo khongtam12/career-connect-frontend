@@ -36,7 +36,7 @@ export const useUserStore = create(
 
                     set({
                         user,
-                        isAuthenticated: true,
+                        isAuthenticated: !!user,
                         loading: false,
                     });
 
@@ -61,7 +61,7 @@ export const useUserStore = create(
 
                     set({
                         user,
-                        isAuthenticated: true,
+                        isAuthenticated: !!user,
                         loading: false,
                     });
 

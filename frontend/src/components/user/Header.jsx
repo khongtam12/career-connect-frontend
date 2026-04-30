@@ -2,7 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 
+import CandidateMenu from "./CandidateMenu";
+import { useUserStore } from "../../stores/useUserStore";
 const Header = ({ rightSlot }) => {
+  const hydrated = useUserStore.persist.hasHydrated();
+  const user = useUserStore((s) => s.user);
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated);
+
+  if (!hydrated) return null;
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -51,25 +58,20 @@ const Header = ({ rightSlot }) => {
             </nav>
           </div>
 
-          {/* RIGHT: Custom slot hoặc default auth buttons */}
           <div className="flex items-center space-x-3">
-            {rightSlot ?? (
+            {isAuthenticated ? (
+              <CandidateMenu user={user} />
+            ) : (
               <>
                 <Link to="/register">
-                  <button className="hidden sm:block border border-emerald-500 text-emerald-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-50 transition-colors">
+                  <button className="hidden sm:block border border-emerald-500 text-emerald-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-50">
                     Đăng ký
                   </button>
                 </Link>
 
                 <Link to="/login">
-                  <button className="hidden sm:block bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-700 transition-colors">
+                  <button className="hidden sm:block bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-700">
                     Đăng nhập
-                  </button>
-                </Link>
-
-                <Link to="/employer/login">
-                  <button className="hidden md:block text-gray-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-300">
-                    Đăng tuyển &amp; tìm hộ sơ
                   </button>
                 </Link>
               </>

@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Header from "../components/user/Header"
 import { Outlet, useLocation } from 'react-router-dom'
 import Footer from '../components/user/Footer'
+import { useUserStore } from '../stores/useUserStore'
 
 
 // Danh sách các route không hiện Footer
@@ -11,9 +12,13 @@ export default function LayoutDefault() {
     const location = useLocation()
     const searchParams = new URLSearchParams(location.search)
     const isPrintMode = searchParams.get('print') === '1'
-    
-    const showFooter = !isPrintMode && !NO_FOOTER_ROUTES.includes(location.pathname)
 
+    const showFooter = !isPrintMode && !NO_FOOTER_ROUTES.includes(location.pathname)
+    const fetchUser = useUserStore((s) => s.fetchUser);
+
+    useEffect(() => {
+        fetchUser();
+    }, []);
     return (
         <div className='overflow-x-hidden'>
             {!isPrintMode && <Header />}
