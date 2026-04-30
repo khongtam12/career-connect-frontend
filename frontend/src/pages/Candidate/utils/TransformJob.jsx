@@ -1,14 +1,16 @@
 export function TransformJob(data) {
   return {
-    id: data.jobId,
+    id: data.jobId || data.id,
     title: data.title,
-
+    companyId: data.company?.companyId || data.company?.id || data.companyId,
+    industryId: data.industryDTO?.industryId || data.industryDTO?.id || data.industry?.id || data.industry?.industryId || data.industryId,
+    
     salary: `${data.salaryMin} - ${data.salaryMax} USD`,
     location: data.location,
     experience: data.experience,
     deadline: data.deadline,
 
-    requirements: safeParse(data.requirementTags),
+    requirements: safeParse(data.requirementTags),  
     benefits: safeParse(data.benefitTags),
     specialties: safeParse(data.specialties),
     relatedCategories: safeParse(data.relatedCategories),
