@@ -1,21 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
 import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
 import JobTable from '../../../components/employer/jobs/JobTable';
 import CreateJobDialog from '../../../components/employer/jobs/CreateJobDialog';
-import PushTopDialog from '../../../components/employer/jobs/PushTopDialog';
 import {
   getMyJobs,
   getMyStats,
   createJob,
   updateJob,
   deleteJob,
-  pushJobToTop,
   changeJobStatus,
 } from '../../../service/jobService';
+import { getCompanySubscriptions } from '../../../service/companyService';
+import { useUserStore } from '../../../stores/useUserStore';
 
 // Import Quill CSS globally
 import 'react-quill-new/dist/quill.snow.css';
@@ -46,7 +49,7 @@ function mapJobFromApi(job) {
   return {
     id: job.jobId,
     title: job.title || '',
-    isTop: job.isTop || job.top || false,
+    packageLabel: job.packageLabel || '',
     location: job.location || '',
     jobType: job.jobType || '',
     type: jobTypeLabel(job.jobType),
@@ -78,6 +81,9 @@ function mapJobFromApi(job) {
 }
 
 export default function JobManagement() {
+  const { user } = useUserStore();
+  const companyId = user?.companyId;
+
   const [jobs, setJobs] = useState([]);
   const [stats, setStats] = useState({ active: 0, paused: 0, closed: 0, totalApplicants: 0 });
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,12 +92,12 @@ export default function JobManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const [subscriptionOptions, setSubscriptionOptions] = useState([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState('create');
   const [editingJob, setEditingJob] = useState(null);
-  const [pushTopDialogOpen, setPushTopDialogOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [walletBalance, setWalletBalance] = useState(15500000);
 
   // ── Snackbar notification ──
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
@@ -143,6 +149,45 @@ export default function JobManagement() {
     fetchStats();
   }, [fetchStats]);
 
+  const fetchSubscriptions = useCallback(async () => {
+    if (!companyId) {
+      setSubscriptionOptions([]);
+      return;
+    }
+
+    setSubscriptionsLoading(true);
+    try {
+      const subscriptions = await getCompanySubscriptions(companyId);
+      const options = (subscriptions || [])
+        .filter((sub) => String(sub.status || '').toUpperCase() === 'ACTIVE')
+        .map((sub) => {
+          const limit = sub.jobPostLimit ?? 0;
+          const posted = sub.jobPostedCount ?? 0;
+          const remaining = Math.max(limit - posted, 0);
+          const labelBase = sub.packageLabel || sub.packageId;
+          return {
+            id: sub.id,
+            packageId: sub.packageId,
+            remaining,
+            limit,
+            label: `${labelBase} (còn lại ${remaining}/${limit})`,
+          };
+        })
+        .filter((option) => option.remaining > 0);
+
+      setSubscriptionOptions(options);
+    } catch (err) {
+      console.error('Lỗi khi tải gói tin đã mua:', err);
+      setSubscriptionOptions([]);
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
+
   const toISODateInput = (deadline) => {
     if (!deadline || typeof deadline !== 'string') return '';
     const value = deadline.trim();
@@ -174,6 +219,11 @@ export default function JobManagement() {
 
   const handleCreateJob = async (formData, isDraft = false) => {
     try {
+      if (!isDraft && !formData.companySubscriptionId) {
+        showSnack('Vui lòng chọn gói tin đã mua để đăng tin.', 'error');
+        return;
+      }
+
       const payload = {
         title: formData.title,
         industry: formData.industry,
@@ -198,12 +248,14 @@ export default function JobManagement() {
         workSchedule: formData.workSchedule,
         relatedCategories: formData.relatedCategories || [],
         skills: formData.skills || [],
+        companySubscriptionId: formData.companySubscriptionId || null,
         saveAsDraft: isDraft,
       };
       await createJob(payload);
       setDialogOpen(false);
       fetchJobs();
       fetchStats();
+      fetchSubscriptions();
       showSnack(isDraft ? 'Đã lưu bản nháp!' : 'Đăng tin tuyển dụng thành công!');
     } catch (err) {
       console.error('Lỗi khi tạo tin:', err);
@@ -258,25 +310,6 @@ export default function JobManagement() {
     setDialogOpen(true);
   };
 
-  const handlePushTop = (job) => {
-    setSelectedJob(job);
-    setPushTopDialogOpen(true);
-  };
-
-  const handleConfirmPushTop = async (job) => {
-    if (!job) return;
-    try {
-      await pushJobToTop(job.id);
-      setPushTopDialogOpen(false);
-      setSelectedJob(null);
-      fetchJobs();
-      fetchStats();
-    } catch (err) {
-      console.error('Lỗi khi đẩy tin:', err);
-      showSnack('Đẩy tin thất bại: ' + (err.response?.data?.error || err.message), 'error');
-    }
-  };
-
   const handleDelete = async (job) => {
     if (!window.confirm('Bạn có chắc muốn xóa tin tuyển dụng này?')) return;
     try {
@@ -306,7 +339,7 @@ export default function JobManagement() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+    <Box sx={{ width: '100%', px: { xs: 2, md: 3 } }}>
       {/* Page Header */}
       <Box
         sx={{
@@ -378,6 +411,81 @@ export default function JobManagement() {
       {/* Stats Cards */}
       <JobStatsCards stats={stats} />
 
+      {!subscriptionsLoading && subscriptionOptions.length === 0 && (
+        <Box
+          sx={{
+            mt: -0.5,
+            mb: 2.5,
+            borderRadius: 3,
+            border: '1.5px solid #fcd34d',
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 60%, #fde68a22 100%)',
+            boxShadow: '0 2px 12px rgba(245,158,11,0.10), 0 1px 3px rgba(245,158,11,0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            px: 2.5,
+            py: 1.8,
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* Icon + text */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: '50%',
+                bgcolor: '#fef3c7',
+                border: '1.5px solid #fcd34d',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <WarningAmberRoundedIcon sx={{ fontSize: 20, color: '#d97706' }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#92400e', lineHeight: 1.4 }}>
+                Bạn chưa có gói tin còn hiệu lực
+              </Typography>
+              <Typography sx={{ fontSize: '0.78rem', color: '#b45309', mt: 0.25, lineHeight: 1.4 }}>
+                Hết lượt đăng hoặc chưa mua gói. Mua thêm gói tin để tiếp tục đăng tuyển dụng.
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* CTA Button */}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<ShoppingCartOutlinedIcon sx={{ fontSize: 16 }} />}
+            endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 15 }} />}
+            href="/employer/pricing"
+            sx={{
+              bgcolor: '#f59e0b',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              borderRadius: 2,
+              textTransform: 'none',
+              boxShadow: '0 2px 8px rgba(245,158,11,0.35)',
+              px: 2,
+              py: 0.8,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              '&:hover': {
+                bgcolor: '#d97706',
+                boxShadow: '0 4px 12px rgba(245,158,11,0.45)',
+              },
+            }}
+          >
+            Mua gói tin
+          </Button>
+        </Box>
+      )}
+
       {/* Search & Filter */}
       <JobSearchFilter
         searchTerm={searchTerm}
@@ -399,7 +507,6 @@ export default function JobManagement() {
         totalPages={totalPages}
         onPageChange={setPage}
         onEdit={handleEdit}
-        onPushTop={handlePushTop}
         onDelete={handleDelete}
         onChangeStatus={handleChangeStatus}
       />
@@ -445,17 +552,8 @@ export default function JobManagement() {
             handleCreateJob(formData, isDraft);
           }
         }}
-      />
-
-      <PushTopDialog
-        open={pushTopDialogOpen}
-        job={selectedJob}
-        walletBalance={walletBalance}
-        onClose={() => {
-          setPushTopDialogOpen(false);
-          setSelectedJob(null);
-        }}
-        onConfirm={handleConfirmPushTop}
+        subscriptionOptions={subscriptionOptions}
+        subscriptionsLoading={subscriptionsLoading}
       />
 
       {/* thông báo */}

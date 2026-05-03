@@ -38,6 +38,110 @@ const bodyCellSx = {
   borderBottom: '1px solid #f3f4f6',
 };
 
+// Bảng màu fallback cho các gói không khớp từ khoá - màu sắc đậm, nổi bật
+const PACKAGE_CHIP_COLORS = [
+  { bg: '#dbeafe', text: '#1d4ed8', border: '#93c5fd' },   // indigo-blue
+  { bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4' },   // deep-rose
+  { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },   // emerald
+  { bg: '#fff7ed', text: '#9a3412', border: '#fdba74' },   // burnt-orange
+  { bg: '#f3e8ff', text: '#6b21a8', border: '#d8b4fe' },   // violet
+  { bg: '#cffafe', text: '#164e63', border: '#67e8f9' },   // teal-cyan
+  { bg: '#fef3c7', text: '#92400e', border: '#fbbf24' },   // amber
+  { bg: '#ffe4e6', text: '#9f1239', border: '#fda4af' },   // crimson-rose
+  { bg: '#ecfccb', text: '#365314', border: '#a3e635' },   // lime-green
+  { bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc' },   // indigo
+  { bg: '#ffedd5', text: '#7c2d12', border: '#fb923c' },   // deep-orange
+  { bg: '#f0fdf4', text: '#14532d', border: '#4ade80' },   // forest-green
+];
+
+// Màu theo từ khoá gói tin - mỗi loại gói có màu sắc riêng biệt, chuyên nghiệp
+const LABEL_COLOR_MAP = [
+  // BEST SELLER: vàng-amber nổi bật
+  {
+    match: ['best', 'seller'],
+    color: { bg: '#fffbeb', text: '#92400e', border: '#f59e0b' },
+    uppercase: true,
+    boxShadow: '0 0 0 1px #f59e0b33',
+  },
+  // Cơ bản / Basic: xanh dương nhẹ
+  {
+    match: ['co ban', 'coban', 'basic', 'tin co ban'],
+    color: { bg: '#eff6ff', text: '#1e40af', border: '#93c5fd' },
+  },
+  // Tiêu chuẩn / Standard: xanh lam trung tính
+  {
+    match: ['tieu chuan', 'standard'],
+    color: { bg: '#ecfeff', text: '#0e7490', border: '#22d3ee' },
+  },
+  // VIP / Premium: tím violet cao cấp
+  {
+    match: ['vip', 'premium'],
+    color: { bg: '#faf5ff', text: '#6d28d9', border: '#c084fc' },
+    boxShadow: '0 0 0 1px #c084fc44',
+  },
+  // Đặc biệt / Special: hồng magenta sang trọng
+  {
+    match: ['dac biet', 'special', 'platinum'],
+    color: { bg: '#fdf2f8', text: '#9d174d', border: '#f472b6' },
+  },
+  // Pro / Professional
+  {
+    match: ['pro', 'professional'],
+    color: { bg: '#f0f9ff', text: '#075985', border: '#38bdf8' },
+  },
+  // Gold
+  {
+    match: ['gold', 'vang'],
+    color: { bg: '#fefce8', text: '#713f12', border: '#eab308' },
+    boxShadow: '0 0 0 1px #eab30833',
+  },
+  // Silver
+  {
+    match: ['silver', 'bac'],
+    color: { bg: '#f8fafc', text: '#334155', border: '#94a3b8' },
+  },
+  // Enterprise
+  {
+    match: ['enterprise', 'doanh nghiep'],
+    color: { bg: '#fff7ed', text: '#7c2d12', border: '#f97316' },
+  },
+];
+
+function normalizeLabel(label) {
+  return label
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .toLowerCase();
+}
+
+function getPackageChipStyle(label) {
+  if (!label) return null;
+  const normalized = normalizeLabel(label);
+  const mapped = LABEL_COLOR_MAP.find((entry) =>
+    entry.match.some((token) => normalized.includes(token))
+  );
+  if (mapped) {
+    const { color, uppercase, boxShadow } = mapped;
+    return {
+      bgcolor: color.bg,
+      color: color.text,
+      border: `1.5px solid ${color.border}`,
+      ...(boxShadow ? { boxShadow } : {}),
+      _uppercase: uppercase || false,
+    };
+  }
+  let hash = 0;
+  for (let i = 0; i < label.length; i += 1) {
+    hash = (hash * 31 + label.charCodeAt(i)) % 9973;
+  }
+  const colors = PACKAGE_CHIP_COLORS[hash % PACKAGE_CHIP_COLORS.length];
+  return {
+    bgcolor: colors.bg,
+    color: colors.text,
+    border: `1.5px solid ${colors.border}`,
+  };
+}
+
 function parseDeadlineToDate(deadline) {
   if (!deadline || typeof deadline !== 'string') return null;
 
@@ -72,7 +176,6 @@ export default function JobTable({
   totalPages = 1,
   onPageChange,
   onEdit,
-  onPushTop,
   onDelete,
   onChangeStatus,
 }) {
@@ -147,22 +250,35 @@ export default function JobTable({
                       >
                         {job.title}
                       </Typography>
-                      {job.isTop && (
-                        <Chip
-                          label="TOP"
-                          size="small"
-                          sx={{
-                            bgcolor: '#fef3c7',
-                            color: '#d97706',
-                            fontWeight: 700,
-                            fontSize: '0.65rem',
-                            height: 20,
-                            borderRadius: '4px',
-                            border: '1px solid #fde68a',
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
+                      {job.packageLabel && (() => {
+                        const chipStyle = getPackageChipStyle(job.packageLabel) || {};
+                        const { _uppercase, ...cleanStyle } = chipStyle;
+                        const displayLabel = _uppercase
+                          ? job.packageLabel.toUpperCase()
+                          : job.packageLabel;
+                        return (
+                          <Chip
+                            label={displayLabel}
+                            size="small"
+                            sx={{
+                              ...cleanStyle,
+                              fontWeight: 600,
+                              fontSize: '0.64rem',
+                              height: 20,
+                              minWidth: 0,
+                              borderRadius: '5px',
+                              flexShrink: 0,
+                              '& .MuiChip-label': {
+                                px: 1,
+                                lineHeight: '20px',
+                                display: 'block',
+                                whiteSpace: 'nowrap',
+                              },
+                              transition: 'box-shadow 0.2s',
+                            }}
+                          />
+                        );
+                      })()}
                     </Box>
                   </TableCell>
 
@@ -200,6 +316,7 @@ export default function JobTable({
                         borderRadius: 1.5,
                         display: 'inline-block',
                         textAlign: 'center',
+                        border: '1.5px solid #86efac',
                       }}
                     >
                       {job.salaryNegotiable ? (
@@ -280,7 +397,6 @@ export default function JobTable({
                     <JobActionMenu
                       job={job}
                       onEdit={onEdit}
-                      onPushTop={onPushTop}
                       onDelete={onDelete}
                       onChangeStatus={onChangeStatus}
                     />

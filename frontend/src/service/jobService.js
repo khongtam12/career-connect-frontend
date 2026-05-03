@@ -30,11 +30,6 @@ export const getMyStats = async () => {
   return res.data;
 };
 
-export const pushJobToTop = async (jobId) => {
-  const res = await apiClient.put(`/api/v1/job/employer/${jobId}/push-top`);
-  return res.data;
-};
-
 export const changeJobStatus = async (jobId, status) => {
   const res = await apiClient.put(`/api/v1/job/employer/${jobId}/status`, null, {
     params: { status },

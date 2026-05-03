@@ -25,7 +25,6 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 
 const headCellSx = {
   fontWeight: 600,
@@ -44,7 +43,7 @@ const bodyCellSx = {
   borderBottom: '1px solid #f3f4f6',
 };
 
-function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onViewDetail, onEdit }) {
+function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onViewDetail }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -90,15 +89,6 @@ function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onVie
             primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
           />
         </MenuItem>
-        <MenuItem onClick={() => { handleClose(); onEdit(candidate); }} sx={{ py: 1 }}>
-          <ListItemIcon>
-            <DriveFileRenameOutlineIcon fontSize="small" sx={{ color: '#f59e0b' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="Chỉnh sửa"
-            primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
-          />
-        </MenuItem>
         <MenuItem onClick={() => { handleClose(); onResetPassword(candidate); }} sx={{ py: 1 }}>
           <ListItemIcon>
             <VpnKeyOutlinedIcon fontSize="small" sx={{ color: '#3b82f6' }} />
@@ -134,7 +124,6 @@ export default function CandidateTable({
   onChangeStatus,
   onResetPassword,
   onViewDetail,
-  onEdit,
 }) {
   return (
     <Paper
@@ -250,7 +239,6 @@ export default function CandidateTable({
                       onChangeStatus={onChangeStatus}
                       onResetPassword={onResetPassword}
                       onViewDetail={onViewDetail}
-                      onEdit={onEdit}
                     />
                   </TableCell>
                 </TableRow>

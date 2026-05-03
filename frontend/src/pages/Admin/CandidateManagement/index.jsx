@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import AddIcon from '@mui/icons-material/Add';
 import CandidateStatsCards from '../../../components/admin/candidates/CandidateStatsCards';
 import CandidateSearchFilter from '../../../components/admin/candidates/CandidateSearchFilter';
 import CandidateTable from '../../../components/admin/candidates/CandidateTable';
-import CandidateCreateDialog from '../../../components/admin/candidates/CandidateCreateDialog';
 import CandidateResetPasswordDialog from '../../../components/admin/candidates/CandidateResetPasswordDialog';
 import CandidateDetailDialog from '../../../components/admin/candidates/CandidateDetailDialog';
-import { getCandidates, updateCandidateStatus, getCandidateStats, createCandidate, updateCandidate, resetCandidatePassword } from '../../../service/adminCandidateService';
+import { getCandidates, updateCandidateStatus, getCandidateStats, resetCandidatePassword } from '../../../service/adminCandidateService';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -56,11 +54,9 @@ export default function CandidateManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [formMode, setFormMode] = useState('create');
 
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
   const showSnack = (message, severity = 'success') =>
@@ -131,23 +127,6 @@ export default function CandidateManagement() {
     }
   };
 
-  const handleCreateOrUpdateCandidate = async (formData) => {
-    try {
-      if (formMode === 'edit') {
-        await updateCandidate(selectedCandidate.id, formData);
-        showSnack('Cập nhật thông tin ứng viên thành công!');
-      } else {
-        await createCandidate(formData);
-        showSnack('Thêm mới ứng viên thành công!');
-      }
-      setCreateDialogOpen(false);
-      fetchCandidates();
-      fetchStats();
-    } catch (err) {
-      console.error('Lỗi khi lưu ứng viên:', err);
-      showSnack('Không thể lưu ứng viên: ' + (err.response?.data?.error || err.message), 'error');
-    }
-  };
 
   const handleResetPassword = async (id, newPassword) => {
     try {
@@ -169,18 +148,6 @@ export default function CandidateManagement() {
   const openDetailDialog = (candidate) => {
     setSelectedCandidate(candidate);
     setDetailDialogOpen(true);
-  };
-
-  const openCreateDialog = () => {
-    setFormMode('create');
-    setSelectedCandidate(null);
-    setCreateDialogOpen(true);
-  };
-
-  const openEditDialog = (candidate) => {
-    setFormMode('edit');
-    setSelectedCandidate(candidate);
-    setCreateDialogOpen(true);
   };
 
   return (
@@ -227,24 +194,6 @@ export default function CandidateManagement() {
           >
             Làm mới
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={openCreateDialog}
-            sx={{
-              bgcolor: '#3b82f6',
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              boxShadow: 'none',
-              '&:hover': {
-                bgcolor: '#2563eb',
-                boxShadow: '0 2px 8px rgba(59,130,246,0.3)',
-              },
-            }}
-          >
-            Thêm mới
-          </Button>
         </Box>
       </Box>
 
@@ -271,15 +220,6 @@ export default function CandidateManagement() {
         onChangeStatus={handleChangeStatus}
         onResetPassword={openResetPasswordDialog}
         onViewDetail={openDetailDialog}
-        onEdit={openEditDialog}
-      />
-
-      <CandidateCreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        onSubmit={handleCreateOrUpdateCandidate}
-        mode={formMode}
-        initialValues={selectedCandidate || {}}
       />
 
       <CandidateResetPasswordDialog
