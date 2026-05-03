@@ -5,12 +5,9 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Divider,
-  Typography,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
@@ -27,7 +24,7 @@ const TRANSITIONS = {
   PAUSED: [{ to: 'ACTIVE', label: 'Tiếp tục đăng', Icon: PlayCircleOutlineIcon,     color: '#10b981' }],
 };
 
-export default function JobActionMenu({ job, onEdit, onPushTop, onDelete, onChangeStatus }) {
+export default function JobActionMenu({ job, onEdit, onDelete, onChangeStatus }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -74,20 +71,8 @@ export default function JobActionMenu({ job, onEdit, onPushTop, onDelete, onChan
           <ListItemText primaryTypographyProps={{ fontSize: '0.84rem' }}>Chỉnh sửa</ListItemText>
         </MenuItem>
 
-        <MenuItem dense onClick={() => handle(onPushTop)}>
-          <ListItemIcon>
-            <RocketLaunchOutlinedIcon sx={{ fontSize: 17, color: '#f59e0b' }} />
-          </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600, color: '#d97706' }}>
-            Đẩy tin lên TOP
-          </ListItemText>
-        </MenuItem>
-
         {transitions.length > 0 && (
           <>
-            <Divider sx={{ my: 0.5 }}>
-              <Typography sx={{ fontSize: '0.7rem', color: '#9ca3af' }}>Đổi trạng thái</Typography>
-            </Divider>
             {transitions.map(({ to, label, Icon, color }) => (
               <MenuItem key={to} dense onClick={() => { handleClose(); onChangeStatus?.(job, to); }}>
                 <ListItemIcon>
@@ -100,8 +85,6 @@ export default function JobActionMenu({ job, onEdit, onPushTop, onDelete, onChan
             ))}
           </>
         )}
-
-        <Divider />
 
         <MenuItem dense onClick={() => handle(onDelete)}>
           <ListItemIcon>

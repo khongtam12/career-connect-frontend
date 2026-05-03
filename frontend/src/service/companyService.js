@@ -29,6 +29,11 @@ export const getCompanyDetail = async (id) => {
     return res.data;
 };
 
+export const getCompanySubscriptions = async (companyId) => {
+    const res = await apiClient.get(`/api/v1/company/subscription/company/${companyId}`);
+    return res.data;
+};
+
 export const processApproval = async (payload) => {
     // payload: { companyId, action: 'APPROVED' | 'REJECTED', note: '' }
     const res = await apiClient.post('/api/v1/company/approval', payload);

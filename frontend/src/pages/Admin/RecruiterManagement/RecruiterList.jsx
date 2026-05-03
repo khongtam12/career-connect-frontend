@@ -1,24 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import useRecruiterStore from '@/stores/useRecruiterStore';
 import RecruiterStatusSwitch from './RecruiterStatusSwitch';
-import RecruiterForm from './RecruiterForm';
 import RecruiterDeleteConfirm from './RecruiterDeleteConfirm';
-import { 
-    Box, 
-    Typography, 
-    Button, 
+import {
+    Box,
+    Typography,
     Paper,
     Container,
     IconButton,
     Tooltip
 } from '@mui/material';
 import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
-import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 
 const RecruiterList = () => {
     const { recruiters, loading, fetchRecruiters } = useRecruiterStore();
     
-    const [formState, setFormState] = useState({ isOpen: false, mode: 'create', data: null });
     const [deleteState, setDeleteState] = useState({ isOpen: false, id: null });
 
     useEffect(() => {
@@ -40,15 +37,6 @@ const RecruiterList = () => {
                 header: 'Hành động',
                 Cell: ({ row }) => (
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title="Chỉnh sửa">
-                            <IconButton 
-                                size="small" 
-                                color="primary"
-                                onClick={() => setFormState({ isOpen: true, mode: 'edit', data: row.original })}
-                            >
-                                <EditIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
                         <Tooltip title="Xóa">
                             <IconButton 
                                 size="small" 
@@ -76,14 +64,6 @@ const RecruiterList = () => {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', p: 1 }}>
                 <Typography variant="h6" fontWeight="bold">Danh sách nhà tuyển dụng</Typography>
-                <Button 
-                    variant="contained" 
-                    startIcon={<AddIcon />}
-                    onClick={() => setFormState({ isOpen: true, mode: 'create', data: null })}
-                    sx={{ borderRadius: '8px', textTransform: 'none' }}
-                >
-                    Thêm mới
-                </Button>
             </Box>
         ),
         muiTablePaperProps: {
@@ -101,12 +81,6 @@ const RecruiterList = () => {
                 <MaterialReactTable table={table} />
             </Box>
 
-            <RecruiterForm 
-                isOpen={formState.isOpen} 
-                onClose={() => setFormState({ ...formState, isOpen: false })} 
-                mode={formState.mode}
-                initialData={formState.data}
-            />
             <RecruiterDeleteConfirm 
                 isOpen={deleteState.isOpen}
                 onClose={() => setDeleteState({ isOpen: false, id: null })}
