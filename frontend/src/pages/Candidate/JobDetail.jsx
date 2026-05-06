@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {getJobById} from "../../service/jobService";
-import { TransformJob } from './utils/transformJob';
+import { getJobById } from "../../service/jobService";
+import { TransformJob } from './utils/TransformJob';
 import {
   MapPin,
   DollarSign,
@@ -64,6 +64,7 @@ export default function JobDetail() {
     const fetchJob = async () => {
       try {
         const data = await getJobById(id);
+        console.log('Fetched job data:', data);
         setJob(TransformJob(data));
       } catch (err) {
         console.error(err);
@@ -188,11 +189,10 @@ export default function JobDetail() {
                     </button>
                     <button
                       onClick={() => setIsSaved(toggleSavedJob(job))}
-                      className={`flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${
-                        isSaved
-                          ? 'border-red-300 bg-red-50 text-red-600'
-                          : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'
-                      }`}
+                      className={`flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${isSaved
+                        ? 'border-red-300 bg-red-50 text-red-600'
+                        : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'
+                        }`}
                     >
                       <Heart size={18} fill={isSaved ? 'currentColor' : 'none'} />
                       {isSaved ? 'Đã lưu' : 'Lưu tin'}
@@ -348,11 +348,10 @@ export default function JobDetail() {
                     </button>
                     <button
                       onClick={() => setIsSaved(!isSaved)}
-                      className={`flex items-center gap-2 py-3 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${
-                        isSaved
-                          ? 'border-red-300 bg-red-50 text-red-600'
-                          : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600'
-                      }`}
+                      className={`flex items-center gap-2 py-3 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${isSaved
+                        ? 'border-red-300 bg-red-50 text-red-600'
+                        : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600'
+                        }`}
                     >
                       <Heart size={16} fill={isSaved ? 'currentColor' : 'none'} />
                       {isSaved ? 'Đã lưu' : 'Lưu tin'}
