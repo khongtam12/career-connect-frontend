@@ -8,6 +8,7 @@ import RejectApplicationModal from './components/RejectApplicationModal';
 import { getCandidatesForEmployer, cancelInterview, updateApplicationStatus } from '@/service/applicationService';
 import { toast } from 'react-toastify';
 import LoadingSpinner from './components/LoadingSpinner';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 
 const mapStatus = (status) => {
     switch (status) {
@@ -89,9 +90,32 @@ const CVManagement = () => {
         }
     };
 
+    // Lắng nghe flag hasNewCandidate từ notification store
+    const hasNewCandidate = useNotificationStore((s) => s.hasNewCandidate);
+    const setHasNewCandidate = useNotificationStore((s) => s.setHasNewCandidate);
+    const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+    const notifications = useNotificationStore((s) => s.notifications);
+
     useEffect(() => {
         fetchCandidates();
+        // Vào trang ứng viên → xóa chấm đỏ + badge
+        const unreadNotis = notifications.filter(n => !n.read);
+        if (unreadNotis.length > 0) {
+            markAllAsRead();
+            // Đồng bộ trạng thái đã đọc lên backend
+            unreadNotis.forEach(n => {
+                fetch(`http://localhost:8085/api/v1/notifications/${n.id}/read`, { method: 'PUT' }).catch(() => {});
+            });
+        }
     }, []);
+
+    // Tự động refresh danh sách khi có ứng viên mới apply (qua WebSocket)
+    useEffect(() => {
+        if (hasNewCandidate) {
+            fetchCandidates();
+            setHasNewCandidate(false);
+        }
+    }, [hasNewCandidate]);
 
     // Filtered candidates (client-side)
     const filteredCandidates = useMemo(() => {
