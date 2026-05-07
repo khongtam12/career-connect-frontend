@@ -1,4 +1,5 @@
 import React from 'react';
+import { isHotJob } from '../utils/jobBadges';
 
 export default function JobDetailPanel({ job }) {
   if (!job) {
@@ -14,6 +15,7 @@ export default function JobDetailPanel({ job }) {
   const requirements = splitToList(job.candidateRequirements || job.requirement || job.requirementTags);
   const benefits = splitToList(job.benefitsDetail || job.benefit || job.benefitTags);
   const description = splitToList(job.description);
+  const showHotBadge = isHotJob(job);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -31,7 +33,14 @@ export default function JobDetailPanel({ job }) {
             </div>
           )}
           <div>
-            <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
+              {showHotBadge && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">
+                  🔥 HOT
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-600 mt-1">{job.companyName || job.companyId}</p>
           </div>
         </div>
