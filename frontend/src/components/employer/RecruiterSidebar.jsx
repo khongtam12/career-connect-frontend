@@ -4,13 +4,16 @@ import {
   FiGrid, FiFileText, FiUsers, FiBox, FiUser, FiHelpCircle
 } from 'react-icons/fi';
 
+import { useNotificationStore } from '../../stores/useNotificationStore';
+
 const RecruiterSidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
+  const { unreadCount } = useNotificationStore();
 
   const menuItems = [
     { name: 'Bảng tin', icon: <FiGrid size={22} />, path: '/employer' },
     { name: 'Tin đăng', icon: <FiFileText size={22} />, path: '/employer/jobs' },
-    { name: 'Ứng viên', icon: <FiUsers size={22} />, path: '/employer/candidates', badge: '12' },
+    { name: 'Ứng viên', icon: <FiUsers size={22} />, path: '/employer/candidates', badge: unreadCount > 0 ? unreadCount : null },
     { name: 'Dịch vụ', icon: <FiBox size={22} />, path: '/employer/services' },
     { name: 'Tài khoản', icon: <FiUser size={22} />, path: '/employer/company' },
     { name: 'Hỗ trợ', icon: <FiHelpCircle size={22} />, path: '/employer/support' },
