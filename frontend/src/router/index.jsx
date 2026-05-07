@@ -23,7 +23,7 @@ import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
 import EmployerList from "../pages/Admin/EmployerManagement/EmployerList";
-import PendingApprovals from "../pages/Employer/company/PendingApprovals";
+import PendingApprovals from "../pages/Admin/CompanyApproval";
 import CandidateManagement from "../pages/Admin/CandidateManagement/index.jsx";
 
 export const router = createBrowserRouter([
