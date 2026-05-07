@@ -30,24 +30,29 @@ export const useUserStore = create(
             // Fetch user từ BE (dùng khi reload hoặc OAuth redirect)
             fetchUser: async () => {
                 try {
-                    set({ loading: true, error: null });
-
-                    const user = await getCurrentUser();
-
-                    set({
-                        user,
-                        isAuthenticated: !!user,
-                        loading: false,
-                    });
-
-                    return user;
+                    set({ loading: true });
+                    const userData = await getCurrentUser();
+                    
+                    if (userData) {
+                        set({
+                            user: userData,
+                            isAuthenticated: true,
+                            loading: false,
+                        });
+                        return userData;
+                    } else {
+                        throw new Error("No user data");
+                    }
                 } catch (err) {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                        loading: false,
-                    });
-
+                    // Chỉ clear user nếu thực sự lỗi 401/403 từ backend
+                    // Tránh clear khi lỗi mạng tạm thời
+                    if (err.response?.status === 401 || err.response?.status === 403) {
+                        set({
+                            user: null,
+                            isAuthenticated: false,
+                        });
+                    }
+                    set({ loading: false });
                     return null;
                 }
             },
@@ -57,19 +62,24 @@ export const useUserStore = create(
                 try {
                     set({ loading: true, error: null });
 
-                    const user = await getCurrentUser();
+                    // Xóa dữ liệu cũ trước khi fetch mới
+                    set({ user: null, isAuthenticated: false });
 
-                    set({
-                        user,
-                        isAuthenticated: !!user,
-                        loading: false,
-                    });
+                    const userData = await getCurrentUser();
 
-                    return user;
+                    if (userData) {
+                        set({
+                            user: userData,
+                            isAuthenticated: true,
+                            loading: false,
+                        });
+                        return userData;
+                    }
                 } catch (err) {
                     set({
                         error: "Không lấy được thông tin người dùng",
                         loading: false,
+                        isAuthenticated: false
                     });
                     throw err;
                 }
@@ -79,17 +89,17 @@ export const useUserStore = create(
             logout: async () => {
                 try {
                     set({ loading: true });
-
-                    await logoutAccount(); // BE clear cookie
-
+                    await logoutAccount(); 
                 } catch (err) {
                     console.error("Logout error:", err);
                 } finally {
+                    // Luôn luôn xóa local state dù BE logout lỗi hay không
                     set({
                         user: null,
                         isAuthenticated: false,
                         loading: false,
                     });
+                    localStorage.removeItem("user-storage"); // Xóa cứng để đảm bảo sạch sẽ
                 }
             },
         }),

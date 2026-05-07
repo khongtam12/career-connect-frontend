@@ -10,6 +10,14 @@ import { getCandidates, updateCandidateStatus, getCandidateStats, resetCandidate
 
 const ITEMS_PER_PAGE = 10;
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function withRetry(fn, retries = 2, delayMs = 1500) {
+  for (let i = 0; i <= retries; i++) {
+    try { return await fn(); }
+    catch (err) { if (i === retries) throw err; await sleep(delayMs); }
+  }
+}
+
 function mapCandidateFromApi(candidate) {
   return {
     id: candidate.candidateId || candidate.id,
@@ -66,12 +74,12 @@ export default function CandidateManagement() {
   const fetchCandidates = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getCandidates({
+      const data = await withRetry(() => getCandidates({
         keyword: searchTerm || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         page,
         size: ITEMS_PER_PAGE,
-      });
+      }));
       const mapped = (data.content || []).map(mapCandidateFromApi);
       setCandidates(mapped);
       setTotalPages(data.totalPages || 1);
@@ -86,7 +94,7 @@ export default function CandidateManagement() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const data = await getCandidateStats();
+      const data = await withRetry(() => getCandidateStats());
       setStats({
         active: data.active || 0,
         banned: data.banned || 0,

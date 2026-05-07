@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import * as Switch from '@radix-ui/react-switch';
 import { toast } from '@/components/ui/use-toast';
 import * as adminService from '@/service/adminService';
-import useRecruiterStore from '@/stores/useRecruiterStore';
+import useEmployerStore from '@/stores/useEmployerStore';
 
-const RecruiterStatusSwitch = ({ id, initialStatus }) => {
+const EmployerStatusSwitch = ({ id, initialStatus }) => {
     const [status, setStatus] = useState(initialStatus);
     const [loading, setLoading] = useState(false);
-    const refresh = useRecruiterStore(state => state.refresh);
+    const refresh = useEmployerStore(state => state.refresh);
 
     // Xử lý bật/tắt trạng thái
     const handleToggle = async (checked) => {
@@ -43,4 +43,4 @@ const RecruiterStatusSwitch = ({ id, initialStatus }) => {
     );
 };
 
-export default RecruiterStatusSwitch;
+export default EmployerStatusSwitch;

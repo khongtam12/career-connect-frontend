@@ -1,21 +1,21 @@
 import { create } from 'zustand';
 import * as adminService from '../service/adminService';
 
-const useRecruiterStore = create((set, get) => ({
-    recruiters: [],
+const useEmployerStore = create((set, get) => ({
+    employers: [],
     loading: false,
     error: null,
     totalElements: 0,
     page: 0,
     size: 10,
     
-    // Gọi API lấy danh sách recruiter
-    fetchRecruiters: async (page = 0, size = 10) => {
+    // Gọi API lấy danh sách employer
+    fetchEmployers: async (page = 0, size = 10) => {
         set({ loading: true, error: null });
         try {
             const data = await adminService.getRecruiters(page, size);
             set({ 
-                recruiters: data?.data?.content || [], 
+                employers: data?.data?.content || [], 
                 totalElements: data?.data?.totalElements || 0,
                 page, 
                 size,
@@ -29,8 +29,8 @@ const useRecruiterStore = create((set, get) => ({
     // Refresh lại danh sách sau khi có thao tác update/delete
     refresh: () => {
         const { page, size } = get();
-        get().fetchRecruiters(page, size);
+        get().fetchEmployers(page, size);
     }
 }));
 
-export default useRecruiterStore;
+export default useEmployerStore;

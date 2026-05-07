@@ -9,6 +9,7 @@ import {
   FiFileText,
   FiSearch,
   FiLayout,
+  FiCheckSquare,
   FiX
 } from 'react-icons/fi';
 import { HiOutlineOfficeBuilding } from 'react-icons/hi';
@@ -26,10 +27,16 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     },
     {
       name: 'Nhà tuyển dụng',
-      subtitle: 'Quản lý công ty',
-      icon: <HiOutlineOfficeBuilding />,
+      subtitle: 'Quản lý tài khoản',
+      icon: <FiUsers />,
       path: '/admin/recruiters',
-      badge: '3'
+    },
+    {
+      name: 'Phê duyệt công ty',
+      subtitle: 'Xét duyệt hồ sơ',
+      icon: <FiCheckSquare />,
+      path: '/admin/company-approvals',
+      badge: 'Mới'
     },
     {
       name: 'Người dùng',
