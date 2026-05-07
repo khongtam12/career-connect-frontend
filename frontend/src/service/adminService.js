@@ -1,7 +1,10 @@
 import apiClient from "./apiClient";
 
-export const getRecruiters = async (page = 0, size = 10) => {
-    const res = await apiClient.get(`/api/v1/admin/recruiters?page=${page}&size=${size}`);
+export const getRecruiters = async (page = 0, size = 10, keyword = '', status = '') => {
+    let url = `/api/v1/admin/recruiters?page=${page}&size=${size}`;
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+    if (status && status !== 'all') url += `&status=${status}`;
+    const res = await apiClient.get(url);
     return res.data;
 };
 
@@ -22,6 +25,11 @@ export const deleteRecruiter = async (id) => {
 
 export const patchRecruiterStatus = async (id, status) => {
     const res = await apiClient.patch(`/api/v1/admin/recruiters/${id}/status`, { status });
+    return res.data;
+};
+
+export const getEmployerStats = async () => {
+    const res = await apiClient.get("/api/v1/admin/recruiters/stats");
     return res.data;
 };
 
