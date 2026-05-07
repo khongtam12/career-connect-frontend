@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeroSection from './components/HeroSection';
 import BestJobsSection from './components/BestJobsSection';
+import QuickJobsSection from './components/QuickJobsSection';
 import StatisticsSection from './components/StatisticsSection';
 import CTASection from './components/CTASection';
 import HowItWorks from './components/HowItWorks';
 import { getJobFilters, getJobStats, searchJobs } from '../../service/jobService';
 import { categoriesData } from '../../data/categoriesData';
 import { getAppliedJobs, getSavedJobs } from './utils/jobTracker';
+import { isImmediateJob, isUrgentJob } from './utils/jobBadges';
+import { Flame, Zap } from 'lucide-react';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -38,6 +41,12 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [savedJobs, setSavedJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
+  const [urgentJobs, setUrgentJobs] = useState([]);
+  const [immediateJobs, setImmediateJobs] = useState([]);
+  const [urgentLoading, setUrgentLoading] = useState(false);
+  const [immediateLoading, setImmediateLoading] = useState(false);
+  const [urgentLocation, setUrgentLocation] = useState('');
+  const [immediateLocation, setImmediateLocation] = useState('');
 
   const mappedCategories = useMemo(() => {
     if (filterOptions.industries.length === 0) {
@@ -99,10 +108,38 @@ export default function Home() {
     navigate(`/jobs?${params.toString()}`);
   };
 
+  const handleQuickTag = (keyword) => {
+    const params = new URLSearchParams();
+    params.set('keyword', keyword);
+    navigate(`/jobs?${params.toString()}`);
+  };
+
   const handlePageChange = (nextPage) => {
     if (nextPage < 0 || nextPage >= totalPages) return;
     applyFilters(nextPage, filters);
   };
+
+  const normalizeText = (value) =>
+    (value || '')
+      .normalize('NFD')
+      .replace(/\p{M}+/gu, '')
+      .toLowerCase();
+
+  const filterByLocation = (items, location) => {
+    if (!location) return items;
+    const target = normalizeText(location);
+    return items.filter((job) => normalizeText(job?.location).includes(target));
+  };
+
+  const urgentJobsDisplay = useMemo(
+    () => filterByLocation(urgentJobs, urgentLocation).slice(0, 6),
+    [urgentJobs, urgentLocation]
+  );
+
+  const immediateJobsDisplay = useMemo(
+    () => filterByLocation(immediateJobs, immediateLocation).slice(0, 6),
+    [immediateJobs, immediateLocation]
+  );
 
   useEffect(() => {
     const loadInit = async () => {
@@ -123,8 +160,30 @@ export default function Home() {
       }
     };
 
+    const loadQuickSections = async () => {
+      setUrgentLoading(true);
+      setImmediateLoading(true);
+      try {
+        const response = await searchJobs({
+          page: 0,
+          size: 30,
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+        });
+        const items = response.content || [];
+        setUrgentJobs(items.filter(isUrgentJob));
+        setImmediateJobs(items.filter(isImmediateJob));
+      } catch (error) {
+        console.error('Failed to load quick job sections', error);
+      } finally {
+        setUrgentLoading(false);
+        setImmediateLoading(false);
+      }
+    };
+
     loadInit();
     applyFilters(0, filters);
+    loadQuickSections();
   }, []);
 
   useEffect(() => {
@@ -146,6 +205,7 @@ export default function Home() {
         onChange={handleFilterChange}
         onSearch={handleSearch}
         onCategorySelect={handleCategorySelect}
+        onQuickTag={handleQuickTag}
         categories={mappedCategories}
         locations={filterOptions.locations}
       />
@@ -159,6 +219,38 @@ export default function Home() {
         onViewAll={() => navigate('/jobs')}
         savedJobs={savedJobs}
         appliedJobs={appliedJobs}
+      />
+
+      <QuickJobsSection
+        title="Việc làm tuyển gấp"
+        subtitle="Cơ hội nổi bật cần tuyển ngay"
+        icon={<Flame size={18} className="text-orange-500" />}
+        jobs={urgentJobsDisplay}
+        total={urgentJobs.length}
+        locations={filterOptions.locations}
+        locationFilter={urgentLocation}
+        onLocationChange={setUrgentLocation}
+        onViewAll={() => navigate(urgentLocation ? `/jobs?location=${encodeURIComponent(urgentLocation)}` : '/jobs')}
+        backgroundClassName="bg-slate-50"
+        accentClassName="text-rose-600"
+        emptyText="Chưa tìm thấy việc làm tuyển gấp"
+        loading={urgentLoading}
+      />
+
+      <QuickJobsSection
+        title="Việc đi làm ngay"
+        subtitle="Nhanh tay ứng tuyển trong hôm nay"
+        icon={<Zap size={18} className="text-orange-500" />}
+        jobs={immediateJobsDisplay}
+        total={immediateJobs.length}
+        locations={filterOptions.locations}
+        locationFilter={immediateLocation}
+        onLocationChange={setImmediateLocation}
+        onViewAll={() => navigate(immediateLocation ? `/jobs?location=${encodeURIComponent(immediateLocation)}` : '/jobs')}
+        backgroundClassName="bg-orange-50/70"
+        accentClassName="text-orange-600"
+        emptyText="Chưa tìm thấy việc đi làm ngay"
+        loading={immediateLoading}
       />
 
       {/* How It Works */}
