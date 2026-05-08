@@ -157,9 +157,9 @@ export default function JobTable({
   return (
     <Paper
       elevation={0}
-      sx={{ 
-        borderRadius: '24px', 
-        border: '1px solid #f1f5f9', 
+      sx={{
+        borderRadius: '24px',
+        border: '1px solid #f1f5f9',
         overflow: 'hidden',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.01), 0 1px 2px 0 rgba(0, 0, 0, 0.006)',
       }}
@@ -204,13 +204,13 @@ export default function JobTable({
                 >
                   <TableCell sx={{ ...bodyCellSx, pl: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar 
-                        src={job.companyLogoUrl} 
+                      <Avatar
+                        src={job.companyLogoUrl}
                         variant="rounded"
-                        sx={{ 
-                          width: 48, 
-                          height: 48, 
-                          bgcolor: '#f1f5f9', 
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: '#f1f5f9',
                           border: '1px solid #e2e8f0',
                           p: 0.5,
                           '& img': { objectFit: 'contain' }
@@ -234,29 +234,29 @@ export default function JobTable({
                             {job.title}
                           </Typography>
                           {job.isHot && (
-                            <Chip 
-                              label="HOT" 
-                              size="small" 
-                              sx={{ 
-                                height: 18, 
-                                fontSize: '0.65rem', 
-                                fontWeight: 900, 
-                                bgcolor: '#fff7ed', 
+                            <Chip
+                              label="HOT"
+                              size="small"
+                              sx={{
+                                height: 18,
+                                fontSize: '0.65rem',
+                                fontWeight: 900,
+                                bgcolor: '#fff7ed',
                                 color: '#c2410c',
                                 border: '1px solid #ffedd5',
                                 '& .MuiChip-label': { px: 1 }
-                              }} 
+                              }}
                             />
                           )}
                         </Box>
-                        <Typography 
-                          noWrap 
-                          sx={{ 
-                            fontSize: '0.7rem', 
-                            color: '#64748b', 
-                            fontWeight: 700, 
-                            textTransform: 'uppercase', 
-                            letterSpacing: '0.025em' 
+                        <Typography
+                          noWrap
+                          sx={{
+                            fontSize: '0.7rem',
+                            color: '#64748b',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.025em'
                           }}
                         >
                           {job.companyName || 'N/A'}
@@ -278,7 +278,7 @@ export default function JobTable({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#059669', fontWeight: 700 }}>
                       <AttachMoneyOutlinedIcon sx={{ fontSize: 18 }} />
                       <Typography sx={{ fontSize: '0.8rem', fontWeight: 800 }}>
-                        {job.salaryMin && job.salaryMax 
+                        {job.salaryMin && job.salaryMax
                           ? `${job.salaryMin} - ${job.salaryMax} tr`
                           : job.salaryRange || 'Thỏa thuận'}
                       </Typography>
@@ -287,15 +287,15 @@ export default function JobTable({
 
                   <TableCell sx={bodyCellSx}>
                     <Tooltip title="Số lượng ứng viên đã ứng tuyển" arrow>
-                      <Box 
-                        sx={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: 1, 
-                          bgcolor: '#f5f3ff', 
-                          color: '#4f46e5', 
-                          px: 1.5, 
-                          py: 0.5, 
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          bgcolor: '#f5f3ff',
+                          color: '#4f46e5',
+                          px: 1.5,
+                          py: 0.5,
                           borderRadius: '8px',
                           border: '1px solid #ede9fe'
                         }}
@@ -311,29 +311,29 @@ export default function JobTable({
                   <TableCell sx={bodyCellSx}>
                     <Chip
                       label={
-                        job.status === 'ACTIVE' ? 'Đang hiển thị' : 
-                        job.status === 'PENDING' ? 'Chờ duyệt' : 
-                        job.status === 'CLOSED' ? 'Đã đóng' : 'Đã từ chối'
+                        job.status === 'ACTIVE' ? 'Đang hiển thị' :
+                          job.status === 'PENDING' ? 'Chờ duyệt' :
+                            job.status === 'CLOSED' ? 'Đã đóng' : 'Đã từ chối'
                       }
                       size="small"
                       sx={{
-                        bgcolor: 
-                          job.status === 'ACTIVE' ? '#f0fdf4' : 
-                          job.status === 'PENDING' ? '#fffbeb' : 
-                          job.status === 'CLOSED' ? '#f1f5f9' : '#fef2f2',
-                        color: 
-                          job.status === 'ACTIVE' ? '#16a34a' : 
-                          job.status === 'PENDING' ? '#d97706' : 
-                          job.status === 'CLOSED' ? '#64748b' : '#ef4444',
+                        bgcolor:
+                          job.status === 'ACTIVE' ? '#f0fdf4' :
+                            job.status === 'PENDING' ? '#fffbeb' :
+                              job.status === 'CLOSED' ? '#f1f5f9' : '#fef2f2',
+                        color:
+                          job.status === 'ACTIVE' ? '#16a34a' :
+                            job.status === 'PENDING' ? '#d97706' :
+                              job.status === 'CLOSED' ? '#64748b' : '#ef4444',
                         fontWeight: 800,
                         fontSize: '0.7rem',
                         height: 28,
                         borderRadius: '10px',
                         border: '1px solid',
-                        borderColor: 
-                          job.status === 'ACTIVE' ? '#dcfce7' : 
-                          job.status === 'PENDING' ? '#fef3c7' : 
-                          job.status === 'CLOSED' ? '#e2e8f0' : '#fee2e2',
+                        borderColor:
+                          job.status === 'ACTIVE' ? '#dcfce7' :
+                            job.status === 'PENDING' ? '#fef3c7' :
+                              job.status === 'CLOSED' ? '#e2e8f0' : '#fee2e2',
                         '& .MuiChip-label': { px: 1.5 }
                       }}
                     />
