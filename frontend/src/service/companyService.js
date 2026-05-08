@@ -10,12 +10,12 @@ export const saveVerification = async (payload) => {
 }
 
 export const getUrl = async ({ key, contentType }) => {
-    const res = await apiClient.get(`/api/v1/company/upload/presigned-url?key=${key}&contentType=${contentType}`)
+    const res = await apiClient.get(`/api/v1/storage/presigned-url?key=${key}&contentType=${contentType}`)
     return res.data
 }
 
 export const deleteFile = async ({ key }) => {
-    const res = await apiClient.delete(`/api/v1/company/upload/delete?key=${key}`)
+    const res = await apiClient.delete(`/api/v1/storage/delete?key=${key}`)
     return res.data
 }
 

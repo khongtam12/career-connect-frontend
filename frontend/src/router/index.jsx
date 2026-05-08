@@ -25,7 +25,7 @@ import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
 import RecruiterList from "../pages/Admin/RecruiterManagement/RecruiterList";
 import PendingApprovals from "../pages/Employer/company/PendingApprovals";
 import CandidateManagement from "../pages/Admin/CandidateManagement/index.jsx";
-
+import PrivateCandidateRouteRedirect from "./PrivateCandidateRouteRedirect.jsx";
 export const router = createBrowserRouter([
     {
         path: "/login",
@@ -45,7 +45,12 @@ export const router = createBrowserRouter([
             },
             {
                 path: "/cv-builder",
-                element: <CVBuilder />
+                element:
+                    (
+                        <PrivateCandidateRouteRedirect>
+                            <CVBuilder />
+                        </PrivateCandidateRouteRedirect>
+                    )
             },
             {
                 path: "/jobs",

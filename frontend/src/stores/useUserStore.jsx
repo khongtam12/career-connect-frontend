@@ -12,6 +12,10 @@ export const useUserStore = create(
             loading: false,
             error: null,
 
+            // Auth Dialog state
+            isAuthDialogOpen: false,
+            isDialogClosable: true,
+            authDialogCallback: null,
 
             // Set user (internal)
             setUser: (user) =>
@@ -65,6 +69,7 @@ export const useUserStore = create(
                         loading: false,
                     });
 
+
                     return user;
                 } catch (err) {
                     set({
@@ -92,7 +97,17 @@ export const useUserStore = create(
                     });
                 }
             },
+            openAuthDialog: (options = { closable: true, onSuccess: null }) => {
+                set({
+                    isAuthDialogOpen: true,
+                    isDialogClosable: options.closable ?? true,
+                    authDialogCallback: options.onSuccess ?? null,
+                });
+            },
+
+            closeAuthDialog: () => set({ isAuthDialogOpen: false, authDialogCallback: null }),
         }),
+
         {
             name: "user-storage",
 
