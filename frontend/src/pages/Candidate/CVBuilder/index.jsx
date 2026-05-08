@@ -80,10 +80,28 @@ export default function EditorPage() {
               avatar: data.avatarUrl || null
             },
             skills: data.skills || [],
-            experience: data.experiences || [],
-            education: data.educations || [],
-            projects: data.projects || [],
-            certificates: data.certificates || []
+            experience: (data.experiences || []).map(e => ({
+              ...e,
+              start: e.startDate,
+              end: e.endDate,
+              desc: e.description
+            })),
+            education: (data.educations || []).map(e => ({
+              ...e,
+              start: e.startDate,
+              end: e.endDate,
+              desc: e.description
+            })),
+            projects: (data.projects || []).map(p => ({
+              ...p,
+              start: p.startDate,
+              end: p.endDate,
+              desc: p.description
+            })),
+            certificates: (data.certificates || []).map(c => ({
+              ...c,
+              org: c.issuer
+            }))
           }
           setCvData(mappedData)
           setTemplateId(data.templateId || 1)
@@ -110,6 +128,22 @@ export default function EditorPage() {
 
   const { user } = useUserStore()
 
+  // Auto-fill personal info from user-service if it's a new CV
+  useEffect(() => {
+    if ((!editId || editId.startsWith('cv_')) && user && cvData.personal.fullName === '') {
+      setCvData(prev => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          fullName: user.fullName || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          avatar: user.avatar || null
+        }
+      }))
+    }
+  }, [user, editId])
+
   const handleSave = async () => {
     if (!user) {
       toast.error('Vui lòng đăng nhập để lưu CV')
@@ -122,12 +156,30 @@ export default function EditorPage() {
         ...cvData.personal,
         avatarUrl: cvData.personal.avatar,
         skills: cvData.skills,
-        experiences: cvData.experience,
-        educations: cvData.education,
-        projects: cvData.projects,
-        certificates: cvData.certificates,
+        experiences: cvData.experience.map(e => ({
+          ...e,
+          startDate: e.start,
+          endDate: e.end,
+          description: e.desc
+        })),
+        educations: cvData.education.map(e => ({
+          ...e,
+          startDate: e.start,
+          endDate: e.end,
+          description: e.desc
+        })),
+        projects: cvData.projects.map(p => ({
+          ...p,
+          startDate: p.start,
+          endDate: p.end,
+          description: p.desc
+        })),
+        certificates: cvData.certificates.map(c => ({
+          ...c,
+          issuer: c.org
+        })),
         id: editId && !editId.startsWith('cv_') ? editId : null,
-        userId: user.id,
+        userId: user.userId || user.id, // Đồng nhất với user-service
         name: cvName,
         templateId,
         status: 'PUBLISHED'
@@ -144,11 +196,39 @@ export default function EditorPage() {
         console.log('✨ [CV Flow] Tạo mới CV thành công:', result);
       }
 
-      toast.success('Đã lưu CV thành công!')
+      toast.success('Đã lưu thông tin CV. Đang đồng bộ bản PDF...')
+
+      // --- Bước 2: Tự động chụp bản Preview thành PDF và lưu lên S3 ---
+      try {
+        const element = document.getElementById('cv-preview-root');
+        if (element && window.html2pdf) {
+          const opt = {
+            margin: 0,
+            filename: `CV_${result.id}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+
+          // Chuyển component thành Blob PDF
+          const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
+          
+          // Gửi file lên server để lưu vào S3
+          const formData = new FormData();
+          formData.append('file', pdfBlob, `CV_${result.id}.pdf`);
+          await cvService.uploadCVFile(result.id, formData);
+          
+          console.log('✅ [CV Flow] Đã đồng bộ bản PDF lên S3 thành công');
+        }
+      } catch (pdfErr) {
+        console.error('⚠️ [CV Flow] Lỗi khi tạo/upload PDF:', pdfErr);
+        // Không chặn luồng lưu chính nếu chỉ lỗi PDF
+      }
+
       setTimeout(() => {
         setSaved(false)
         navigate('/cv-dashboard')
-      }, 1200)
+      }, 1500)
 
     } catch (err) {
       console.error('❌ [CV Flow] Lỗi khi lưu:', err)
@@ -157,13 +237,42 @@ export default function EditorPage() {
     }
   }
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!editId || editId.startsWith('cv_')) {
       toast.error('Vui lòng lưu CV trước khi xuất PDF chuyên nghiệp')
       return
     }
-    const url = `${import.meta.env.VITE_BACKEND_URL}/api/v1/cvs/${editId}/pdf`
-    window.open(url, '_blank')
+
+    setSaved(true)
+    try {
+      const element = document.getElementById('cv-preview-root');
+      if (element && window.html2pdf) {
+        const opt = {
+          margin: 0,
+          filename: `${cvName || 'CV'}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Chuyển component thành PDF và tải về máy người dùng
+        await window.html2pdf().set(opt).from(element).save();
+        
+        toast.success('Xuất PDF thành công! Đang quay về trang quản lý...')
+        
+        // Chờ tải xong rồi mới quay về dashboard
+        setTimeout(() => {
+          setSaved(false)
+          navigate('/cv-dashboard')
+        }, 2000)
+      } else {
+        throw new Error('Công cụ xuất PDF chưa sẵn sàng')
+      }
+    } catch (err) {
+      console.error('❌ [CV Flow] Lỗi khi xuất PDF:', err)
+      toast.error('Không thể xuất PDF. Vui lòng thử lại.')
+      setSaved(false)
+    }
   }
 
   // Hydration & Guard safeguard: Render Soft Loading
@@ -315,6 +424,7 @@ export default function EditorPage() {
          <div className="flex-1 h-full rounded-2xl bg-zinc-200/50 border border-zinc-200/50 shadow-inner overflow-auto p-10 flex justify-center items-start custom-scrollbar relative items-center">
             
             <div
+               id="cv-preview-root"
                className="transition-all duration-300 origin-top bg-white print-area-shadow"
                style={{ 
                   width: `${zoom}%`,

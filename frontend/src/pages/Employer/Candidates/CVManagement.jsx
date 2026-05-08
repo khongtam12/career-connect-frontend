@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  FiSearch, FiFilter, FiMapPin, FiClock, 
-  FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash, FiRefreshCw 
+import {
+    FiSearch, FiFilter, FiMapPin, FiClock,
+    FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash, FiRefreshCw
 } from 'react-icons/fi';
 import ScheduleInterviewModal from './components/ScheduleInterviewModal';
 import RejectApplicationModal from './components/RejectApplicationModal';
 import { getCandidatesForEmployer, cancelInterview, updateApplicationStatus } from '@/service/applicationService';
 import { toast } from 'react-toastify';
 import LoadingSpinner from './components/LoadingSpinner';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 
 const mapStatus = (status) => {
     switch (status) {
@@ -34,7 +35,7 @@ const calculateAge = (dob) => {
 };
 
 const CVManagement = () => {
-    
+
     // Modals state
     const [openInterviewModal, setOpenInterviewModal] = useState(false);
     const [openRejectModal, setOpenRejectModal] = useState(false);
@@ -89,9 +90,32 @@ const CVManagement = () => {
         }
     };
 
+    // Lắng nghe flag hasNewCandidate từ notification store
+    const hasNewCandidate = useNotificationStore((s) => s.hasNewCandidate);
+    const setHasNewCandidate = useNotificationStore((s) => s.setHasNewCandidate);
+    const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+    const notifications = useNotificationStore((s) => s.notifications);
+
     useEffect(() => {
         fetchCandidates();
+        // Vào trang ứng viên → xóa chấm đỏ + badge
+        const unreadNotis = notifications.filter(n => !n.read);
+        if (unreadNotis.length > 0) {
+            markAllAsRead();
+            // Đồng bộ trạng thái đã đọc lên backend
+            unreadNotis.forEach(n => {
+                fetch(`http://localhost:8085/api/v1/notifications/${n.id}/read`, { method: 'PUT' }).catch(() => { });
+            });
+        }
     }, []);
+
+    // Tự động refresh danh sách khi có ứng viên mới apply (qua WebSocket)
+    useEffect(() => {
+        if (hasNewCandidate) {
+            fetchCandidates();
+            setHasNewCandidate(false);
+        }
+    }, [hasNewCandidate]);
 
     // Filtered candidates (client-side)
     const filteredCandidates = useMemo(() => {
@@ -172,7 +196,7 @@ const CVManagement = () => {
     // Hủy phỏng vấn
     const handleCancelInterview = async () => {
         if (!selectedCandidate) return;
-        
+
         const confirmed = window.confirm(`Bạn có chắc muốn hủy phỏng vấn của ${selectedCandidate.name}?`);
         if (!confirmed) return;
 
@@ -222,15 +246,15 @@ const CVManagement = () => {
             <div className="bg-white p-3 border-b border-gray-100 flex gap-3 items-center flex-wrap shrink-0">
                 <div className="flex-1 min-w-[200px] relative">
                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Tìm kiếm theo tên hoặc vị trí ứng tuyển..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white outline-none transition-all text-sm font-medium"
                     />
                 </div>
-                
+
                 <select
                     className="bg-[#f9fafb] border border-gray-200 text-gray-700 text-[0.875rem] rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none min-w-[150px]"
                     value={statusFilter}
@@ -257,14 +281,14 @@ const CVManagement = () => {
                 </select>
 
                 {(searchQuery || statusFilter !== 'all_status' || timeFilter !== 'all_time') && (
-                    <button 
+                    <button
                         onClick={() => { setSearchQuery(''); setStatusFilter('all_status'); setTimeFilter('all_time'); }}
                         className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg px-4 py-2 text-sm font-bold transition-colors"
                     >
                         <FiXCircle className="text-xs" /> Xóa lọc
                     </button>
                 )}
-                <button 
+                <button
                     onClick={() => {
                         setLoading(true);
                         fetchCandidates();
@@ -292,14 +316,14 @@ const CVManagement = () => {
                                 Không tìm thấy ứng viên phù hợp
                             </div>
                         ) : filteredCandidates.map((c) => (
-                            <div 
+                            <div
                                 key={c.id}
                                 onClick={() => setSelectedCandidate(c)}
                                 className={`p-3 cursor-pointer border-b border-gray-50 transition-all ${selectedCandidate.id === c.id ? 'bg-blue-50/40 border-l-4 border-l-blue-600' : 'hover:bg-gray-50 border-l-4 border-transparent'}`}
                             >
                                 <div className="flex gap-2.5">
-                                    <img 
-                                        src={c.avatar} 
+                                    <img
+                                        src={c.avatar}
                                         alt={c.name}
                                         className="w-9 h-9 rounded-lg object-cover bg-gray-200 shrink-0"
                                     />
@@ -313,20 +337,20 @@ const CVManagement = () => {
                                             </span>
                                         </div>
                                         <p className="text-gray-600 text-[14px] mb-1 line-clamp-1">{c.role}</p>
-                                        
+
                                         <div className="flex flex-col gap-1 mt-1.5">
                                             <div className="text-gray-500 text-[13px] flex items-center gap-1 whitespace-nowrap">
-                                                <FiClock className="text-gray-400 text-[9px]"/> {c.experience} năm kinh nghiệm
+                                                <FiClock className="text-gray-400 text-[9px]" /> {c.experience} năm kinh nghiệm
                                             </div>
                                             <div className="flex justify-end">
-                                                <span 
+                                                <span
                                                     className={`px-2 py-0.5 rounded-full inline-flex items-center justify-center font-bold text-[9px] whitespace-nowrap 
-                                                    ${c.status === 'Chờ xử lý' ? 'bg-amber-100 text-amber-700' : 
-                                                      c.status === 'Đang phỏng vấn' ? 'bg-blue-100 text-blue-700' : 
-                                                      c.status === 'Đã từ chối' ? 'bg-red-100 text-red-700' : 
-                                                      c.status === 'Đã chấp nhận' ? 'bg-green-100 text-green-700' : 
-                                                      c.status === 'Đã hủy' ? 'bg-orange-100 text-orange-700' :
-                                                      'bg-gray-100 text-gray-700'}`}
+                                                    ${c.status === 'Chờ xử lý' ? 'bg-amber-100 text-amber-700' :
+                                                            c.status === 'Đang phỏng vấn' ? 'bg-blue-100 text-blue-700' :
+                                                                c.status === 'Đã từ chối' ? 'bg-red-100 text-red-700' :
+                                                                    c.status === 'Đã chấp nhận' ? 'bg-green-100 text-green-700' :
+                                                                        c.status === 'Đã hủy' ? 'bg-orange-100 text-orange-700' :
+                                                                            'bg-gray-100 text-gray-700'}`}
                                                 >
                                                     {c.status}
                                                 </span>
@@ -341,12 +365,12 @@ const CVManagement = () => {
 
                 {/* Right: Candidate Detail & CV Preview */}
                 <div className="flex-1 bg-gray-50 overflow-y-auto p-4 flex flex-col gap-4 min-w-0">
-                     
-                     {/* Candidate Header Card */}
-                     <div className="p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white shrink-0">
+
+                    {/* Candidate Header Card */}
+                    <div className="p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white shrink-0">
                         <div className="flex gap-4 items-center">
-                            <img 
-                                src={selectedCandidate.avatar} 
+                            <img
+                                src={selectedCandidate.avatar}
                                 alt={selectedCandidate.name}
                                 className="w-16 h-16 rounded-2xl object-cover bg-gray-200 shrink-0"
                             />
@@ -365,7 +389,7 @@ const CVManagement = () => {
                         </div>
 
                         <div className="flex flex-col gap-2 min-w-[200px] w-full lg:w-auto mt-2 lg:mt-0">
-                            <button 
+                            <button
                                 onClick={() => handleDownloadCV(selectedCandidate)}
                                 className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 py-1.5 text-xs transition-colors"
                             >
@@ -375,14 +399,14 @@ const CVManagement = () => {
                                 {/* Nút lên lịch PV hoặc hủy PV tùy trạng thái */}
                                 {selectedCandidate.rawStatus === 'INTERVIEW' ? (
                                     <>
-                                        <button 
+                                        <button
                                             onClick={handleCancelInterview}
                                             disabled={actionLoading}
                                             className="flex items-center justify-center gap-2 flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow-sm py-1.5 text-xs transition-colors disabled:opacity-50"
                                         >
                                             <FiSlash /> {actionLoading ? '...' : 'Hủy PV'}
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={handleAcceptCandidate}
                                             disabled={actionLoading}
                                             className="flex items-center justify-center gap-2 flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm py-1.5 text-xs transition-colors disabled:opacity-50"
@@ -396,13 +420,13 @@ const CVManagement = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <button 
+                                        <button
                                             onClick={() => setOpenInterviewModal(true)}
                                             className="flex items-center justify-center gap-2 flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm py-1.5 text-xs transition-colors"
                                         >
                                             <FiCalendar /> Lên lịch PV
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => setOpenRejectModal(true)}
                                             className="flex items-center justify-center gap-2 flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg border border-red-100 py-1.5 text-xs transition-colors"
                                         >
@@ -412,10 +436,10 @@ const CVManagement = () => {
                                 )}
                             </div>
                         </div>
-                     </div>
+                    </div>
 
-                     {/* Interview Info Card (nếu đang phỏng vấn) */}
-                     {selectedCandidate.rawStatus === 'INTERVIEW' && selectedCandidate.interviewDate && (
+                    {/* Interview Info Card (nếu đang phỏng vấn) */}
+                    {selectedCandidate.rawStatus === 'INTERVIEW' && selectedCandidate.interviewDate && (
                         <div className="p-4 rounded-xl shadow-sm border border-blue-100 bg-blue-50/60 shrink-0">
                             <h3 className="font-bold text-blue-800 text-sm flex items-center gap-2 mb-3">
                                 <FiCalendar className="text-blue-600" /> Thông tin phỏng vấn
@@ -435,25 +459,25 @@ const CVManagement = () => {
                                 </div>
                             </div>
                         </div>
-                     )}
+                    )}
 
-                     {/* Rejection Reason Card (nếu đã từ chối) */}
-                     {selectedCandidate.rawStatus === 'REJECTED' && selectedCandidate.rejectionReason && (
+                    {/* Rejection Reason Card (nếu đã từ chối) */}
+                    {selectedCandidate.rawStatus === 'REJECTED' && selectedCandidate.rejectionReason && (
                         <div className="p-4 rounded-xl shadow-sm border border-red-100 bg-red-50/60 shrink-0">
                             <h3 className="font-bold text-red-800 text-sm flex items-center gap-2 mb-2">
                                 <FiXCircle className="text-red-600" /> Lý do từ chối
                             </h3>
                             <p className="text-gray-700 text-sm">{selectedCandidate.rejectionReason}</p>
                         </div>
-                     )}
+                    )}
 
-                     {/* CV PDF Viewer Area */}
-                     <div className="mt-4 rounded-xl shadow-sm border border-gray-100 bg-white overflow-hidden flex flex-col min-h-[1000px]">
+                    {/* CV PDF Viewer Area */}
+                    <div className="mt-4 rounded-xl shadow-sm border border-gray-100 bg-white overflow-hidden flex flex-col min-h-[1000px]">
                         <div className="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center shrink-0">
                             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
                                 Hồ sơ đính kèm (PDF)
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => handleDownloadCV(selectedCandidate)}
                                 className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-xs font-bold transition-colors"
                             >
@@ -462,15 +486,15 @@ const CVManagement = () => {
                         </div>
                         <div className="flex-1 w-full bg-gray-200 relative min-h-0">
                             {/* Embedded PDF Viewer */}
-                            <object 
-                                data={selectedCandidate.cvUrl} 
-                                type="application/pdf" 
+                            <object
+                                data={selectedCandidate.cvUrl}
+                                type="application/pdf"
                                 className="absolute inset-0 w-full h-full"
                             >
                                 <div className="flex items-center justify-center h-full flex-col gap-2 text-gray-500 bg-white">
-                                    <FiDownload size={32} className="text-gray-400"/>
+                                    <FiDownload size={32} className="text-gray-400" />
                                     <p className="text-sm">Không thể hiển thị PDF trực tiếp. Vui lòng tải xuống.</p>
-                                    <button 
+                                    <button
                                         onClick={() => handleDownloadCV(selectedCandidate)}
                                         className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
                                     >
@@ -479,22 +503,22 @@ const CVManagement = () => {
                                 </div>
                             </object>
                         </div>
-                     </div>
+                    </div>
                 </div>
             </div>
 
             {/* Modals */}
-            <ScheduleInterviewModal 
-                open={openInterviewModal} 
-                onClose={() => setOpenInterviewModal(false)} 
+            <ScheduleInterviewModal
+                open={openInterviewModal}
+                onClose={() => setOpenInterviewModal(false)}
                 candidateName={selectedCandidate.name}
                 applicationId={selectedCandidate.id}
                 onSuccess={handleActionSuccess}
             />
 
-            <RejectApplicationModal 
-                open={openRejectModal} 
-                onClose={() => setOpenRejectModal(false)} 
+            <RejectApplicationModal
+                open={openRejectModal}
+                onClose={() => setOpenRejectModal(false)}
                 candidateName={selectedCandidate.name}
                 applicationId={selectedCandidate.id}
                 onSuccess={handleActionSuccess}

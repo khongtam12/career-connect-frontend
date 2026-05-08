@@ -1,8 +1,10 @@
 import React from 'react';
+import { isHotJob } from '../utils/jobBadges';
 
 export default function JobListItem({ job, isActive, onSelect }) {
   const salaryLabel = formatSalary(job.salaryMin, job.salaryMax);
   const jobTypeLabel = formatJobType(job.jobType);
+  const showHotBadge = isHotJob(job);
 
   return (
     <button
@@ -27,7 +29,14 @@ export default function JobListItem({ job, isActive, onSelect }) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 line-clamp-2">{job.title}</p>
+          <div className="flex items-start gap-2">
+            <p className="text-sm font-semibold text-gray-900 line-clamp-2">{job.title}</p>
+            {showHotBadge && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">
+                🔥 HOT
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-600 mt-1 truncate">{job.companyName || job.companyId}</p>
           <p className="text-emerald-600 font-bold mt-3 text-sm sm:text-base">{salaryLabel}</p>
           <div className="flex flex-wrap gap-2 mt-3 text-xs text-gray-600">

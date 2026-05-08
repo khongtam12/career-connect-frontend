@@ -234,7 +234,7 @@ export default function CVForm({ data, onChange }) {
                             <Input value={p.fullName || ''} onChange={e => updateP('fullName', e.target.value)} placeholder="Nguyễn Văn A" />
                           </Field>
                           <Field label="Ngày sinh">
-                            <Input type="date" value={p.dob || ''} onChange={e => updateP('dob', e.target.value)} />
+                            <Input type="date" value={p.dob || ''} onChange={e => updateP('dob', e.target.value)} className="w-full h-9 text-xs px-2" />
                           </Field>
                           <Field label="Email">
                             <Input type="email" value={p.email || ''} onChange={e => updateP('email', e.target.value)} placeholder="name@example.com" />
@@ -337,12 +337,14 @@ export default function CVForm({ data, onChange }) {
                               <Field label="Vị trí công việc" className="col-span-2">
                                 <Input value={exp.role || ''} onChange={e => updateArr('experience', i, 'role', e.target.value)} placeholder="Frontend Engineer" />
                               </Field>
-                              <Field label="Bắt đầu">
-                                <Input type="month" value={exp.start || ''} onChange={e => updateArr('experience', i, 'start', e.target.value)} />
-                              </Field>
-                              <Field label="Kết thúc">
-                                <Input type="month" value={exp.end || ''} onChange={e => updateArr('experience', i, 'end', e.target.value)} />
-                              </Field>
+                              <div className="grid grid-cols-2 gap-3 col-span-2">
+                                <Field label="Bắt đầu">
+                                  <Input type="month" value={exp.start || ''} onChange={e => updateArr('experience', i, 'start', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                                <Field label="Kết thúc">
+                                  <Input type="month" value={exp.end || ''} onChange={e => updateArr('experience', i, 'end', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                              </div>
                               <Field label="Mô tả công việc" className="col-span-2">
                                 <Textarea rows={4} value={exp.desc || ''} onChange={e => updateArr('experience', i, 'desc', e.target.value)} placeholder="— Xây dựng tính năng X giúp tăng conversion Y%&#10;— Tech stack: React, TypeScript..." />
                               </Field>
@@ -372,12 +374,14 @@ export default function CVForm({ data, onChange }) {
                               <Field label="Ngành học" className="col-span-2">
                                 <Input value={edu.major || ''} onChange={e => updateArr('education', i, 'major', e.target.value)} placeholder="Kỹ thuật phần mềm" />
                               </Field>
-                              <Field label="Bắt đầu">
-                                <Input type="month" value={edu.start || ''} onChange={e => updateArr('education', i, 'start', e.target.value)} />
-                              </Field>
-                              <Field label="Kết thúc">
-                                <Input type="month" value={edu.end || ''} onChange={e => updateArr('education', i, 'end', e.target.value)} />
-                              </Field>
+                              <div className="grid grid-cols-2 gap-3 col-span-2">
+                                <Field label="Bắt đầu">
+                                  <Input type="month" value={edu.start || ''} onChange={e => updateArr('education', i, 'start', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                                <Field label="Kết thúc">
+                                  <Input type="month" value={edu.end || ''} onChange={e => updateArr('education', i, 'end', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                              </div>
                               <Field label="GPA / Chi tiết" className="col-span-2">
                                 <Textarea rows={2} value={edu.desc || ''} onChange={e => updateArr('education', i, 'desc', e.target.value)} placeholder="GPA: 3.7/4.0 — Tốt nghiệp loại Giỏi" />
                               </Field>
@@ -404,12 +408,14 @@ export default function CVForm({ data, onChange }) {
                               <Field label="Tên dự án" className="col-span-2">
                                 <Input value={prj.name || ''} onChange={e => updateArr('projects', i, 'name', e.target.value)} placeholder="E-commerce Platform" />
                               </Field>
-                              <Field label="Bắt đầu">
-                                <Input type="month" value={prj.start || ''} onChange={e => updateArr('projects', i, 'start', e.target.value)} />
-                              </Field>
-                              <Field label="Kết thúc">
-                                <Input type="month" value={prj.end || ''} onChange={e => updateArr('projects', i, 'end', e.target.value)} />
-                              </Field>
+                              <div className="grid grid-cols-2 gap-3 col-span-2">
+                                <Field label="Bắt đầu">
+                                  <Input type="month" value={prj.start || ''} onChange={e => updateArr('projects', i, 'start', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                                <Field label="Kết thúc">
+                                  <Input type="month" value={prj.end || ''} onChange={e => updateArr('projects', i, 'end', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                              </div>
                               <Field label="Link dự án / Source" className="col-span-2">
                                 <Input value={prj.link || ''} onChange={e => updateArr('projects', i, 'link', e.target.value)} placeholder="https://github.com/..." />
                               </Field>
@@ -440,7 +446,7 @@ export default function CVForm({ data, onChange }) {
                                 <Input value={cert.name || ''} onChange={e => updateArr('certificates', i, 'name', e.target.value)} placeholder="AWS Solutions Architect" />
                               </Field>
                               <Field label="Tháng/Năm đạt được">
-                                <Input type="month" value={cert.date || ''} onChange={e => updateArr('certificates', i, 'date', e.target.value)} />
+                                <Input type="month" value={cert.date || ''} onChange={e => updateArr('certificates', i, 'date', e.target.value)} className="w-full h-9 text-xs px-2" />
                               </Field>
                               <Field label="Tổ chức cấp">
                                 <Input value={cert.org || ''} onChange={e => updateArr('certificates', i, 'org', e.target.value)} placeholder="Amazon Web Services" />

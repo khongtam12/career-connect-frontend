@@ -4,11 +4,14 @@ import { Link } from 'react-router-dom';
 import { isJobSaved, toggleSavedJob } from '../utils/jobTracker';
 import { useUserStore } from '../../../stores/useUserStore';
 
+import { isHotJob } from '../utils/jobBadges';
+
 export default function JobCard({ job, isFeatured = false, onDetail, isSaved, onToggleSave }) {
   const jobId = job?.jobId || job?.id;
   const [localSaved, setLocalSaved] = React.useState(() => isJobSaved(jobId));
   const resolvedSaved = typeof isSaved === 'boolean' ? isSaved : localSaved;
   const { isAuthenticated, openAuthDialog } = useUserStore();
+  const showHotBadge = isHotJob(job);
   useEffect(() => {
     setLocalSaved(isJobSaved(jobId));
   }, [jobId]);
@@ -43,6 +46,13 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
         : 'border-gray-200 bg-white'
         }`}
     >
+      {showHotBadge && (
+        <div className="absolute left-4 top-4 z-10">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2.5 py-1 text-[10px] font-bold uppercase text-white shadow-sm">
+            🔥 HOT
+          </span>
+        </div>
+      )}
       {/* Background */}
       <div
         className={`absolute inset-0 bg-linear-to-br ${job.color || 'from-emerald-500 to-teal-600'
@@ -99,8 +109,8 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
           <button
             onClick={handleToggleSave} // ← thay toàn bộ inline arrow function cũ
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${resolvedSaved
-                ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              ? 'bg-red-100 text-red-600 hover:bg-red-200'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
           >
             <Heart size={18} fill={resolvedSaved ? 'currentColor' : 'none'} />

@@ -61,6 +61,7 @@ export default function CVPreview({ data, templateId }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: 10.5, opacity: 0.9 }}>
               {p.phone && <span>📱 {p.phone}</span>}
               {p.email && <span>✉ {p.email}</span>}
+              {p.dob && <span>🎂 {p.dob}</span>}
               {p.address && <span>📍 {p.address}</span>}
               {p.linkedin && <span>🔗 {p.linkedin}</span>}
             </div>
@@ -107,8 +108,8 @@ export default function CVPreview({ data, templateId }) {
                     <div style={{ fontWeight: 700, fontSize: 10.5, color: '#2d3748' }}>{edu.school}</div>
                     <div style={{ fontSize: 10, color: colors.primary, fontWeight: 600 }}>{edu.major}</div>
                     <div style={{ fontSize: 9.5, color: '#718096' }}>
-                      {fmt(edu.startDate)} – {fmt(edu.endDate)}
-                      {edu.gpa && ` | GPA: ${edu.gpa}`}
+                      {fmt(edu.start)} – {fmt(edu.end)}
+                      {edu.desc && ` | ${edu.desc}`}
                     </div>
                   </div>
                 ))}
@@ -120,8 +121,11 @@ export default function CVPreview({ data, templateId }) {
                 {sectionTitle('Chứng chỉ')}
                 {(data.certificates || []).map(cert => (
                   <div key={cert.id} style={{ marginBottom: 6 }}>
-                    <div style={{ fontWeight: 700, fontSize: 10.5, color: '#2d3748' }}>{cert.name}</div>
-                    <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.issuer} {cert.date && `· ${fmt(cert.date)}`}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ fontWeight: 700, fontSize: 10.5 }}>{cert.name}</div>
+                      {cert.date && <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(cert.date)}</div>}
+                    </div>
+                    <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.org}</div>
                   </div>
                 ))}
               </div>
@@ -137,16 +141,16 @@ export default function CVPreview({ data, templateId }) {
                   <div key={exp.id} style={{ marginBottom: 12, paddingLeft: 8, borderLeft: `3px solid ${colors.primary}40` }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{exp.position}</div>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{exp.role}</div>
                         <div style={{ fontSize: 10.5, color: colors.primary, fontWeight: 600 }}>{exp.company}</div>
                       </div>
                       <span style={{ fontSize: 9.5, color: '#718096', whiteSpace: 'nowrap', marginLeft: 8 }}>
-                        {fmt(exp.startDate)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.endDate)}
+                        {fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}
                       </span>
                     </div>
-                    {exp.description && (
+                    {exp.desc && (
                       <p style={{ fontSize: 10, color: '#4a5568', marginTop: 4, lineHeight: 1.5 }}>
-                        {exp.description}
+                        {exp.desc}
                       </p>
                     )}
                   </div>
@@ -163,22 +167,25 @@ export default function CVPreview({ data, templateId }) {
                       <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{proj.name}</div>
                       {proj.role && <span style={{ fontSize: 9.5, color: colors.primary, fontWeight: 600 }}>{proj.role}</span>}
                     </div>
-                    {proj.description && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3, lineHeight: 1.5 }}>{proj.description}</p>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {(proj.start || proj.end) && (
+                        <div style={{ fontSize: 9, color: '#718096' }}>{fmt(proj.start)} – {fmt(proj.end)}</div>
+                      )}
+                      {proj.link && (
+                        <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: colors.primary, textDecoration: 'none' }}>{proj.link}</a>
+                      )}
+                    </div>
+                    {proj.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3, lineHeight: 1.5 }}>{proj.desc}</p>}
                     {proj.technologies && (
                       <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                         {proj.technologies.split(',').map((t, i) => (
                           <span key={i} style={{
                             background: colors.secondary, color: colors.primary,
                             fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
-                            border: `1px solid ${colors.primary}30`
                           }}>{t.trim()}</span>
                         ))}
                       </div>
                     )}
-                    <div style={{ fontSize: 9.5, color: '#718096', marginTop: 4, display: 'flex', gap: 10 }}>
-                      {proj.github && <span>GitHub: {proj.github}</span>}
-                      {proj.demo && <span>Demo: {proj.demo}</span>}
-                    </div>
                   </div>
                 ))}
               </div>
@@ -209,6 +216,7 @@ export default function CVPreview({ data, templateId }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 20px', fontSize: 10.5, opacity: 0.85 }}>
               {p.phone && <span>📱 {p.phone}</span>}
               {p.email && <span>✉ {p.email}</span>}
+              {p.dob && <span>🎂 {p.dob}</span>}
               {p.address && <span>📍 {p.address}</span>}
             </div>
           </div>
@@ -227,10 +235,10 @@ export default function CVPreview({ data, templateId }) {
                   {sectionTitle('Kinh nghiệm')}
                   {(data.experience || []).map(exp => (
                     <div key={exp.id} style={{ marginBottom: 10 }}>
-                      <div style={{ fontWeight: 700, fontSize: 11 }}>{exp.position}</div>
+                      <div style={{ fontWeight: 700, fontSize: 11 }}>{exp.role}</div>
                       <div style={{ color: colors.primary, fontSize: 10.5, fontWeight: 600 }}>{exp.company}</div>
-                      <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(exp.startDate)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.endDate)}</div>
-                      {exp.description && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{exp.description}</p>}
+                      <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}</div>
+                      {exp.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{exp.desc}</p>}
                     </div>
                   ))}
                 </div>
@@ -240,8 +248,16 @@ export default function CVPreview({ data, templateId }) {
                   {sectionTitle('Dự án')}
                   {(data.projects || []).map(proj => (
                     <div key={proj.id} style={{ marginBottom: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 11 }}>{proj.name} {proj.role && <span style={{ color: colors.primary }}>· {proj.role}</span>}</div>
-                      {proj.description && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{proj.description}</p>}
+                      <div style={{ fontWeight: 700, fontSize: 11 }}>{proj.name} {proj.role && <span style={{ color: colors.primary }}> · {proj.role}</span>}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {(proj.start || proj.end) && (
+                        <div style={{ fontSize: 9, color: '#718096' }}>{fmt(proj.start)} – {fmt(proj.end)}</div>
+                      )}
+                      {proj.link && (
+                        <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: colors.primary, textDecoration: 'none' }}>{proj.link}</a>
+                      )}
+                    </div>
+                      {proj.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{proj.desc}</p>}
                       {proj.technologies && <p style={{ fontSize: 10, color: '#718096' }}>{proj.technologies}</p>}
                     </div>
                   ))}
@@ -272,7 +288,7 @@ export default function CVPreview({ data, templateId }) {
                     <div key={edu.id} style={{ marginBottom: 8 }}>
                       <div style={{ fontWeight: 700, fontSize: 10.5 }}>{edu.school}</div>
                       <div style={{ fontSize: 10, color: colors.primary }}>{edu.major}</div>
-                      <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(edu.startDate)} – {fmt(edu.endDate)} {edu.gpa && `| GPA: ${edu.gpa}`}</div>
+                      <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(edu.start)} – {fmt(edu.end)} {edu.desc && `| ${edu.desc}`}</div>
                     </div>
                   ))}
                 </div>
@@ -281,11 +297,14 @@ export default function CVPreview({ data, templateId }) {
                 <div>
                   {sectionTitle('Chứng chỉ')}
                   {(data.certificates || []).map(cert => (
-                    <div key={cert.id} style={{ marginBottom: 6 }}>
+                  <div key={cert.id} style={{ marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ fontWeight: 700, fontSize: 10.5 }}>{cert.name}</div>
-                      <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.issuer}</div>
+                      {cert.date && <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(cert.date)}</div>}
                     </div>
-                  ))}
+                    <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.org}</div>
+                  </div>
+                ))}
                 </div>
               )}
             </div>
@@ -297,8 +316,9 @@ export default function CVPreview({ data, templateId }) {
 
   // Templates 2, 6, 8: Accent side bar
   return (
-    <div id="cv-print-area" style={{
-      background: 'white', width: '100%', minHeight: '297mm',
+    <div id="cv-preview-root" className="cv-preview-container" style={{
+      width: '210mm',
+      minHeight: '297mm',
       fontSize: 11, fontFamily: "'Segoe UI', Arial, sans-serif",
       boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden',
       display: 'grid', gridTemplateColumns: '35% 1fr'
@@ -319,6 +339,7 @@ export default function CVPreview({ data, templateId }) {
         <div style={{ borderTop: 'rgba(255,255,255,0.3) 1px solid', paddingTop: 12, marginBottom: 14, fontSize: 9.5 }}>
           {p.phone && <div style={{ marginBottom: 4 }}>📱 {p.phone}</div>}
           {p.email && <div style={{ marginBottom: 4 }}>✉ {p.email}</div>}
+          {p.dob && <div style={{ marginBottom: 4 }}>🎂 {p.dob}</div>}
           {p.address && <div style={{ marginBottom: 4 }}>📍 {p.address}</div>}
         </div>
         {(data.skills || []).length > 0 && (
@@ -343,7 +364,8 @@ export default function CVPreview({ data, templateId }) {
               <div key={edu.id} style={{ marginBottom: 8, fontSize: 9.5 }}>
                 <div style={{ fontWeight: 700 }}>{edu.school}</div>
                 <div style={{ opacity: 0.8 }}>{edu.major}</div>
-                <div style={{ opacity: 0.6 }}>{fmt(edu.startDate)} – {fmt(edu.endDate)}</div>
+                <div style={{ opacity: 0.6 }}>{fmt(edu.start)} – {fmt(edu.end)}</div>
+                {edu.desc && <div style={{ opacity: 0.6, fontSize: 8.5, marginTop: 2 }}>{edu.desc}</div>}
               </div>
             ))}
           </div>
@@ -363,12 +385,12 @@ export default function CVPreview({ data, templateId }) {
             {sectionTitle('Kinh nghiệm làm việc')}
             {(data.experience || []).map(exp => (
               <div key={exp.id} style={{ marginBottom: 10, paddingLeft: 8, borderLeft: `3px solid ${colors.primary}50` }}>
-                <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{exp.position}</div>
+                <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{exp.role}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: colors.primary, fontSize: 10.5, fontWeight: 600 }}>{exp.company}</span>
-                  <span style={{ fontSize: 9.5, color: '#718096' }}>{fmt(exp.startDate)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.endDate)}</span>
+                  <span style={{ fontSize: 9.5, color: '#718096' }}>{fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}</span>
                 </div>
-                {exp.description && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 4 }}>{exp.description}</p>}
+                {exp.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 4 }}>{exp.desc}</p>}
               </div>
             ))}
           </div>
@@ -378,13 +400,17 @@ export default function CVPreview({ data, templateId }) {
             {sectionTitle('Dự án cá nhân')}
             {(data.projects || []).map(proj => (
               <div key={proj.id} style={{ marginBottom: 10 }}>
-                <div style={{ fontWeight: 700, fontSize: 11 }}>{proj.name} {proj.role && <span style={{ color: colors.primary, fontWeight: 500 }}>· {proj.role}</span>}</div>
-                {proj.description && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{proj.description}</p>}
-                {proj.technologies && <p style={{ fontSize: 9.5, color: '#718096', marginTop: 2 }}>Tech: {proj.technologies}</p>}
-                <div style={{ fontSize: 9.5, color: colors.primary, marginTop: 2, display: 'flex', gap: 10 }}>
-                  {proj.github && <span>GitHub</span>}
-                  {proj.demo && <span>Demo</span>}
+                <div style={{ fontWeight: 700, fontSize: 11 }}>{proj.name} {proj.role && <span style={{ color: colors.primary, fontWeight: 500 }}> · {proj.role}</span>}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  {(proj.start || proj.end) && (
+                    <div style={{ fontSize: 9, color: '#718096', opacity: 0.8 }}>{fmt(proj.start)} – {fmt(proj.end)}</div>
+                  )}
+                  {proj.link && (
+                    <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: colors.primary, textDecoration: 'none' }}>{proj.link}</a>
+                  )}
                 </div>
+                {proj.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{proj.desc}</p>}
+                {proj.technologies && <p style={{ fontSize: 9.5, color: '#718096', marginTop: 2 }}>Tech: {proj.technologies}</p>}
               </div>
             ))}
           </div>
@@ -399,7 +425,7 @@ export default function CVPreview({ data, templateId }) {
                   borderRadius: 6, padding: '5px 10px'
                 }}>
                   <div style={{ fontWeight: 700, fontSize: 10.5, color: colors.accent }}>{cert.name}</div>
-                  <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.issuer}</div>
+                  <div style={{ fontSize: 9.5, color: '#718096', opacity: 0.8 }}>{cert.org} {cert.date && `| ${fmt(cert.date)}`}</div>
                 </div>
               ))}
             </div>

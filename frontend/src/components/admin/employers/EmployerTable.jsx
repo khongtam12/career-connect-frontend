@@ -16,15 +16,14 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Skeleton
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
-import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 const headCellSx = {
   fontWeight: 600,
@@ -43,18 +42,18 @@ const bodyCellSx = {
   borderBottom: '1px solid #f3f4f6',
 };
 
-function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onViewDetail }) {
+function EmployerActionMenu({ employer, onChangeStatus }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
   const handleClick = (e) => setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
-  const isLocked = candidate.status === 'BANNED';
+  const isBanned = employer.status === 'BANNED';
 
-  const handleToggleStatus = () => {
+  const handleToggleBanned = () => {
     handleClose();
-    onChangeStatus(candidate, isLocked ? 'ACTIVE' : 'BANNED');
+    onChangeStatus(employer.id, isBanned ? 'ACTIVE' : 'BANNED');
   };
 
   return (
@@ -72,7 +71,7 @@ function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onVie
             overflow: 'visible',
             filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
             mt: 0.5,
-            minWidth: 150,
+            minWidth: 180,
             borderRadius: 2,
             border: '1px solid #e5e7eb',
           },
@@ -80,34 +79,16 @@ function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onVie
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={() => { handleClose(); onViewDetail(candidate); }} sx={{ py: 1 }}>
+        <MenuItem onClick={handleToggleBanned} sx={{ py: 1 }}>
           <ListItemIcon>
-            <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6366f1' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="Xem chi tiết"
-            primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
-          />
-        </MenuItem>
-        <MenuItem onClick={() => { handleClose(); onResetPassword(candidate); }} sx={{ py: 1 }}>
-          <ListItemIcon>
-            <VpnKeyOutlinedIcon fontSize="small" sx={{ color: '#3b82f6' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="Reset mật khẩu"
-            primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
-          />
-        </MenuItem>
-        <MenuItem onClick={handleToggleStatus} sx={{ py: 1 }}>
-          <ListItemIcon>
-            {isLocked ? (
+            {isBanned ? (
               <LockOpenOutlinedIcon fontSize="small" sx={{ color: '#10b981' }} />
             ) : (
               <LockOutlinedIcon fontSize="small" sx={{ color: '#ef4444' }} />
             )}
           </ListItemIcon>
           <ListItemText
-            primary={isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
+            primary={isBanned ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
             primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
           />
         </MenuItem>
@@ -116,15 +97,30 @@ function CandidateActionMenu({ candidate, onChangeStatus, onResetPassword, onVie
   );
 }
 
-export default function CandidateTable({
-  candidates = [],
+export default function EmployerTable({
+  employers = [],
+  loading = false,
   page = 1,
   totalPages = 1,
   onPageChange,
   onChangeStatus,
-  onResetPassword,
-  onViewDetail,
 }) {
+  if (loading) {
+    return (
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableBody>
+            {[...Array(5)].map((_, i) => (
+              <TableRow key={i}>
+                <TableCell colSpan={6}><Skeleton height={60} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  }
+
   return (
     <Paper
       variant="outlined"
@@ -135,13 +131,13 @@ export default function CandidateTable({
           <TableHead>
             <TableRow>
               <TableCell sx={{ ...headCellSx, minWidth: 250 }}>
-                Ứng viên
+                Nhà tuyển dụng
               </TableCell>
               <TableCell sx={{ ...headCellSx, minWidth: 200 }}>
                 Email
               </TableCell>
-              <TableCell sx={{ ...headCellSx, minWidth: 150 }}>
-                Số điện thoại
+              <TableCell sx={{ ...headCellSx, minWidth: 200 }}>
+                Công ty
               </TableCell>
               <TableCell sx={{ ...headCellSx, minWidth: 120 }}>
                 Ngày đăng ký
@@ -156,18 +152,18 @@ export default function CandidateTable({
           </TableHead>
 
           <TableBody>
-            {candidates.length === 0 ? (
+            {employers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} sx={{ textAlign: 'center', py: 6 }}>
                   <Typography color="text.secondary">
-                    Không có ứng viên nào
+                    Không tìm thấy nhà tuyển dụng nào
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              candidates.map((candidate) => (
+              employers.map((emp) => (
                 <TableRow
-                  key={candidate.id}
+                  key={emp.id}
                   hover
                   sx={{
                     '&:hover': { bgcolor: '#fafafa' },
@@ -176,7 +172,7 @@ export default function CandidateTable({
                 >
                   <TableCell sx={bodyCellSx}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar src={candidate.avatar} alt={candidate.fullName} sx={{ width: 40, height: 40 }} />
+                      <Avatar src={emp.avatar} alt={emp.fullName} sx={{ width: 40, height: 40 }} />
                       <Box>
                         <Typography
                           sx={{
@@ -186,10 +182,10 @@ export default function CandidateTable({
                             lineHeight: 1.4,
                           }}
                         >
-                          {candidate.fullName}
+                          {emp.fullName}
                         </Typography>
                         <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                          {candidate.currentJobTitle || 'Chưa cập nhật'}
+                          {emp.position || 'Nhà tuyển dụng'}
                         </Typography>
                       </Box>
                     </Box>
@@ -199,33 +195,33 @@ export default function CandidateTable({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <EmailOutlinedIcon sx={{ fontSize: 16, color: '#9ca3af' }} />
                       <Typography sx={{ fontSize: '0.85rem', color: '#374151' }}>
-                        {candidate.email}
+                        {emp.email}
                       </Typography>
                     </Box>
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <PhoneOutlinedIcon sx={{ fontSize: 16, color: '#9ca3af' }} />
+                      <BusinessOutlinedIcon sx={{ fontSize: 16, color: '#9ca3af' }} />
                       <Typography sx={{ fontSize: '0.85rem', color: '#374151' }}>
-                        {candidate.phone || 'Chưa cập nhật'}
+                        {emp.companyName || 'Unknown'}
                       </Typography>
                     </Box>
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
                     <Typography sx={{ fontSize: '0.85rem', color: '#374151' }}>
-                      {candidate.createdAt || 'Chưa cập nhật'}
+                      {emp.createdAt || 'N/A'}
                     </Typography>
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
                     <Chip
-                      label={candidate.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
+                      label={emp.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
                       size="small"
                       sx={{
-                        bgcolor: candidate.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
-                        color: candidate.status === 'ACTIVE' ? '#16a34a' : '#ef4444',
+                        bgcolor: emp.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
+                        color: emp.status === 'ACTIVE' ? '#16a34a' : '#ef4444',
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         height: 24,
@@ -234,11 +230,9 @@ export default function CandidateTable({
                   </TableCell>
 
                   <TableCell sx={{ ...bodyCellSx, textAlign: 'center' }}>
-                    <CandidateActionMenu
-                      candidate={candidate}
+                    <EmployerActionMenu
+                      employer={emp}
                       onChangeStatus={onChangeStatus}
-                      onResetPassword={onResetPassword}
-                      onViewDetail={onViewDetail}
                     />
                   </TableCell>
                 </TableRow>

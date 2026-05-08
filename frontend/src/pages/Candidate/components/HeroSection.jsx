@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Search, MapPin, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { FileX, Search, MapPin, ChevronLeft, ChevronRight, Sparkles, Zap } from 'lucide-react';
 import { categoriesData } from '../../../data/categoriesData';
 
 export default function HeroSection({
@@ -7,6 +7,7 @@ export default function HeroSection({
   onChange,
   onSearch,
   onCategorySelect,
+  onQuickTag,
   categories = categoriesData,
   locations = [],
 }) {
@@ -254,6 +255,32 @@ export default function HeroSection({
                 <p className="text-teal-100 text-xs sm:text-sm font-medium">Việc làm mới hôm nay</p>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => onQuickTag?.('Việc đi làm ngay')}
+              className="inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm sm:text-base font-bold text-orange-600 shadow-sm border border-orange-100 hover:border-orange-200 transition-colors"
+            >
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-orange-50 text-orange-600">
+                <Zap size={18} />
+              </span>
+              Việc đi làm ngay
+              <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">Mới</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onQuickTag?.('Không cần CV')}
+              className="inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm sm:text-base font-bold text-blue-600 shadow-sm border border-blue-100 hover:border-blue-200 transition-colors"
+            >
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600">
+                <FileX size={18} />
+              </span>
+              Việc không cần CV
+              <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">Mới</span>
+            </button>
           </div>
         </div>
       </div>

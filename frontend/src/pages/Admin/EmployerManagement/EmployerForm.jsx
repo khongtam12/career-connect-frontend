@@ -5,27 +5,35 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from '@/components/ui/use-toast';
 import * as adminService from '@/service/adminService';
-import useRecruiterStore from '@/stores/useRecruiterStore';
+import useEmployerStore from '@/stores/useEmployerStore';
 
-// Schema validate form bằng zod
 const schema = z.object({
-    username: z.string().min(3, { message: 'Tên người dùng phải có ít nhất 3 ký tự' }),
+    fullName: z.string().min(3, { message: 'Họ tên phải có ít nhất 3 ký tự' }),
     email: z.string().email({ message: 'Email không hợp lệ' }),
     companyId: z.string().min(1, { message: 'Vui lòng chọn công ty' })
 });
 
-const RecruiterForm = ({ isOpen, onClose, mode, initialData }) => {
+const EmployerForm = ({ isOpen, onClose, mode, initialData }) => {
     const [loading, setLoading] = useState(false);
-    const refresh = useRecruiterStore(state => state.refresh);
+    const refresh = useEmployerStore(state => state.refresh);
     
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         resolver: zodResolver(schema),
-        defaultValues: { username: '', email: '', companyId: '' }
+        defaultValues: { fullName: '', email: '', companyId: '' }
     });
 
-    // Điền dữ liệu nếu là Edit
     useEffect(() => {
-        if (isOpen) reset(initialData || { username: '', email: '', companyId: '' });
+        if (isOpen) {
+            if (initialData) {
+                reset({
+                    fullName: initialData.fullName || '',
+                    email: initialData.email || '',
+                    companyId: initialData.companyId || ''
+                });
+            } else {
+                reset({ fullName: '', email: '', companyId: '' });
+            }
+        }
     }, [isOpen, initialData, reset]);
 
     const onSubmit = async (data) => {
@@ -33,10 +41,10 @@ const RecruiterForm = ({ isOpen, onClose, mode, initialData }) => {
         try {
             if (mode === 'edit' && initialData?.id) {
                 await adminService.updateRecruiter(initialData.id, data);
-                toast({ title: 'Thành công', description: 'Cập nhật recruiter thành công', variant: 'default' });
+                toast({ title: 'Thành công', description: 'Cập nhật nhà tuyển dụng thành công', variant: 'default' });
             } else {
                 await adminService.createRecruiter(data);
-                toast({ title: 'Thành công', description: 'Tạo recruiter mới', variant: 'default' });
+                toast({ title: 'Thành công', description: 'Tạo nhà tuyển dụng mới', variant: 'default' });
             }
             refresh();
             onClose();
@@ -53,14 +61,14 @@ const RecruiterForm = ({ isOpen, onClose, mode, initialData }) => {
                 <Dialog.Overlay className="bg-black/50 fixed inset-0 z-50" />
                 <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white p-6 rounded-lg shadow-lg w-[90vw] max-w-md z-50">
                     <Dialog.Title className="text-xl font-bold mb-4">
-                        {mode === 'edit' ? 'Chỉnh sửa Recruiter' : 'Tạo Recruiter mới'}
+                        {mode === 'edit' ? 'Chỉnh sửa Nhà tuyển dụng' : 'Tạo Nhà tuyển dụng mới'}
                     </Dialog.Title>
                     
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tên người dùng</label>
-                            <input {...register('username')} className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập tên" />
-                            {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>}
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên</label>
+                            <input {...register('fullName')} className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập họ tên" />
+                            {errors.fullName && <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -88,4 +96,4 @@ const RecruiterForm = ({ isOpen, onClose, mode, initialData }) => {
     );
 };
 
-export default RecruiterForm;
+export default EmployerForm;

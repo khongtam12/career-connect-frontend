@@ -86,6 +86,7 @@ const INITIAL_FORM = {
   candidateRequirements: '', salaryDetail: '', benefitsDetail: '',
   workSchedule: '', rank: '', education: '', quantity: '', ageRange: '',
   relatedCategories: [], skills: [],
+  companySubscriptionId: '',
 };
 
 /* ── Tag Input Component ── */
@@ -137,7 +138,15 @@ function TagInput({ tags, onChange, placeholder }) {
   );
 }
 
-export default function CreateJobDialog({ open, onClose, onSubmit, mode = 'create', initialValues }) {
+export default function CreateJobDialog({
+  open,
+  onClose,
+  onSubmit,
+  mode = 'create',
+  initialValues,
+  subscriptionOptions = [],
+  subscriptionsLoading = false,
+}) {
   const [form, setForm] = useState({ ...INITIAL_FORM });
   const [mapPosition, setMapPosition] = useState(DEFAULT_MAP_POSITION);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -247,6 +256,35 @@ export default function CreateJobDialog({ open, onClose, onSubmit, mode = 'creat
       </DialogTitle>
 
       <DialogContent dividers sx={{ px: 3, py: 2.5 }}>
+        {!isEdit && (
+          <>
+            <Typography sx={sectionTitleSx}>Gói tin đã mua</Typography>
+            <Box sx={{ mb: 2.5 }}>
+              <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Chọn gói tin</Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={form.companySubscriptionId}
+                  onChange={handleChange('companySubscriptionId')}
+                  displayEmpty
+                  sx={selectSx}
+                  MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
+                  renderValue={(val) => val ? subscriptionOptions.find((opt) => opt.id === val)?.label : <span style={{ color: '#9ca3af' }}>Chọn gói tin</span>}
+                >
+                  {subscriptionsLoading && (
+                    <MenuItem disabled>Đang tải gói tin...</MenuItem>
+                  )}
+                  {!subscriptionsLoading && subscriptionOptions.length === 0 && (
+                    <MenuItem disabled>Chưa có gói tin phù hợp</MenuItem>
+                  )}
+                  {subscriptionOptions.map((opt) => (
+                    <MenuItem key={opt.id} value={opt.id}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </>
+        )}
+
         {/* ═══════ SECTION 1: Thông tin cơ bản ═══════ */}
         <Typography sx={sectionTitleSx}>Thông tin cơ bản</Typography>
 
@@ -307,6 +345,7 @@ export default function CreateJobDialog({ open, onClose, onSubmit, mode = 'creat
             <TextField fullWidth size="small" placeholder="VD: 2-3 năm" value={form.experience} onChange={handleChange('experience')} sx={fieldSx} />
           </Grid>
         </Grid>
+
 
         {/* Lương */}
         <Box sx={{ mb: 2.5 }}>
@@ -529,7 +568,10 @@ export default function CreateJobDialog({ open, onClose, onSubmit, mode = 'creat
           </Button>
         )}
 
-        <Button onClick={() => handleSubmit(false)} variant="contained"
+        <Button
+          onClick={() => handleSubmit(false)}
+          variant="contained"
+          disabled={!isEdit && !subscriptionsLoading && subscriptionOptions.length === 0}
           sx={{ bgcolor: '#10b981', borderRadius: 2, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: 'none', '&:hover': { bgcolor: '#059669', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' } }}
         >
           {isEdit ? 'Lưu thay đổi' : 'Đăng tin'}

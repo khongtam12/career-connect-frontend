@@ -22,10 +22,12 @@ import LoginCD from "../pages/Candidate/Login/login.jsx";
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
-import RecruiterList from "../pages/Admin/RecruiterManagement/RecruiterList";
-import PendingApprovals from "../pages/Employer/company/PendingApprovals";
+import EmployerList from "../pages/Admin/EmployerManagement/EmployerList";
+import PendingApprovals from "../pages/Admin/CompanyApproval";
 import CandidateManagement from "../pages/Admin/CandidateManagement/index.jsx";
 import PrivateCandidateRouteRedirect from "./PrivateCandidateRouteRedirect.jsx";
+import PrivateEmployerRouteRedirect from "./PrivateEmployerRouteRedirect";
+import PrivateAdminRouteRedirect from "./PrivateAdminRouteRedirect";
 export const router = createBrowserRouter([
     {
         path: "/login",
@@ -78,7 +80,9 @@ export const router = createBrowserRouter([
     {
         path: "/employer",
         element: (
-            <EmployerLayout />
+            <PrivateEmployerRouteRedirect>
+                <EmployerLayout />
+            </PrivateEmployerRouteRedirect>
         ),
         children: [
             { index: true, element: <Home1 /> },
@@ -116,9 +120,10 @@ export const router = createBrowserRouter([
     {
         path: "/admin",
         element: (
-            <AdminLayout />
+            <PrivateAdminRouteRedirect>
+                <AdminLayout />
+            </PrivateAdminRouteRedirect>
         ),
-
         children: [
             { index: true, element: <Dashboard /> },
             {
@@ -127,7 +132,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: '/admin/recruiters',
-                element: <RecruiterList />,
+                element: <EmployerList />,
             },
             {
                 path: '/admin/candidates',

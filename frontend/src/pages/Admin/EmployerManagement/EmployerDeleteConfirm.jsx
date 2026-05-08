@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from '@/components/ui/use-toast';
 import * as adminService from '@/service/adminService';
-import useRecruiterStore from '@/stores/useRecruiterStore';
+import useEmployerStore from '@/stores/useEmployerStore';
 
-const RecruiterDeleteConfirm = ({ isOpen, onClose, recruiterId }) => {
+const EmployerDeleteConfirm = ({ isOpen, onClose, recruiterId }) => {
     const [loading, setLoading] = useState(false);
-    const refresh = useRecruiterStore(state => state.refresh);
+    const refresh = useEmployerStore(state => state.refresh);
 
     // Xử lý xóa
     const handleDelete = async () => {
@@ -16,13 +16,13 @@ const RecruiterDeleteConfirm = ({ isOpen, onClose, recruiterId }) => {
             await adminService.deleteRecruiter(recruiterId);
             toast({
                 title: 'Xóa',
-                description: 'Xóa recruiter thành công',
+                description: 'Xóa nhà tuyển dụng thành công',
                 variant: 'default'
             });
             refresh();
             onClose();
         } catch (error) {
-            toast({ title: 'Lỗi', description: 'Không thể xóa recruiter này', variant: 'destructive' });
+            toast({ title: 'Lỗi', description: 'Không thể xóa nhà tuyển dụng này', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -35,7 +35,7 @@ const RecruiterDeleteConfirm = ({ isOpen, onClose, recruiterId }) => {
                 <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white p-6 rounded-lg shadow-lg w-[90vw] max-w-md z-50">
                     <Dialog.Title className="text-lg font-bold mb-2">Xác nhận xóa</Dialog.Title>
                     <Dialog.Description className="mb-6 text-gray-600">
-                        Bạn có chắc muốn xóa recruiter này? Hành động này không thể hoàn tác.
+                        Bạn có chắc muốn xóa nhà tuyển dụng này? Hành động này không thể hoàn tác.
                     </Dialog.Description>
                     
                     <div className="flex justify-end gap-3">
@@ -58,4 +58,4 @@ const RecruiterDeleteConfirm = ({ isOpen, onClose, recruiterId }) => {
     );
 };
 
-export default RecruiterDeleteConfirm;
+export default EmployerDeleteConfirm;
