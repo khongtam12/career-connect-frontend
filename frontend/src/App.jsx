@@ -13,11 +13,9 @@ function App() {
   useEffect(() => {
 
     fetchUser();
-  }, [fetchUser]);
+  }, []);
 
-  useEffect(() => {
-    fetchUser()
-  }, [])
+
   return (
     <div>
       <RouterProvider router={router} />

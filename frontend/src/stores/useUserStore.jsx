@@ -35,6 +35,7 @@ export const useUserStore = create(
             fetchUser: async () => {
                 try {
                     set({ loading: true });
+
                     const userData = await getCurrentUser();
 
                     if (userData) {
@@ -43,24 +44,35 @@ export const useUserStore = create(
                             isAuthenticated: true,
                             loading: false,
                         });
+
                         return userData;
-                    } else {
-                        throw new Error("No user data");
                     }
+
+                    set({
+                        user: null,
+                        isAuthenticated: false,
+                        loading: false,
+                    });
+
+                    return null;
+
                 } catch (err) {
-                    // Chỉ clear user nếu thực sự lỗi 401/403 từ backend
-                    // Tránh clear khi lỗi mạng tạm thời
-                    if (err.response?.status === 401 || err.response?.status === 403) {
+
+                    if (
+                        err.response?.status === 401 ||
+                        err.response?.status === 403
+                    ) {
                         set({
                             user: null,
                             isAuthenticated: false,
                         });
                     }
+
                     set({ loading: false });
+
                     return null;
                 }
             },
-
             //  Login success handler (dùng sau khi login API thành công)
             handleLoginSuccess: async () => {
                 try {
