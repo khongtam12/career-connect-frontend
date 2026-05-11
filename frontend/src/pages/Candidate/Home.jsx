@@ -95,10 +95,7 @@ export default function Home() {
   };
 
   const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (filters.keyword) params.set('keyword', filters.keyword);
-    if (filters.location) params.set('location', filters.location);
-    navigate(`/jobs?${params.toString()}`);
+    applyFilters(0, filters);
   };
 
   const handleCategorySelect = (category) => {

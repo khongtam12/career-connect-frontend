@@ -5,6 +5,9 @@ import { useUserStore } from "../../stores/useUserStore";
 import NotificationModal from "./model/NotificationModal";
 import { fetchNotificationsByCompanyId, connectNotificationWebSocket } from "../../service/notificationService";
 import apiClient from "../../service/apiClient";
+import { Stomp } from '@stomp/stompjs'
+import SockJS from 'sockjs-client';
+import axios from 'axios';
 import { useNotificationStore } from "../../stores/useNotificationStore";
 
 const RecruiterHeader = ({ setSidebarOpen }) => {
@@ -44,7 +47,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
       if (stompClient) stompClient.disconnect();
     };
   }, [user]);
-  
+
 
 
   // click outside
@@ -127,15 +130,15 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
           {unreadCount > 0 && (
           <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
             )}
-          <FiBell size={20} />
-        </button>
+            <FiBell size={20} />
+          </button>
 
-        <NotificationModal
-          open={showNotifications}
-          onClose={() => setShowNotifications(false)}
-          notifications={notifications}
-        />
-      </div>
+          <NotificationModal
+            open={showNotifications}
+            onClose={() => setShowNotifications(false)}
+            notifications={notifications}
+          />
+        </div>
 
         {/* Wallet */}
         <div className="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">

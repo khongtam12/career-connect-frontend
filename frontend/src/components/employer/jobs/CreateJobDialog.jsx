@@ -21,60 +21,23 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { INDUSTRIES, JOB_TYPES } from './mockData';
+import {
+  INDUSTRIES,
+  JOB_TYPES,
+  EDUCATION_OPTIONS,
+  RANK_OPTIONS,
+} from './jobSelectOptions';
+import { DEFAULT_MAP_POSITION, QUILL_MODULES } from './jobDialogConfig';
+import {
+  fieldSx,
+  selectSx,
+  sectionLabelSx,
+  sectionTitleSx,
+  quillBoxSx,
+} from './jobDialogStyles';
 
 const ReactQuill = lazy(() => import('react-quill-new'));
 const JobLocationMap = lazy(() => import('./JobLocationMap'));
-
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    ['link'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['clean'],
-  ],
-};
-
-const fieldSx = {
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 2,
-    '& fieldset': { borderColor: '#e5e7eb' },
-    '&:hover fieldset': { borderColor: '#d1d5db' },
-    '&.Mui-focused fieldset': { borderColor: '#10b981' },
-  },
-  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
-  '& .MuiOutlinedInput-input': { fontSize: '0.85rem', py: 1.05 },
-  '& .MuiOutlinedInput-input::placeholder': { fontSize: '0.85rem', color: '#9ca3af', opacity: 1 },
-};
-
-const selectSx = {
-  borderRadius: 2,
-  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#10b981' },
-  '& .MuiSelect-select': { fontSize: '0.85rem', py: 1.05 },
-  '& .MuiSvgIcon-root': { fontSize: 18 },
-};
-
-const sectionLabelSx = { fontWeight: 600, fontSize: '0.82rem', color: '#374151', mb: 1 };
-
-const sectionTitleSx = {
-  fontWeight: 700, fontSize: '0.95rem', color: '#1f2937', mb: 2, mt: 1,
-  display: 'flex', alignItems: 'center', gap: 1,
-  '&::before': { content: '""', width: 4, height: 18, bgcolor: '#10b981', borderRadius: 1, display: 'inline-block' },
-};
-
-const quillBoxSx = {
-  '& .ql-toolbar': { borderRadius: '8px 8px 0 0', borderColor: '#e5e7eb', fontSize: '0.85rem' },
-  '& .ql-container': { borderRadius: '0 0 8px 8px', borderColor: '#e5e7eb', minHeight: 120, fontSize: '0.85rem' },
-  '& .ql-editor': { minHeight: 120 },
-};
-
-const EDUCATION_OPTIONS = ['Trung học phổ thông', 'Trung cấp', 'Cao Đẳng trở lên', 'Đại học', 'Đại học (đang học)', 'Thạc sĩ', 'Tiến sĩ', 'Không yêu cầu'];
-const RANK_OPTIONS = ['Thực tập sinh', 'Nhân viên', 'Trưởng nhóm', 'Phó phòng', 'Trưởng phòng', 'Phó giám đốc', 'Giám đốc'];
-
-const DEFAULT_MAP_POSITION = [21.0285, 105.8542];
 
 const INITIAL_FORM = {
   title: '', industry: '', address: '', jobType: '', experience: '',
@@ -146,6 +109,8 @@ export default function CreateJobDialog({
   initialValues,
   subscriptionOptions = [],
   subscriptionsLoading = false,
+  fieldErrors = {},
+  onClearError,
 }) {
   const [form, setForm] = useState({ ...INITIAL_FORM });
   const [mapPosition, setMapPosition] = useState(DEFAULT_MAP_POSITION);
@@ -201,7 +166,8 @@ export default function CreateJobDialog({
 
   const handleChange = useCallback((field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  }, []);
+    onClearError?.(field);
+  }, [onClearError]);
 
   // Format number with commas: 15000000 -> 15,000,000
   const formatCurrency = (value) => {
@@ -213,27 +179,30 @@ export default function CreateJobDialog({
   const handleSalaryChange = useCallback((field) => (e) => {
     const formatted = formatCurrency(e.target.value);
     setForm((prev) => ({ ...prev, [field]: formatted }));
-  }, []);
+    onClearError?.(field);
+  }, [onClearError]);
 
 
 
   const handleQuillChange = useCallback((field) => (value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }, []);
+    onClearError?.(field);
+  }, [onClearError]);
 
   const handleTagChange = useCallback((field) => (newTags) => {
     setForm((prev) => ({ ...prev, [field]: newTags }));
   }, []);
 
+  // Không reset form ở đây — parent sẽ đóng dialog khi thành công
   const handleSubmit = (isDraft = false) => {
     onSubmit?.(form, isDraft);
-    if (mode !== 'edit') {
-      setForm({ ...INITIAL_FORM });
-      setMapPosition(DEFAULT_MAP_POSITION);
-      setIsGeocoding(false);
-      setGeocodeMessage('');
-    }
   };
+
+  // Helper hiển thị lỗi dưới field
+  const fieldErrorText = (field) => fieldErrors[field] || '';
+  const fieldErrorSx = (field) => fieldErrors[field] ? {
+    '& .MuiOutlinedInput-root fieldset': { borderColor: '#ef4444 !important' },
+  } : {};
 
   const isEdit = mode === 'edit';
 
@@ -261,7 +230,7 @@ export default function CreateJobDialog({
             <Typography sx={sectionTitleSx}>Gói tin đã mua</Typography>
             <Box sx={{ mb: 2.5 }}>
               <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Chọn gói tin</Typography>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth size="small" error={!!fieldErrors.companySubscriptionId}>
                 <Select
                   value={form.companySubscriptionId}
                   onChange={handleChange('companySubscriptionId')}
@@ -280,6 +249,11 @@ export default function CreateJobDialog({
                     <MenuItem key={opt.id} value={opt.id}>{opt.label}</MenuItem>
                   ))}
                 </Select>
+                {fieldErrors.companySubscriptionId && (
+                  <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                    {fieldErrors.companySubscriptionId}
+                  </Typography>
+                )}
               </FormControl>
             </Box>
           </>
@@ -291,25 +265,56 @@ export default function CreateJobDialog({
         {/* Tiêu đề */}
         <Box sx={{ mb: 2.5 }}>
           <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Tiêu đề vị trí</Typography>
-          <TextField fullWidth size="small" placeholder="VD: Senior Frontend Developer" value={form.title} onChange={handleChange('title')} sx={fieldSx} />
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="VD: Senior Frontend Developer"
+            value={form.title}
+            onChange={handleChange('title')}
+            sx={{...fieldSx, ...fieldErrorSx('title')}}
+            error={!!fieldErrors.title}
+          />
+          {fieldErrors.title && (
+            <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+              {fieldErrorText('title')}
+            </Typography>
+          )}
         </Box>
 
         {/* Ngành nghề + Địa chỉ */}
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}>Ngành nghề</Typography>
-            <FormControl fullWidth size="small">
-              <Select value={form.industry} onChange={handleChange('industry')} displayEmpty sx={selectSx}
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Ngành nghề</Typography>
+            <FormControl fullWidth size="small" error={!!fieldErrors.industry}>
+              <Select value={form.industry} onChange={handleChange('industry')} displayEmpty sx={{...selectSx, ...(fieldErrors.industry ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
                 MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
                 renderValue={(val) => val || <span style={{ color: '#9ca3af' }}>Chọn ngành nghề</span>}
               >
                 {INDUSTRIES.map((ind) => <MenuItem key={ind} value={ind}>{ind}</MenuItem>)}
               </Select>
+              {fieldErrors.industry && (
+                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                  {fieldErrors.industry}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Địa chỉ làm việc</Typography>
-            <TextField fullWidth size="small" placeholder="Nhập địa chỉ..." value={form.address} onChange={handleChange('address')} sx={fieldSx} />
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Nhập địa chỉ..."
+              value={form.address}
+              onChange={handleChange('address')}
+              sx={{...fieldSx, ...fieldErrorSx('address')}}
+              error={!!fieldErrors.address}
+            />
+            {fieldErrors.address && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrorText('address')}
+              </Typography>
+            )}
             {(isGeocoding || geocodeMessage) && (
               <Typography sx={{ mt: 0.8, fontSize: '0.78rem', color: isGeocoding ? '#6b7280' : geocodeMessage.includes('Không') ? '#ef4444' : '#10b981' }}>
                 {isGeocoding ? 'Đang định vị địa chỉ trên bản đồ...' : geocodeMessage}
@@ -329,8 +334,8 @@ export default function CreateJobDialog({
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Loại hình công việc</Typography>
-            <FormControl fullWidth size="small">
-              <Select value={form.jobType} onChange={handleChange('jobType')} displayEmpty sx={selectSx}
+            <FormControl fullWidth size="small" error={!!fieldErrors.jobType}>
+              <Select value={form.jobType} onChange={handleChange('jobType')} displayEmpty sx={{...selectSx, ...(fieldErrors.jobType ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
                 MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
                 renderValue={(val) =>
                   val ? val : <span style={{ color: '#9ca3af' }}>Chọn loại hình</span>
@@ -338,11 +343,29 @@ export default function CreateJobDialog({
               >
                 {JOB_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
               </Select>
+              {fieldErrors.jobType && (
+                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                  {fieldErrors.jobType}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}>Kinh nghiệm yêu cầu</Typography>
-            <TextField fullWidth size="small" placeholder="VD: 2-3 năm" value={form.experience} onChange={handleChange('experience')} sx={fieldSx} />
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Kinh nghiệm yêu cầu</Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="VD: 2-3 năm"
+              value={form.experience}
+              onChange={handleChange('experience')}
+              sx={{...fieldSx, ...fieldErrorSx('experience')}}
+              error={!!fieldErrors.experience}
+            />
+            {fieldErrors.experience && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrorText('experience')}
+              </Typography>
+            )}
           </Grid>
         </Grid>
 
@@ -353,11 +376,15 @@ export default function CreateJobDialog({
             control={
               <Checkbox
                 checked={form.salaryNegotiable}
-                onChange={(e) => setForm((prev) => ({
-                  ...prev,
-                  salaryNegotiable: e.target.checked,
-                  ...(e.target.checked ? { salaryMin: '', salaryMax: '' } : {}),
-                }))}
+                onChange={(e) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    salaryNegotiable: e.target.checked,
+                    ...(e.target.checked ? { salaryMin: '', salaryMax: '' } : {}),
+                  }));
+                  onClearError?.('salaryMin');
+                  onClearError?.('salaryMax');
+                }}
                 sx={{ color: '#10b981', '&.Mui-checked': { color: '#10b981' } }}
               />
             }
@@ -366,12 +393,38 @@ export default function CreateJobDialog({
           {!form.salaryNegotiable && (
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography sx={sectionLabelSx}>Lương tối thiểu (VNĐ)</Typography>
-                <TextField fullWidth size="small" placeholder="15,000,000" value={form.salaryMin} onChange={handleSalaryChange('salaryMin')} sx={fieldSx} />
+                <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Lương tối thiểu (VNĐ)</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="15,000,000"
+                  value={form.salaryMin}
+                  onChange={handleSalaryChange('salaryMin')}
+                  sx={{...fieldSx, ...fieldErrorSx('salaryMin')}}
+                  error={!!fieldErrors.salaryMin}
+                />
+                {fieldErrors.salaryMin && (
+                  <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                    {fieldErrorText('salaryMin')}
+                  </Typography>
+                )}
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography sx={sectionLabelSx}>Lương tối đa (VNĐ)</Typography>
-                <TextField fullWidth size="small" placeholder="25,000,000" value={form.salaryMax} onChange={handleSalaryChange('salaryMax')} sx={fieldSx} />
+                <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Lương tối đa (VNĐ)</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="25,000,000"
+                  value={form.salaryMax}
+                  onChange={handleSalaryChange('salaryMax')}
+                  sx={{...fieldSx, ...fieldErrorSx('salaryMax')}}
+                  error={!!fieldErrors.salaryMax}
+                />
+                {fieldErrors.salaryMax && (
+                  <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                    {fieldErrorText('salaryMax')}
+                  </Typography>
+                )}
               </Grid>
             </Grid>
           )}
@@ -379,14 +432,20 @@ export default function CreateJobDialog({
 
         {/* Hạn nộp */}
         <Box sx={{ mb: 2.5 }}>
-          <Typography sx={sectionLabelSx}>Hạn nộp hồ sơ</Typography>
+          <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Hạn nộp hồ sơ</Typography>
           <TextField
             fullWidth size="small" type="date"
             value={form.deadline}
             onChange={handleChange('deadline')}
             InputLabelProps={{ shrink: true }}
-            sx={fieldSx}
+            sx={{...fieldSx, ...fieldErrorSx('deadline')}}
+            error={!!fieldErrors.deadline}
           />
+          {fieldErrors.deadline && (
+            <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+              {fieldErrorText('deadline')}
+            </Typography>
+          )}
         </Box>
 
 
@@ -396,37 +455,74 @@ export default function CreateJobDialog({
 
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}>Cấp bậc</Typography>
-            <FormControl fullWidth size="small">
-              <Select value={form.rank} onChange={handleChange('rank')} displayEmpty sx={selectSx}
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Cấp bậc</Typography>
+            <FormControl fullWidth size="small" error={!!fieldErrors.rank}>
+              <Select value={form.rank} onChange={handleChange('rank')} displayEmpty sx={{...selectSx, ...(fieldErrors.rank ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
                 MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
                 renderValue={(val) => val || <span style={{ color: '#9ca3af' }}>Chọn cấp bậc</span>}
               >
                 {RANK_OPTIONS.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
               </Select>
+              {fieldErrors.rank && (
+                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                  {fieldErrors.rank}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}>Học vấn</Typography>
-            <FormControl fullWidth size="small">
-              <Select value={form.education} onChange={handleChange('education')} displayEmpty sx={selectSx}
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Học vấn</Typography>
+            <FormControl fullWidth size="small" error={!!fieldErrors.education}>
+              <Select value={form.education} onChange={handleChange('education')} displayEmpty sx={{...selectSx, ...(fieldErrors.education ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
                 MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
                 renderValue={(val) => val || <span style={{ color: '#9ca3af' }}>Chọn trình độ</span>}
               >
                 {EDUCATION_OPTIONS.map((e) => <MenuItem key={e} value={e}>{e}</MenuItem>)}
               </Select>
+              {fieldErrors.education && (
+                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                  {fieldErrors.education}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
         </Grid>
 
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}>Số lượng tuyển</Typography>
-            <TextField fullWidth size="small" type="number" placeholder="VD: 4" value={form.quantity} onChange={handleChange('quantity')} sx={fieldSx} />
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Số lượng tuyển</Typography>
+            <TextField
+              fullWidth
+              size="small"
+              type="number"
+              placeholder="VD: 4"
+              value={form.quantity}
+              onChange={handleChange('quantity')}
+              sx={{...fieldSx, ...fieldErrorSx('quantity')}}
+              error={!!fieldErrors.quantity}
+            />
+            {fieldErrors.quantity && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrorText('quantity')}
+              </Typography>
+            )}
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}>Độ tuổi yêu cầu</Typography>
-            <TextField fullWidth size="small" placeholder="VD: 21 - 38" value={form.ageRange} onChange={handleChange('ageRange')} sx={fieldSx} />
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Độ tuổi yêu cầu</Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="VD: 18 - 35"
+              value={form.ageRange}
+              onChange={handleChange('ageRange')}
+              sx={{...fieldSx, ...fieldErrorSx('ageRange')}}
+              error={!!fieldErrors.ageRange}
+            />
+            {fieldErrors.ageRange && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrorText('ageRange')}
+              </Typography>
+            )}
           </Grid>
         </Grid>
 
@@ -461,17 +557,22 @@ export default function CreateJobDialog({
         <Suspense fallback={<Box sx={{ textAlign: 'center', py: 4 }}><CircularProgress size={28} sx={{ color: '#10b981' }} /></Box>}>
           {/* Mô tả công việc */}
           <Box sx={{ mb: 3 }}>
-            <Typography sx={sectionLabelSx}>Mô tả công việc</Typography>
-            <Box sx={quillBoxSx}>
-              <ReactQuill theme="snow" value={form.description} onChange={handleQuillChange('description')} modules={quillModules} placeholder="Nhập mô tả công việc..." />
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Mô tả công việc</Typography>
+            <Box sx={{...quillBoxSx, ...(fieldErrors.description ? {'& .ql-container': {borderColor: '#ef4444'}, '& .ql-toolbar': {borderColor: '#ef4444'}} : {})}}>
+              <ReactQuill theme="snow" value={form.description} onChange={handleQuillChange('description')} modules={QUILL_MODULES} placeholder="Nhập mô tả công việc..." />
             </Box>
+            {fieldErrors.description && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrors.description}
+              </Typography>
+            )}
           </Box>
 
           {/* Yêu cầu ứng viên */}
           <Box sx={{ mb: 3 }}>
             <Typography sx={sectionLabelSx}>Yêu cầu ứng viên</Typography>
             <Box sx={quillBoxSx}>
-              <ReactQuill theme="snow" value={form.candidateRequirements} onChange={handleQuillChange('candidateRequirements')} modules={quillModules} placeholder="Nhập yêu cầu ứng viên..." />
+              <ReactQuill theme="snow" value={form.candidateRequirements} onChange={handleQuillChange('candidateRequirements')} modules={QUILL_MODULES} placeholder="Nhập yêu cầu ứng viên..." />
             </Box>
           </Box>
 
@@ -479,7 +580,7 @@ export default function CreateJobDialog({
           <Box sx={{ mb: 3 }}>
             <Typography sx={sectionLabelSx}>Thu nhập</Typography>
             <Box sx={quillBoxSx}>
-              <ReactQuill theme="snow" value={form.salaryDetail} onChange={handleQuillChange('salaryDetail')} modules={quillModules} placeholder="VD: Lương cứng 14-16 triệu, Thưởng KPI..." />
+              <ReactQuill theme="snow" value={form.salaryDetail} onChange={handleQuillChange('salaryDetail')} modules={QUILL_MODULES} placeholder="VD: Lương cứng 14-16 triệu, Thưởng KPI..." />
             </Box>
           </Box>
 
@@ -487,7 +588,7 @@ export default function CreateJobDialog({
           <Box sx={{ mb: 3 }}>
             <Typography sx={sectionLabelSx}>Quyền lợi</Typography>
             <Box sx={quillBoxSx}>
-              <ReactQuill theme="snow" value={form.benefitsDetail} onChange={handleQuillChange('benefitsDetail')} modules={quillModules} placeholder="VD: Lương tháng 13, BHXH, du lịch hàng năm..." />
+              <ReactQuill theme="snow" value={form.benefitsDetail} onChange={handleQuillChange('benefitsDetail')} modules={QUILL_MODULES} placeholder="VD: Lương tháng 13, BHXH, du lịch hàng năm..." />
             </Box>
           </Box>
 
@@ -495,7 +596,7 @@ export default function CreateJobDialog({
           <Box sx={{ mb: 3 }}>
             <Typography sx={sectionLabelSx}>Thời gian làm việc</Typography>
             <Box sx={quillBoxSx}>
-              <ReactQuill theme="snow" value={form.workSchedule} onChange={handleQuillChange('workSchedule')} modules={quillModules} placeholder="VD: Thứ 2 - Thứ 6, 8:00 - 17:00..." />
+              <ReactQuill theme="snow" value={form.workSchedule} onChange={handleQuillChange('workSchedule')} modules={QUILL_MODULES} placeholder="VD: Thứ 2 - Thứ 6, 8:00 - 17:00..." />
             </Box>
           </Box>
         </Suspense>

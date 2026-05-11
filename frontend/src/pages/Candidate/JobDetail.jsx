@@ -25,6 +25,7 @@ import {
 
 import ApplyJobModal from './components/ApplyJobModal';
 import { isJobSaved, toggleSavedJob } from './utils/jobTracker';
+import { useUserStore } from '../../stores/useUserStore';
 
 /* ── Reusable info‑row for sidebar ── */
 function InfoRow({ icon: Icon, label, value, iconColor = 'text-emerald-600' }) {
@@ -50,6 +51,25 @@ function Tag({ children, color = 'bg-emerald-100 text-emerald-700' }) {
   );
 }
 
+function isHtmlString(value) {
+  return /<\/?[a-z][\s\S]*>/i.test(value);
+}
+
+function normalizeHtml(value) {
+  return value ? value.replace(/&nbsp;/g, ' ') : value;
+}
+
+function formatJobType(jobType) {
+  const map = {
+    FULL_TIME: 'Toàn thời gian',
+    PART_TIME: 'Bán thời gian',
+    INTERNSHIP: 'Thực tập',
+    REMOTE: 'Từ xa',
+    FREELANCE: 'Tự do',
+  };
+  return map[jobType] || jobType;
+}
+
 /* ─────────────────────────────────────────────
    Job Detail Page
    ───────────────────────────────────────────── */
@@ -59,8 +79,35 @@ export default function JobDetail() {
   const [applyOpen, setApplyOpen] = useState(false);
 
   const [job, setJob] = useState(null);
+  const { isAuthenticated, openAuthDialog } = useUserStore();
+
+  // ── Handler ứng tuyển ──
+  const handleApply = () => {
+    if (!isAuthenticated) {
+      openAuthDialog({
+        closable: true,
+        onSuccess: () => setApplyOpen(true), // tự động mở modal apply sau khi login
+      });
+      return;
+    }
+    setApplyOpen(true);
+  };
+
+  // ── Handler lưu tin ──
+  const handleToggleSave = () => {
+    if (!isAuthenticated) {
+      openAuthDialog({ closable: true });
+      return;
+    }
+    setIsSaved(toggleSavedJob(job));
+  };
+
+  const hasFetched = React.useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const fetchJob = async () => {
       try {
         const data = await getJobById(id);
@@ -98,6 +145,17 @@ export default function JobDetail() {
   }
 
   const gradientColor = job.color || 'from-emerald-500 to-teal-600';
+  const descriptionHtml = normalizeHtml(job.description?.[0]);
+  const candidateHtml = normalizeHtml(job.candidateRequirements?.[0]);
+  const salaryHtml = normalizeHtml(job.salaryDetail?.[0]);
+  const benefitsHtml = normalizeHtml(job.benefitsDetail?.[0]);
+  const workScheduleHtml = normalizeHtml(job.workSchedule?.[0]);
+  const workFormLabel = formatJobType(job.workForm);
+  const descriptionIsHtml = descriptionHtml && isHtmlString(descriptionHtml);
+  const candidateIsHtml = candidateHtml && isHtmlString(candidateHtml);
+  const salaryIsHtml = salaryHtml && isHtmlString(salaryHtml);
+  const benefitsIsHtml = benefitsHtml && isHtmlString(benefitsHtml);
+  const workScheduleIsHtml = workScheduleHtml && isHtmlString(workScheduleHtml);
 
   return (
     <>
@@ -182,14 +240,14 @@ export default function JobDetail() {
                   {/* CTA Buttons */}
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={() => setApplyOpen(true)}
+                      onClick={handleApply}
                       className="flex-1 min-w-[200px] flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-base hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
                     >
                       <Send size={18} />
                       Ứng tuyển ngay
                     </button>
                     <button
-                      onClick={() => setIsSaved(toggleSavedJob(job))}
+                      onClick={handleToggleSave}
                       className={`flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${isSaved
                         ? 'border-red-300 bg-red-50 text-red-600'
                         : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'
@@ -250,41 +308,62 @@ export default function JobDetail() {
                 {/* ── Mô tả công việc ── */}
                 <div className="mb-8">
                   <h3 className="text-base font-bold text-gray-900 mb-3">Mô tả công việc</h3>
-                  <ul className="space-y-2">
-                    {job.description?.map((line, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* ── Yêu cầu ứng viên ── */}
-                <div className="mb-8">
-                  <h3 className="text-base font-bold text-gray-900 mb-3">Yêu cầu ứng viên</h3>
-                  <ul className="space-y-2">
-                    {job.candidateRequirements?.map((line, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                        <span className="mt-1 text-emerald-500">-</span>
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* ── Thu nhập ── */}
-                {job.salaryDetail && (
-                  <div className="mb-8">
-                    <h3 className="text-base font-bold text-gray-900 mb-3">Thu nhập</h3>
+                  {descriptionIsHtml ? (
+                    <div
+                      className="job-html text-sm text-gray-700"
+                      dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                    />
+                  ) : (
                     <ul className="space-y-2">
-                      {job.salaryDetail.map((line, i) => (
+                      {job.description?.map((line, i) => (
                         <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
                           <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                           {line}
                         </li>
                       ))}
                     </ul>
+                  )}
+                </div>
+
+                {/* ── Yêu cầu ứng viên ── */}
+                <div className="mb-8">
+                  <h3 className="text-base font-bold text-gray-900 mb-3">Yêu cầu ứng viên</h3>
+                  {candidateIsHtml ? (
+                    <div
+                      className="job-html text-sm text-gray-700"
+                      dangerouslySetInnerHTML={{ __html: candidateHtml }}
+                    />
+                  ) : (
+                    <ul className="space-y-2">
+                      {job.candidateRequirements?.map((line, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
+                          <span className="mt-1 text-emerald-500">-</span>
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* ── Thu nhập ── */}
+                {job.salaryDetail && (
+                  <div className="mb-8">
+                    <h3 className="text-base font-bold text-gray-900 mb-3">Thu nhập</h3>
+                    {salaryIsHtml ? (
+                      <div
+                        className="job-html text-sm text-gray-700"
+                        dangerouslySetInnerHTML={{ __html: salaryHtml }}
+                      />
+                    ) : (
+                      <ul className="space-y-2">
+                        {job.salaryDetail.map((line, i) => (
+                          <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
+                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
 
@@ -292,14 +371,21 @@ export default function JobDetail() {
                 {job.benefitsDetail && (
                   <div className="mb-8">
                     <h3 className="text-base font-bold text-gray-900 mb-3">Quyền lợi</h3>
-                    <ul className="space-y-2">
-                      {job.benefitsDetail.map((line, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                          {line}
-                        </li>
-                      ))}
-                    </ul>
+                    {benefitsIsHtml ? (
+                      <div
+                        className="job-html text-sm text-gray-700"
+                        dangerouslySetInnerHTML={{ __html: benefitsHtml }}
+                      />
+                    ) : (
+                      <ul className="space-y-2">
+                        {job.benefitsDetail.map((line, i) => (
+                          <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
+                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
 
@@ -318,14 +404,21 @@ export default function JobDetail() {
                 {job.workSchedule && (
                   <div className="mb-8">
                     <h3 className="text-base font-bold text-gray-900 mb-3">Thời gian làm việc</h3>
-                    <ul className="space-y-2">
-                      {job.workSchedule.map((line, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                          {line}
-                        </li>
-                      ))}
-                    </ul>
+                    {workScheduleIsHtml ? (
+                      <div
+                        className="job-html text-sm text-gray-700"
+                        dangerouslySetInnerHTML={{ __html: workScheduleHtml }}
+                      />
+                    ) : (
+                      <ul className="space-y-2">
+                        {job.workSchedule.map((line, i) => (
+                          <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
+                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
 
@@ -341,14 +434,14 @@ export default function JobDetail() {
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={() => setApplyOpen(true)}
+                      onClick={handleApply}
                       className="flex items-center gap-2 py-3 px-8 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
                     >
                       <Send size={16} />
                       Ứng tuyển ngay
                     </button>
                     <button
-                      onClick={() => setIsSaved(!isSaved)}
+                      onClick={handleToggleSave}
                       className={`flex items-center gap-2 py-3 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${isSaved
                         ? 'border-red-300 bg-red-50 text-red-600'
                         : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600'
@@ -418,7 +511,7 @@ export default function JobDetail() {
                   <InfoRow icon={Star} label="Cấp bậc" value={job.rank} />
                   <InfoRow icon={GraduationCap} label="Học vấn" value={job.education} />
                   <InfoRow icon={Users} label="Số lượng tuyển" value={`${job.quantity} người`} />
-                  <InfoRow icon={Clock} label="Hình thức làm việc" value={job.workForm} />
+                  <InfoRow icon={Clock} label="Hình thức làm việc" value={workFormLabel} />
                 </div>
               </div>
 
