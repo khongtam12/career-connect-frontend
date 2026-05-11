@@ -65,6 +65,7 @@ export default function JobDetail() {
       try {
         const data = await getJobById(id);
         console.log('Fetched job data:', data);
+        console.log("data",data.company.logo)
         setJob(TransformJob(data));
       } catch (err) {
         console.error(err);
@@ -371,11 +372,22 @@ export default function JobDetail() {
               {/* ── Company Card ── */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradientColor} flex items-center justify-center text-white text-xl font-bold shadow-lg`}>
-                    {job.company?.charAt(0)}
+                  <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 shadow-lg shrink-0">
+                    <img
+                      src={job.logo}
+                      alt={job.company}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src =
+                          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeplpRN1hSAQoBqsMoIHnQwfn4zC8yFJldEjYoL8Mi8g&s=10";
+                      }}
+                    />
                   </div>
+
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-gray-900 line-clamp-2">{job.company}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 line-clamp-2">
+                      {job.company}
+                    </h3>
                   </div>
                 </div>
 

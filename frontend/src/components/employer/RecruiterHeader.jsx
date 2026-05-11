@@ -3,9 +3,8 @@ import { FiBell, FiPlus, FiChevronDown, FiMenu, FiSearch } from "react-icons/fi"
 import { useState, useRef, useEffect } from "react";
 import { useUserStore } from "../../stores/useUserStore";
 import NotificationModal from "./model/NotificationModal";
-import {Stomp} from '@stomp/stompjs'
-import SockJS from 'sockjs-client';
-import axios from 'axios';
+import { fetchNotificationsByCompanyId, connectNotificationWebSocket } from "../../service/notificationService";
+import apiClient from "../../service/apiClient";
 import { useNotificationStore } from "../../stores/useNotificationStore";
 
 const RecruiterHeader = ({ setSidebarOpen }) => {
@@ -23,40 +22,27 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
 
   const { notifications, unreadCount, setNotifications, addNotification, setHasNewCandidate, markAllAsRead } = useNotificationStore();
 
-  // Đánh dấu tất cả đã đọc (local + gọi API backend)
-  const handleMarkAllRead = () => {
-    const unreadNotis = notifications.filter(n => !n.read);
-    if (unreadNotis.length === 0) return;
-    markAllAsRead();
-    // Gọi API đánh dấu từng thông báo đã đọc trên backend
-    unreadNotis.forEach(n => {
-      axios.put(`http://localhost:8085/api/v1/notifications/${n.id}/read`).catch(() => {});
-    });
-  };
 
   useEffect(() => {
     if (!user?.companyId) return;
 
     // 1. Fetch thông báo cũ từ Backend 
-    axios.get(`http://localhost:8085/api/v1/notifications/company/${user.companyId}`)
+    fetchNotificationsByCompanyId(user.companyId)
       .then(res => {
-        setNotifications(res.data);
+        setNotifications(res);
       })
       .catch(err => console.log(err));
 
-    // 2. Mở kết nối STOMP Websocket
-    const socket = new SockJS('http://localhost:8085/ws-notifications');
-    const stompClient = Stomp.over(socket);
-    stompClient.debug = () => {}; // Ẩn log STOMP cho sạch console
-    stompClient.connect({}, () => {
-      stompClient.subscribe(`/topic/company/${user.companyId}/notifications`, (message) => {
-        const newNoti = JSON.parse(message.body);
-        addNotification(newNoti);
-        // Báo hiệu cho CVManagement biết có ứng viên mới cần refetch
-        setHasNewCandidate(true);
-      });
+    // 2. Mở kết nối STOMP Websocket qua API Gateway
+    const stompClient = connectNotificationWebSocket(user.companyId, (newNoti) => {
+      addNotification(newNoti);
+      // Báo hiệu cho CVManagement biết có ứng viên mới cần refetch
+      setHasNewCandidate(true);
     });
-    return () => stompClient.disconnect();
+
+    return () => {
+      if (stompClient) stompClient.disconnect();
+    };
   }, [user]);
   
 
@@ -135,10 +121,6 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
         <button
           onClick={() => {
             setShowNotifications((prev) => !prev);
-            // Khi mở dropdown thông báo → xóa chấm đỏ + badge
-            if (!showNotifications && unreadCount > 0) {
-              handleMarkAllRead();
-            }
           }}
           className="relative p-2 text-gray-400 hover:text-purple-600 hover:bg-gray-50 rounded-lg"
         >

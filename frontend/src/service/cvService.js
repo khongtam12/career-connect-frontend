@@ -48,7 +48,11 @@ export const saveCV = async (cvData) => {
 };
 
 export const uploadCVFile = async (id, formData) => {
-  const res = await apiClient.post(`/api/v1/cvs/${id}/upload-pdf`, formData);
+  const res = await apiClient.post(`/api/v1/cvs/${id}/upload-pdf`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return res.data;
 };
 

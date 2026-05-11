@@ -29,6 +29,7 @@ export default function ApplyJobModal({ open, onClose, job }) {
         try {
           const list = await cvService.getMyCVs();
           setCvList(list);
+          console.log("cv",list)
           if (list.length > 0) setSelectedCvId(list[0].id);
         } catch {
           setCvList([]);
@@ -73,7 +74,7 @@ export default function ApplyJobModal({ open, onClose, job }) {
       cvId = selectedCvId;
 
       const selectedCv = cvList.find((cv) => cv.id === selectedCvId);
-      url = selectedCv?.url || undefined;
+      url = selectedCv?.fileUrl || undefined;
     } else {
       const uploaded = await uploadApplicationFile(localFile);
       cvId = uploaded.data.id;
