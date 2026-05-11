@@ -28,8 +28,8 @@ export const getMyApplications = async () => {
 
 
 //employer
-export const getCandidatesForEmployer = async () => {
-  const res = await apiClient.get('/api/v1/apply/employer/candidates');
+export const getCandidatesForEmployer = async (params = {}) => {
+  const res = await apiClient.get('/api/v1/apply/employer/candidates', { params });
   return res.data;
 };
 
