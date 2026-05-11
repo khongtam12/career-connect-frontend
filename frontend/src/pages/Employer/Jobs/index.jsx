@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
-import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import {
+  Box,
+  Typography,
+  Button,
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
 import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
 import JobTable from '../../../components/employer/jobs/JobTable';
 import CreateJobDialog from '../../../components/employer/jobs/CreateJobDialog';
+import SubscriptionWarningBanner from '../../../components/employer/jobs/SubscriptionWarningBanner';
+import DeleteJobConfirmDialog from '../../../components/employer/jobs/DeleteJobConfirmDialog';
+import JobSnackbar from '../../../components/employer/jobs/JobSnackbar';
 import {
   getMyJobs,
   getMyStats,
@@ -17,8 +21,9 @@ import {
   deleteJob,
   changeJobStatus,
 } from '../../../service/jobService';
-import { getCompanySubscriptions } from '../../../service/companyService';
+import { getCompanyDetail, getCompanySubscriptions } from '../../../service/companyService';
 import { useUserStore } from '../../../stores/useUserStore';
+import { validateJobForm } from '../../../validation/jobValidation';
 
 // Import Quill CSS globally
 import 'react-quill-new/dist/quill.snow.css';
@@ -27,11 +32,11 @@ const ITEMS_PER_PAGE = 10;
 
 // jobType: { label (hiển thị tiếng Việt), value (enum gửi BE) }
 const JOB_TYPE = [
-  { label: 'Toàn thời gian', value: 'FULL_TIME'   },
-  { label: 'Bán thời gian', value: 'PART_TIME'   },
-  { label: 'Thực tập',      value: 'INTERNSHIP'  },
-  { label: 'Freelance',      value: 'FREELANCE'   },
-  { label: 'Remote',         value: 'REMOTE'      },
+  { label: 'Toàn thời gian', value: 'FULL_TIME' },
+  { label: 'Bán thời gian', value: 'PART_TIME' },
+  { label: 'Thực tập', value: 'INTERNSHIP' },
+  { label: 'Freelance', value: 'FREELANCE' },
+  { label: 'Remote', value: 'REMOTE' },
 ];
 
 // enum BE → label tiếng Việt
@@ -90,14 +95,16 @@ export default function JobManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
 
   const [subscriptionOptions, setSubscriptionOptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+  const [companyStatus, setCompanyStatus] = useState(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState('create');
   const [editingJob, setEditingJob] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, job: null });
 
   // ── Snackbar notification ──
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
@@ -105,14 +112,33 @@ export default function JobManagement() {
     setSnack({ open: true, message, severity });
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
 
+  const isCompanyVerified = companyStatus === 'VERIFIED';
+
+  const clearFieldError = useCallback((field) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
+
   // ── Fetch jobs ──
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
+  const fetchJobs = useCallback(async (overrides = {}) => {
+    const searchParam = Object.prototype.hasOwnProperty.call(overrides, 'search')
+      ? overrides.search
+      : (searchTerm || undefined);
+    const statusParam = Object.prototype.hasOwnProperty.call(overrides, 'status')
+      ? overrides.status
+      : statusFilter;
+    const pageParam = Object.prototype.hasOwnProperty.call(overrides, 'page')
+      ? overrides.page
+      : page;
     try {
       const data = await getMyJobs({
-        search: searchTerm || undefined,
-        status: statusFilter,
-        page,
+        search: searchParam,
+        status: statusParam,
+        page: pageParam,
         size: ITEMS_PER_PAGE,
       });
       const mapped = (data.content || []).map(mapJobFromApi);
@@ -120,8 +146,6 @@ export default function JobManagement() {
       setTotalPages(data.totalPages || 1);
     } catch (err) {
       console.error('Lỗi khi tải danh sách tin:', err);
-    } finally {
-      setLoading(false);
     }
   }, [searchTerm, statusFilter, page]);
 
@@ -188,6 +212,24 @@ export default function JobManagement() {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
 
+  const fetchCompanyStatus = useCallback(async () => {
+    if (!companyId) {
+      setCompanyStatus(null);
+      return;
+    }
+    try {
+      const company = await getCompanyDetail(companyId);
+      setCompanyStatus(company?.statusCompany || null);
+    } catch (err) {
+      console.error('Lỗi khi tải trạng thái công ty:', err);
+      setCompanyStatus(null);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    fetchCompanyStatus();
+  }, [fetchCompanyStatus]);
+
   const toISODateInput = (deadline) => {
     if (!deadline || typeof deadline !== 'string') return '';
     const value = deadline.trim();
@@ -209,19 +251,29 @@ export default function JobManagement() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+
   // ── Handlers ──
   const handleRefresh = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setPage(1);
+    fetchJobs({ search: undefined, status: 'all', page: 1 });
     fetchStats();
   };
 
   const handleCreateJob = async (formData, isDraft = false) => {
     try {
-      if (!isDraft && !formData.companySubscriptionId) {
-        showSnack('Vui lòng chọn gói tin đã mua để đăng tin.', 'error');
+      if (!isDraft && !isCompanyVerified) {
+        showSnack('Công ty của bạn chưa được phê duyệt. Vui lòng chờ admin xác minh công ty trước khi đăng tin tuyển dụng.', 'error');
         return;
+      }
+      if (!isDraft) {
+        const errors = validateJobForm(formData, { requireSubscription: true });
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          showSnack('Vui lòng kiểm tra lại các trường bắt buộc.', 'error');
+          return;
+        }
       }
 
       const payload = {
@@ -253,19 +305,28 @@ export default function JobManagement() {
       };
       await createJob(payload);
       setDialogOpen(false);
+      setFieldErrors({});
       fetchJobs();
       fetchStats();
       fetchSubscriptions();
       showSnack(isDraft ? 'Đã lưu bản nháp!' : 'Đăng tin tuyển dụng thành công!');
     } catch (err) {
       console.error('Lỗi khi tạo tin:', err);
-      showSnack((isDraft ? 'Lưu nháp thất bại: ' : 'Tạo tin thất bại: ') + (err.response?.data?.error || err.message), 'error');
+      const backendMessage = err.response?.data?.message || err.response?.data?.error;
+      showSnack((isDraft ? 'Lưu nháp thất bại: ' : 'Tạo tin thất bại: ') + (backendMessage || err.message), 'error');
     }
   };
 
   const handleUpdateJob = async (job, formData) => {
     if (!job) return;
     try {
+      const errors = validateJobForm(formData, { requireSubscription: false });
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        showSnack('Vui lòng kiểm tra lại các trường bắt buộc.', 'error');
+        return;
+      }
+
       const payload = {
         title: formData.title,
         industry: formData.industry,
@@ -295,6 +356,7 @@ export default function JobManagement() {
       setDialogOpen(false);
       setEditingJob(null);
       setDialogMode('create');
+      setFieldErrors({});
       fetchJobs();
       fetchStats();
       showSnack('Cập nhật tin tuyển dụng thành công!');
@@ -308,10 +370,20 @@ export default function JobManagement() {
     setEditingJob(job);
     setDialogMode('edit');
     setDialogOpen(true);
+    setFieldErrors({});
   };
 
-  const handleDelete = async (job) => {
-    if (!window.confirm('Bạn có chắc muốn xóa tin tuyển dụng này?')) return;
+  const handleDeleteRequest = (job) => {
+    setDeleteConfirm({ open: true, job });
+  };
+
+  const handleDeleteConfirmClose = () => {
+    setDeleteConfirm({ open: false, job: null });
+  };
+
+  const handleDelete = async () => {
+    const { job } = deleteConfirm;
+    if (!job) return;
     try {
       await deleteJob(job.id);
       fetchJobs();
@@ -320,6 +392,8 @@ export default function JobManagement() {
     } catch (err) {
       console.error('Lỗi khi xóa tin:', err);
       showSnack('Xóa thất bại: ' + (err.response?.data?.error || err.message), 'error');
+    } finally {
+      handleDeleteConfirmClose();
     }
   };
 
@@ -387,6 +461,10 @@ export default function JobManagement() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => {
+              if (!isCompanyVerified) {
+                showSnack('Công ty của bạn chưa được phê duyệt. Vui lòng chờ admin xác minh công ty trước khi đăng tin tuyển dụng.', 'error');
+                return;
+              }
               setDialogMode('create');
               setEditingJob(null);
               setDialogOpen(true);
@@ -412,78 +490,7 @@ export default function JobManagement() {
       <JobStatsCards stats={stats} />
 
       {!subscriptionsLoading && subscriptionOptions.length === 0 && (
-        <Box
-          sx={{
-            mt: -0.5,
-            mb: 2.5,
-            borderRadius: 3,
-            border: '1.5px solid #fcd34d',
-            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 60%, #fde68a22 100%)',
-            boxShadow: '0 2px 12px rgba(245,158,11,0.10), 0 1px 3px rgba(245,158,11,0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            px: 2.5,
-            py: 1.8,
-            flexWrap: 'wrap',
-          }}
-        >
-          {/* Icon + text */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-            <Box
-              sx={{
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                bgcolor: '#fef3c7',
-                border: '1.5px solid #fcd34d',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <WarningAmberRoundedIcon sx={{ fontSize: 20, color: '#d97706' }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#92400e', lineHeight: 1.4 }}>
-                Bạn chưa có gói tin còn hiệu lực
-              </Typography>
-              <Typography sx={{ fontSize: '0.78rem', color: '#b45309', mt: 0.25, lineHeight: 1.4 }}>
-                Hết lượt đăng hoặc chưa mua gói. Mua thêm gói tin để tiếp tục đăng tuyển dụng.
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* CTA Button */}
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<ShoppingCartOutlinedIcon sx={{ fontSize: 16 }} />}
-            endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 15 }} />}
-            href="/employer/pricing"
-            sx={{
-              bgcolor: '#f59e0b',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              borderRadius: 2,
-              textTransform: 'none',
-              boxShadow: '0 2px 8px rgba(245,158,11,0.35)',
-              px: 2,
-              py: 0.8,
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              '&:hover': {
-                bgcolor: '#d97706',
-                boxShadow: '0 4px 12px rgba(245,158,11,0.45)',
-              },
-            }}
-          >
-            Mua gói tin
-          </Button>
-        </Box>
+        <SubscriptionWarningBanner />
       )}
 
       {/* Search & Filter */}
@@ -507,7 +514,7 @@ export default function JobManagement() {
         totalPages={totalPages}
         onPageChange={setPage}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleDeleteRequest}
         onChangeStatus={handleChangeStatus}
       />
 
@@ -544,6 +551,7 @@ export default function JobManagement() {
           setDialogOpen(false);
           setEditingJob(null);
           setDialogMode('create');
+          setFieldErrors({});
         }}
         onSubmit={(formData, isDraft) => {
           if (dialogMode === 'edit') {
@@ -554,35 +562,23 @@ export default function JobManagement() {
         }}
         subscriptionOptions={subscriptionOptions}
         subscriptionsLoading={subscriptionsLoading}
+        fieldErrors={fieldErrors}
+        onClearError={clearFieldError}
       />
 
-      {/* thông báo */}
-      <Snackbar
+      <DeleteJobConfirmDialog
+        open={deleteConfirm.open}
+        jobTitle={deleteConfirm.job?.title}
+        onClose={handleDeleteConfirmClose}
+        onConfirm={handleDelete}
+      />
+
+      <JobSnackbar
         open={snack.open}
-        autoHideDuration={3500}
+        message={snack.message}
+        severity={snack.severity}
         onClose={closeSnack}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={closeSnack}
-          severity={snack.severity}
-          sx={{
-            borderRadius: 2,
-            fontSize: '0.84rem',
-            fontWeight: 500,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            border: '1px solid',
-            borderColor: snack.severity === 'success' ? '#bbf7d0' : '#fecaca',
-            bgcolor: snack.severity === 'success' ? '#f0fdf4' : '#fff5f5',
-            color: snack.severity === 'success' ? '#15803d' : '#dc2626',
-            '& .MuiAlert-icon': {
-              color: snack.severity === 'success' ? '#16a34a' : '#ef4444',
-            },
-          }}
-        >
-          {snack.message}
-        </Alert>
-      </Snackbar>
+      />
     </Box>
   );
 }

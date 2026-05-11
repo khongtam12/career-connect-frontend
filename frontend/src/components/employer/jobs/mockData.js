@@ -109,30 +109,3 @@ export const STATUS_MAP_UPPER = Object.fromEntries(
   Object.entries(STATUS_MAP).map(([k, v]) => [k.toUpperCase(), v])
 );
 
-// Danh sách ngành nghề
-export const INDUSTRIES = [
-  'Công nghệ thông tin',
-  'Kinh doanh / Bán hàng',
-  'Marketing / Truyền thông',
-  'Kế toán / Tài chính',
-  'Hành chính / Nhân sự',
-  'Kỹ thuật / Cơ khí',
-  'Xây dựng / Kiến trúc',
-  'Giáo dục / Đào tạo',
-  'Y tế / Dược phẩm',
-  'Logistics / Vận tải',
-  'Bất động sản',
-  'Thiết kế / Đồ họa',
-  'Điện / Điện tử / Viễn thông',
-  'Dịch vụ khách hàng',
-  'Khác',
-];
-
-// Loại hình công việc
-export const JOB_TYPES = [
-  'Toàn thời gian',
-  'Bán thời gian',
-  'Thực tập',
-  'Freelance',
-  'Remote',
-];

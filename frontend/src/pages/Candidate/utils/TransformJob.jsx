@@ -36,6 +36,10 @@ export function TransformJob(data) {
 
 // ── helper functions ──
 
+function isHtmlString(value) {
+  return /<\/?[a-z][\s\S]*>/i.test(value);
+}
+
 function safeParse(json) {
   try {
     return JSON.parse(json || "[]");
@@ -49,5 +53,7 @@ function toArray(str) {
 }
 
 function splitToArray(str) {
-  return str ? str.split(',').map(s => s.trim()) : [];
+  if (!str) return [];
+  if (isHtmlString(str)) return [str];
+  return str.split(',').map(s => s.trim());
 }
