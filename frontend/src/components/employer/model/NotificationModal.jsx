@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { FiBell } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useNotificationStore } from "../../../stores/useNotificationStore";
-import axios from "axios";
+import { markNotificationAsRead } from "../../../service/notificationService";
 
 const NotificationModal = ({ open, onClose, notifications = [] }) => {
   const ref = useRef(null);
@@ -13,7 +13,7 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
     if (!noti.read) {
       // Gọi API đánh dấu đã đọc
       try {
-        await axios.put(`http://localhost:8085/api/v1/notifications/${noti.id}/read`);
+        await markNotificationAsRead(noti.id);
         markAsReadLocally(noti.id);
       } catch (error) {
          console.log(error);
@@ -98,7 +98,7 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
                     {noti.time}
                   </span>
 
-                  {noti.unread && (
+                  {!noti.read && (
                     <span className="h-2 w-2 bg-purple-600 rounded-full"></span>
                   )}
                 </div>
@@ -117,7 +117,7 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
               if (unreadNotis.length === 0) return;
               markAllAsRead();
               unreadNotis.forEach(n => {
-                axios.put(`http://localhost:8085/api/v1/notifications/${n.id}/read`).catch(() => {});
+                markNotificationAsRead(n.id).catch(() => {});
               });
             }}
             className="text-sm text-purple-600 hover:underline"

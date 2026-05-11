@@ -23,7 +23,7 @@ const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, o
 
             setReason('');
             toast.success(`Đã từ chối hồ sơ của ${candidateName} và gửi email phản hồi!`);
-            
+
             if (onSuccess) onSuccess();
             onClose();
         } catch (err) {
@@ -41,8 +41,8 @@ const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, o
     };
 
     return (
-        <Dialog 
-            open={open} 
+        <Dialog
+            open={open}
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
@@ -61,13 +61,13 @@ const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, o
                         {error}
                     </Alert>
                 )}
-                
-                <TextField 
-                    label="Lý do từ chối (Bắt buộc)" 
+
+                <TextField
+                    label="Lý do từ chối (Bắt buộc)"
                     multiline
                     rows={4}
                     placeholder="VD: Kinh nghiệm chưa phù hợp với yêu cầu vị trí hiện tại..."
-                    fullWidth 
+                    fullWidth
                     required
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
@@ -78,9 +78,9 @@ const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, o
                 <Button onClick={handleClose} className="text-gray-500 font-bold capitalize" disabled={loading}>
                     Hủy
                 </Button>
-                <Button 
-                    variant="contained" 
-                    color="error" 
+                <Button
+                    variant="contained"
+                    color="error"
                     className="font-bold capitalize rounded-xl px-6 bg-red-600 hover:bg-red-700 shadow-none"
                     onClick={handleSubmit}
                     disabled={loading}
