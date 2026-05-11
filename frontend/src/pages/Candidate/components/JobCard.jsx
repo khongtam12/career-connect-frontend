@@ -2,14 +2,16 @@ import React, { useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { isJobSaved, toggleSavedJob } from '../utils/jobTracker';
+import { useUserStore } from '../../../stores/useUserStore';
+
 import { isHotJob } from '../utils/jobBadges';
 
 export default function JobCard({ job, isFeatured = false, onDetail, isSaved, onToggleSave }) {
   const jobId = job?.jobId || job?.id;
   const [localSaved, setLocalSaved] = React.useState(() => isJobSaved(jobId));
   const resolvedSaved = typeof isSaved === 'boolean' ? isSaved : localSaved;
+  const { isAuthenticated, openAuthDialog } = useUserStore();
   const showHotBadge = isHotJob(job);
-
   useEffect(() => {
     setLocalSaved(isJobSaved(jobId));
   }, [jobId]);
@@ -25,12 +27,23 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
 
   const jobTypeLabel = job.type || formatJobType(job.jobType);
   const salaryLabel = job.salary || formatSalary(job.salaryMin, job.salaryMax);
-
+  const handleToggleSave = () => {
+    if (!isAuthenticated) {
+      openAuthDialog({ closable: true });
+      return;
+    }
+    if (onToggleSave) {
+      onToggleSave(job, !resolvedSaved);
+      return;
+    }
+    const next = toggleSavedJob(job);
+    setLocalSaved(next);
+  };
   return (
     <div
       className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 ${isFeatured
-          ? 'border-emerald-200 bg-linear-to-br from-emerald-50 to-white'
-          : 'border-gray-200 bg-white'
+        ? 'border-emerald-200 bg-linear-to-br from-emerald-50 to-white'
+        : 'border-gray-200 bg-white'
         }`}
     >
       {showHotBadge && (
@@ -42,18 +55,16 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
       )}
       {/* Background */}
       <div
-        className={`absolute inset-0 bg-linear-to-br ${
-          job.color || 'from-emerald-500 to-teal-600'
-        } opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+        className={`absolute inset-0 bg-linear-to-br ${job.color || 'from-emerald-500 to-teal-600'
+          } opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
       />
 
       <div className="relative p-5 sm:p-6">
         {/* Header */}
         <div className="flex gap-4 mb-4">
           <div
-            className={`w-14 h-14 rounded-xl bg-linear-to-br ${
-              job.color || 'from-emerald-500 to-teal-600'
-            } shrink-0 flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:scale-110 transition-transform duration-300`}
+            className={`w-14 h-14 rounded-xl bg-linear-to-br ${job.color || 'from-emerald-500 to-teal-600'
+              } shrink-0 flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:scale-110 transition-transform duration-300`}
           >
             {companyName.charAt(0)}
           </div>
@@ -81,8 +92,8 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
 
             {jobTypeLabel && (
               <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${jobTypeLabel === 'Full-time'
-                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                 }`}>
                 {jobTypeLabel === 'Full-time' ? '💼' : '🎓'} {jobTypeLabel}
               </span>
@@ -96,17 +107,10 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              if (onToggleSave) {
-                onToggleSave(job, !resolvedSaved);
-                return;
-              }
-              const next = toggleSavedJob(job);
-              setLocalSaved(next);
-            }}
+            onClick={handleToggleSave} // ← thay toàn bộ inline arrow function cũ
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${resolvedSaved
-                ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              ? 'bg-red-100 text-red-600 hover:bg-red-200'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
           >
             <Heart size={18} fill={resolvedSaved ? 'currentColor' : 'none'} />

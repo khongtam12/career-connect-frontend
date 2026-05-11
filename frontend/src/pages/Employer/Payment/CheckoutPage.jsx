@@ -81,6 +81,7 @@ const CheckoutPage = () => {
 
             const response = await paymentPackage({
                 employerId,
+                employerEmail: user?.email,
                 companyId,
                 packageId: jobPackage.packageId,
                 durationDays,

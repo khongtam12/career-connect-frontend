@@ -25,6 +25,7 @@ import {
 
 import ApplyJobModal from './components/ApplyJobModal';
 import { isJobSaved, toggleSavedJob } from './utils/jobTracker';
+import { useUserStore } from '../../stores/useUserStore';
 
 /* ── Reusable info‑row for sidebar ── */
 function InfoRow({ icon: Icon, label, value, iconColor = 'text-emerald-600' }) {
@@ -59,6 +60,28 @@ export default function JobDetail() {
   const [applyOpen, setApplyOpen] = useState(false);
 
   const [job, setJob] = useState(null);
+  const { isAuthenticated, openAuthDialog } = useUserStore();
+
+  // ── Handler ứng tuyển ──
+  const handleApply = () => {
+    if (!isAuthenticated) {
+      openAuthDialog({
+        closable: true,
+        onSuccess: () => setApplyOpen(true), // tự động mở modal apply sau khi login
+      });
+      return;
+    }
+    setApplyOpen(true);
+  };
+
+  // ── Handler lưu tin ──
+  const handleToggleSave = () => {
+    if (!isAuthenticated) {
+      openAuthDialog({ closable: true });
+      return;
+    }
+    setIsSaved(toggleSavedJob(job));
+  };
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -181,14 +204,14 @@ export default function JobDetail() {
                   {/* CTA Buttons */}
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={() => setApplyOpen(true)}
+                      onClick={handleApply}
                       className="flex-1 min-w-[200px] flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-base hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
                     >
                       <Send size={18} />
                       Ứng tuyển ngay
                     </button>
                     <button
-                      onClick={() => setIsSaved(toggleSavedJob(job))}
+                      onClick={handleToggleSave}
                       className={`flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${isSaved
                         ? 'border-red-300 bg-red-50 text-red-600'
                         : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'
@@ -340,14 +363,14 @@ export default function JobDetail() {
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={() => setApplyOpen(true)}
+                      onClick={handleApply}
                       className="flex items-center gap-2 py-3 px-8 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
                     >
                       <Send size={16} />
                       Ứng tuyển ngay
                     </button>
                     <button
-                      onClick={() => setIsSaved(!isSaved)}
+                      onClick={handleToggleSave}
                       className={`flex items-center gap-2 py-3 px-6 rounded-xl font-semibold border-2 transition-all duration-200 ${isSaved
                         ? 'border-red-300 bg-red-50 text-red-600'
                         : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600'

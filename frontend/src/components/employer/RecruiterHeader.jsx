@@ -3,7 +3,7 @@ import { FiBell, FiPlus, FiChevronDown, FiMenu, FiSearch } from "react-icons/fi"
 import { useState, useRef, useEffect } from "react";
 import { useUserStore } from "../../stores/useUserStore";
 import NotificationModal from "./model/NotificationModal";
-import {Stomp} from '@stomp/stompjs'
+import { Stomp } from '@stomp/stompjs'
 import SockJS from 'sockjs-client';
 import axios from 'axios';
 import { useNotificationStore } from "../../stores/useNotificationStore";
@@ -30,7 +30,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
     markAllAsRead();
     // Gọi API đánh dấu từng thông báo đã đọc trên backend
     unreadNotis.forEach(n => {
-      axios.put(`http://localhost:8085/api/v1/notifications/${n.id}/read`).catch(() => {});
+      axios.put(`http://localhost:8085/api/v1/notifications/${n.id}/read`).catch(() => { });
     });
   };
 
@@ -47,7 +47,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
     // 2. Mở kết nối STOMP Websocket
     const socket = new SockJS('http://localhost:8085/ws-notifications');
     const stompClient = Stomp.over(socket);
-    stompClient.debug = () => {}; // Ẩn log STOMP cho sạch console
+    stompClient.debug = () => { }; // Ẩn log STOMP cho sạch console
     stompClient.connect({}, () => {
       stompClient.subscribe(`/topic/company/${user.companyId}/notifications`, (message) => {
         const newNoti = JSON.parse(message.body);
@@ -58,7 +58,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
     });
     return () => stompClient.disconnect();
   }, [user]);
-  
+
 
 
   // click outside
@@ -131,29 +131,29 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
       <div className="flex items-center gap-3">
 
         {/* Notification */}
-       <div className="relative">
-        <button
-          onClick={() => {
-            setShowNotifications((prev) => !prev);
-            // Khi mở dropdown thông báo → xóa chấm đỏ + badge
-            if (!showNotifications && unreadCount > 0) {
-              handleMarkAllRead();
-            }
-          }}
-          className="relative p-2 text-gray-400 hover:text-purple-600 hover:bg-gray-50 rounded-lg"
-        >
-          {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+        <div className="relative">
+          <button
+            onClick={() => {
+              setShowNotifications((prev) => !prev);
+              // Khi mở dropdown thông báo → xóa chấm đỏ + badge
+              if (!showNotifications && unreadCount > 0) {
+                handleMarkAllRead();
+              }
+            }}
+            className="relative p-2 text-gray-400 hover:text-purple-600 hover:bg-gray-50 rounded-lg"
+          >
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
             )}
-          <FiBell size={20} />
-        </button>
+            <FiBell size={20} />
+          </button>
 
-        <NotificationModal
-          open={showNotifications}
-          onClose={() => setShowNotifications(false)}
-          notifications={notifications}
-        />
-      </div>
+          <NotificationModal
+            open={showNotifications}
+            onClose={() => setShowNotifications(false)}
+            notifications={notifications}
+          />
+        </div>
 
         {/* Wallet */}
         <div className="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
