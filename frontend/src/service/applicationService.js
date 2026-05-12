@@ -11,7 +11,7 @@ export const applyForJob = async (payload) => {
 export const uploadApplicationFile = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await apiClient.post('/api/v1/apply/upload', formData, {
+  const res = await apiClient.post('/api/v1/storage/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

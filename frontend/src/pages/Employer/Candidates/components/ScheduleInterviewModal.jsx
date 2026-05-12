@@ -40,7 +40,7 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
             setNote('');
 
             toast.success(`Đã lên lịch phỏng vấn thành công cho ${candidateName} và gửi email thông báo!`);
-            
+
             if (onSuccess) onSuccess();
             onClose();
         } catch (err) {
@@ -61,8 +61,8 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
     };
 
     return (
-        <Dialog 
-            open={open} 
+        <Dialog
+            open={open}
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
@@ -81,12 +81,12 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
                         {error}
                     </Alert>
                 )}
-                
+
                 <div className="flex gap-4">
-                    <TextField 
-                        label="Ngày phỏng vấn" 
-                        type="date" 
-                        fullWidth 
+                    <TextField
+                        label="Ngày phỏng vấn"
+                        type="date"
+                        fullWidth
                         value={interviewDate}
                         onChange={(e) => setInterviewDate(e.target.value)}
                         InputLabelProps={{ shrink: true }}
@@ -94,10 +94,10 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
                         required
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
                     />
-                    <TextField 
-                        label="Thời gian" 
-                        type="time" 
-                        fullWidth 
+                    <TextField
+                        label="Thời gian"
+                        type="time"
+                        fullWidth
                         value={interviewTime}
                         onChange={(e) => setInterviewTime(e.target.value)}
                         InputLabelProps={{ shrink: true }}
@@ -106,24 +106,24 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
                     />
                 </div>
-                
-                <TextField 
-                    label="Địa điểm / Link họp online" 
+
+                <TextField
+                    label="Địa điểm / Link họp online"
                     placeholder="VD: Tầng 3, Tòa nhà ABC hoặc Link Google Meet"
-                    fullWidth 
+                    fullWidth
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     size="small"
                     required
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
                 />
-                
-                <TextField 
-                    label="Lời nhắn / Ghi chú cho ứng viên" 
+
+                <TextField
+                    label="Lời nhắn / Ghi chú cho ứng viên"
                     multiline
                     rows={3}
                     placeholder="Trang phục, yêu cầu chuẩn bị..."
-                    fullWidth 
+                    fullWidth
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     size="small"
@@ -134,8 +134,8 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
                 <Button onClick={handleClose} className="text-gray-500 font-bold capitalize" disabled={loading}>
                     Hủy
                 </Button>
-                <Button 
-                    variant="contained" 
+                <Button
+                    variant="contained"
                     className="bg-emerald-600 hover:bg-emerald-700 font-bold capitalize rounded-xl px-6"
                     onClick={handleSubmit}
                     disabled={loading}

@@ -1,22 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-    FiCalendar,
-    FiCheckCircle,
-    FiClock,
-    FiDownload,
-    FiMapPin,
-    FiRefreshCw,
-    FiSearch,
-    FiSlash,
-    FiXCircle,
+    FiSearch, FiFilter, FiMapPin, FiClock,
+    FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash, FiRefreshCw,
+
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ScheduleInterviewModal from './components/ScheduleInterviewModal';
 import RejectApplicationModal from './components/RejectApplicationModal';
 import { cancelInterview, getCandidatesForEmployer, updateApplicationStatus } from '@/service/applicationService';
 import LoadingSpinner from './components/LoadingSpinner';
+import EmptyCandidateState from '@/components/employer/EmptyCandidateState';
 import { useNotificationStore } from '@/stores/useNotificationStore';
-
+import {markNotificationAsRead} from "../../../service/notificationService"
 const mapStatus = (status) => {
     switch (status) {
         case 'APPLIED': return 'Cho xu ly';
@@ -65,6 +60,8 @@ const statusTone = (status) => {
 };
 
 const CVManagement = () => {
+
+    // Modals state
     const [openInterviewModal, setOpenInterviewModal] = useState(false);
     const [openRejectModal, setOpenRejectModal] = useState(false);
     const [candidates, setCandidates] = useState([]);
@@ -135,8 +132,9 @@ const CVManagement = () => {
         const unreadNotifications = notifications.filter((notification) => !notification.read);
         if (unreadNotifications.length > 0) {
             markAllAsRead();
-            unreadNotifications.forEach((notification) => {
-                fetch(`http://localhost:8085/api/v1/notifications/${notification.id}/read`, { method: 'PUT' }).catch(() => {});
+            // Đồng bộ trạng thái đã đọc lên backend
+            unreadNotifications.forEach(n => {
+                markNotificationAsRead(n.id).catch(() => { });
             });
         }
     }, [jobFilter]);
@@ -232,7 +230,7 @@ const CVManagement = () => {
     const handleCancelInterview = async () => {
         if (!selectedCandidate) return;
 
-        const confirmed = window.confirm(`Ban co chac muon huy phong van cua ${selectedCandidate.name}?`);
+        const confirmed = window.confirm(`Bạn có chắc muốn hủy phỏng vấn của ${selectedCandidate.name}?`);
         if (!confirmed) return;
 
         setActionLoading(true);
@@ -271,10 +269,12 @@ const CVManagement = () => {
         fetchCandidates();
     };
 
-    if (loading) return <LoadingSpinner message="Dang tai danh sach ung vien..." />;
-    if (!candidates.length) return <div className="p-4">Khong co ung vien</div>;
-    if (!selectedCandidate) return <div className="p-4">Khong co ung vien duoc chon</div>;
-
+    if (loading) return <LoadingSpinner message="Đang tải danh sách ứng viên..." />;
+    if (!candidates.length) return (
+        <div className="flex-1 bg-white p-6 rounded-3xl m-4 shadow-sm border border-gray-100">
+            <EmptyCandidateState />
+        </div>
+    );
     return (
         <div className="flex flex-col h-full bg-gray-50/50">
             <div className="bg-white p-3 border-b border-gray-100 flex gap-3 items-center flex-wrap shrink-0">
@@ -282,7 +282,7 @@ const CVManagement = () => {
                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Tim kiem theo ten hoac vi tri ung tuyen..."
+                        placeholder="Tìm kiếm theo tên hoặc vị trí ứng tuyển..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white outline-none transition-all text-sm font-medium"
@@ -325,20 +325,14 @@ const CVManagement = () => {
                     <option value="this_month">Thang nay</option>
                 </select>
 
-                {(searchQuery || jobFilter !== 'all_jobs' || statusFilter !== 'all_status' || timeFilter !== 'all_time') && (
+                {(searchQuery || statusFilter !== 'all_status' || timeFilter !== 'all_time') && (
                     <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            setJobFilter('all_jobs');
-                            setStatusFilter('all_status');
-                            setTimeFilter('all_time');
-                        }}
+                        onClick={() => { setSearchQuery(''); setStatusFilter('all_status'); setTimeFilter('all_time'); }}
                         className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg px-4 py-2 text-sm font-bold transition-colors"
                     >
                         <FiXCircle className="text-xs" /> Xoa loc
                     </button>
                 )}
-
                 <button
                     onClick={() => {
                         setLoading(true);
@@ -409,6 +403,8 @@ const CVManagement = () => {
                 </div>
 
                 <div className="flex-1 bg-gray-50 overflow-y-auto p-4 flex flex-col gap-4 min-w-0">
+
+                    {/* Candidate Header Card */}
                     <div className="p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white shrink-0">
                         <div className="flex gap-4 items-center">
                             <img
@@ -482,6 +478,7 @@ const CVManagement = () => {
                         </div>
                     </div>
 
+                    {/* Interview Info Card (nếu đang phỏng vấn) */}
                     {selectedCandidate.rawStatus === 'INTERVIEW' && selectedCandidate.interviewDate && (
                         <div className="p-4 rounded-xl shadow-sm border border-blue-100 bg-blue-50/60 shrink-0">
                             <h3 className="font-bold text-blue-800 text-sm flex items-center gap-2 mb-3">
@@ -504,6 +501,7 @@ const CVManagement = () => {
                         </div>
                     )}
 
+                    {/* Rejection Reason Card (nếu đã từ chối) */}
                     {selectedCandidate.rawStatus === 'REJECTED' && selectedCandidate.rejectionReason && (
                         <div className="p-4 rounded-xl shadow-sm border border-red-100 bg-red-50/60 shrink-0">
                             <h3 className="font-bold text-red-800 text-sm flex items-center gap-2 mb-2">
@@ -513,6 +511,7 @@ const CVManagement = () => {
                         </div>
                     )}
 
+                    {/* CV PDF Viewer Area */}
                     {selectedCandidate.matchInsight && (
                         <div className="p-4 rounded-xl shadow-sm border border-emerald-100 bg-emerald-50/40 shrink-0">
                             <div className="flex items-start justify-between gap-4 mb-3">
@@ -597,6 +596,7 @@ const CVManagement = () => {
                             </button>
                         </div>
                         <div className="flex-1 w-full bg-gray-200 relative min-h-0">
+                            {/* Embedded PDF Viewer */}
                             <object
                                 data={selectedCandidate.cvUrl}
                                 type="application/pdf"
@@ -618,6 +618,7 @@ const CVManagement = () => {
                 </div>
             </div>
 
+            {/* Modals */}
             <ScheduleInterviewModal
                 open={openInterviewModal}
                 onClose={() => setOpenInterviewModal(false)}
