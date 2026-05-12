@@ -41,11 +41,14 @@ function isHtmlString(value) {
 }
 
 function safeParse(json) {
+  if (!json) return [];
   try {
-    return JSON.parse(json || "[]");
+    const parsed = JSON.parse(json);
+    if (Array.isArray(parsed)) return parsed;
   } catch {
-    return [];
+    // not valid JSON, fallback to splitting by comma
   }
+  return json.split(',').map(s => s.trim());
 }
 
 function toArray(str) {
