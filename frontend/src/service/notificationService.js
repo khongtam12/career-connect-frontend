@@ -2,7 +2,7 @@ import apiClient from "./apiClient";
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '');
+const BASE_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
 const WS_URL = `${BASE_URL}/api/v1/notifications/ws`;
 
 // 1. Fetch thông báo cũ từ Backend

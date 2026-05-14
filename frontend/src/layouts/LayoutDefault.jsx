@@ -6,7 +6,7 @@ import { useUserStore } from '../stores/useUserStore'
 
 
 // Danh sách các route không hiện Footer
-const NO_FOOTER_ROUTES = ['/cv-builder', '/cv-dashboard']
+const NO_FOOTER_ROUTES = ['/cv-builder', '/cv-dashboard', '/profile']
 
 export default function LayoutDefault() {
     const location = useLocation()

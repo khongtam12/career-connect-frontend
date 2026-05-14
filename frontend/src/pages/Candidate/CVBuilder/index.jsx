@@ -122,9 +122,36 @@ export default function EditorPage() {
   // Auto-trigger print if arrived with ?print=1
   useEffect(() => {
     if (isPrintMode && mounted && !isValidating) {
-      setTimeout(() => window.print(), 500)
+      const exportPdf = async () => {
+        try {
+          const element = document.getElementById('cv-preview-root');
+          if (element && window.html2pdf) {
+            const opt = {
+              margin: 0,
+              filename: `${cvName || 'CV'}.pdf`,
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            toast.info('Đang chuẩn bị tải xuống PDF...');
+            await window.html2pdf().set(opt).from(element).save();
+            toast.success('Tải PDF thành công!');
+            setTimeout(() => {
+              navigate('/cv-dashboard');
+            }, 2000);
+          } else {
+            setTimeout(() => window.print(), 500);
+          }
+        } catch (err) {
+            console.error('Lỗi khi xuất PDF:', err);
+            toast.error('Không thể xuất PDF. Vui lòng thử lại.');
+            navigate('/cv-dashboard');
+        }
+      };
+      
+      setTimeout(exportPdf, 800); // Wait a bit for images to load
     }
-  }, [isPrintMode, mounted, isValidating])
+  }, [isPrintMode, mounted, isValidating, cvName, navigate])
 
   const { user } = useUserStore()
 
@@ -289,7 +316,7 @@ export default function EditorPage() {
   if (isPrintMode) {
     return (
       <div className="bg-white min-h-screen w-full flex justify-center">
-        <div className="w-[210mm] shadow-none">
+        <div id="cv-preview-root" className="w-[210mm] shadow-none">
           <CVPreview data={cvData} templateId={templateId} />
         </div>
       </div>
