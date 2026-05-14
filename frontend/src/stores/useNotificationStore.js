@@ -6,6 +6,9 @@ export const useNotificationStore = create(
     (set, get) => ({
       notifications: [],
       unreadCount: 0,
+      unreadChatCount: 0,
+
+      setUnreadChatCount: (count) => set({ unreadChatCount: count }),
 
       // Khi fetch từ backend (lúc mount hoặc reload)
       setNotifications: (notis) => {
