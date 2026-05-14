@@ -1,13 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, MessageSquare } from "lucide-react";
 
 import CandidateMenu from "./CandidateMenu";
 import { useUserStore } from "../../stores/useUserStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
 const Header = ({ rightSlot }) => {
   const hydrated = useUserStore.persist.hasHydrated();
   const user = useUserStore((s) => s.user);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
+  const unreadChatCount = useNotificationStore((s) => s.unreadChatCount);
 
   if (!hydrated) return null;
   return (
@@ -60,7 +62,19 @@ const Header = ({ rightSlot }) => {
 
           <div className="flex items-center space-x-3">
             {isAuthenticated ? (
-              <CandidateMenu user={user} />
+              <div className="flex items-center space-x-4">
+                <Link 
+                  to="/chat" 
+                  className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all relative group"
+                  title="Tin nhắn"
+                >
+                  <MessageSquare size={22} />
+                  {unreadChatCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full shadow-sm group-hover:scale-110 transition-transform"></span>
+                  )}
+                </Link>
+                <CandidateMenu user={user} />
+              </div>
             ) : (
               <>
                 <Link to="/register">
