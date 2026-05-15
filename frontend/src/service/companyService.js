@@ -34,6 +34,12 @@ export const getCompanySubscriptions = async (companyId) => {
     return res.data;
 };
 
+export const getCompanyMarketingEntitlements = async (companyId, category) => {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    const res = await apiClient.get(`/api/v1/company/marketing-entitlements/company/${companyId}${query}`);
+    return res.data;
+};
+
 export const processApproval = async (payload) => {
     // payload: { companyId, action: 'APPROVED' | 'REJECTED', note: '' }
     const res = await apiClient.post('/api/v1/company/approval', payload);

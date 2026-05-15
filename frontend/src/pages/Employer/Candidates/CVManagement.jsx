@@ -48,6 +48,31 @@ const scoreTone = (score) => {
     return 'bg-red-100 text-red-700';
 };
 
+const normalizeInsightItems = (items) => {
+    if (!Array.isArray(items)) return [];
+
+    return items
+        .flatMap((item) => {
+            if (typeof item !== 'string') return [];
+
+            const cleaned = item
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/\[/g, ' ')
+                .replace(/\]/g, ' ')
+                .replace(/"/g, ' ')
+                .replace(/•/g, '\n')
+                .replace(/\s*\/\s*li\s*>\s*/gi, '\n');
+
+            return cleaned.split(/[,\n\r;]+/);
+        })
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .filter((item) => item !== 'ul' && item !== '/ul')
+        .filter((item, index, array) => array.findIndex((value) => value.toLowerCase() === item.toLowerCase()) === index);
+};
+
 const statusTone = (status) => {
     switch (status) {
         case 'Cho xu ly': return 'bg-amber-100 text-amber-700';
@@ -201,6 +226,16 @@ const CVManagement = () => {
 
         return result;
     }, [candidates, searchQuery, statusFilter, timeFilter]);
+
+    const matchedSkills = useMemo(
+        () => normalizeInsightItems(selectedCandidate?.matchInsight?.matchedSkills),
+        [selectedCandidate]
+    );
+
+    const missingSkills = useMemo(
+        () => normalizeInsightItems(selectedCandidate?.matchInsight?.missingSkills),
+        [selectedCandidate]
+    );
 
     const jobOptions = useMemo(() => {
         const uniqueJobs = new Map();
@@ -551,10 +586,10 @@ const CVManagement = () => {
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs font-bold text-emerald-800 mb-2">Ky nang khop</p>
+                                        <p className="text-xs font-bold text-emerald-800 mb-2">Ky nang khop</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {(selectedCandidate.matchInsight.matchedSkills || []).length > 0 ? (
-                                            selectedCandidate.matchInsight.matchedSkills.map((skill) => (
+                                        {matchedSkills.length > 0 ? (
+                                            matchedSkills.map((skill) => (
                                                 <span key={skill} className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
                                                     {skill}
                                                 </span>
@@ -568,8 +603,8 @@ const CVManagement = () => {
                                 <div>
                                     <p className="text-xs font-bold text-red-700 mb-2">Ky nang con thieu</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {(selectedCandidate.matchInsight.missingSkills || []).length > 0 ? (
-                                            selectedCandidate.matchInsight.missingSkills.map((skill) => (
+                                        {missingSkills.length > 0 ? (
+                                            missingSkills.map((skill) => (
                                                 <span key={skill} className="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
                                                     {skill}
                                                 </span>
