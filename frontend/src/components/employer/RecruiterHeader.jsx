@@ -86,11 +86,11 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
 
         {/* Logo */}
         <Link to="/employer" className="flex items-center gap-2 group">
-          <div className="bg-purple-600 text-white p-1.5 rounded-lg group-hover:bg-purple-700 transition">
+          <div className="bg-emerald-600 text-white p-1.5 rounded-lg group-hover:bg-emerald-700 transition">
             <FiPlus size={18} />
           </div>
           <span className="font-black text-lg text-gray-900">
-            career<span className="text-purple-600">connect</span>
+            career<span className="text-emerald-600">connect</span>
           </span>
         </Link>
 
@@ -99,18 +99,18 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
           <div className="hidden md:flex relative max-w-sm w-full ml-4">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
               placeholder="Tìm kiếm ứng viên..."
             />
           </div>
         ) : (
           <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-500">
             <NavLink to="/employer/pricing" className={({ isActive }) =>
-              isActive ? "text-purple-600" : "hover:text-purple-600"
+              isActive ? "text-emerald-600" : "hover:text-emerald-600"
             }>
               Bảng giá
             </NavLink>
-            <NavLink to="/employer/candidates" className="hover:text-purple-600">
+            <NavLink to="/employer/candidates" className="hover:text-emerald-600">
               Tìm ứng viên
             </NavLink>
           </nav>
@@ -126,7 +126,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
           onClick={() => {
             setShowNotifications((prev) => !prev);
           }}
-          className="relative p-2 text-gray-400 hover:text-purple-600 hover:bg-gray-50 rounded-lg"
+          className="relative p-2 text-gray-400 hover:text-emerald-600 hover:bg-gray-50 rounded-lg"
         >
           {unreadCount > 0 && (
           <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
@@ -144,7 +144,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
         {/* Chat */}
         <Link 
           to="/employer/chat" 
-          className="p-2 text-gray-400 hover:text-purple-600 hover:bg-gray-50 rounded-lg relative group"
+          className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-gray-50 rounded-lg relative group"
           title="Tin nhắn"
         >
           <FiMessageSquare size={20} />
@@ -177,7 +177,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
                 alt=""
               />
             ) : (
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold">
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xs font-bold">
                 {initials}
               </div>
             )}
@@ -206,8 +206,8 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
               }`}
           >
             {/* User card */}
-            <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
-              <div className="h-10 w-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold">
+            <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-indigo-50 border-b">
+              <div className="h-10 w-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold">
                 {initials}
               </div>
               <div>
