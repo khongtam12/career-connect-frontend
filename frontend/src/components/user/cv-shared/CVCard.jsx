@@ -1,202 +1,200 @@
-'use client'
-
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Pencil,
-  Eye,
-  Download,
-  Trash2,
-  FileText,
-  Star,
-  MoreHorizontal,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+    Box, Typography, Button, IconButton, Card, Chip, Stack, Fade 
+} from '@mui/material';
+import { 
+    Edit as EditIcon, 
+    Visibility as VisibilityIcon, 
+    Download as DownloadIcon, 
+    DeleteOutline as DeleteIcon, 
+    Description as FileTextIcon, 
+    Star as StarIcon 
+} from '@mui/icons-material';
 
 /* Template gradient map — mirrors CVPreview */
 const TEMPLATE_GRADIENTS = {
-  1: 'from-indigo-500 to-cyan-400',
-  2: 'from-violet-500 to-purple-400',
-  3: 'from-slate-600 to-slate-400',
-  4: 'from-purple-700 to-violet-500',
-  5: 'from-slate-900 to-slate-700',
-  6: 'from-rose-600 to-pink-400',
-  7: 'from-emerald-700 to-teal-400',
-  8: 'from-slate-400 to-slate-300',
-}
+    1: 'linear-gradient(to bottom right, #6366f1, #22d3ee)',
+    2: 'linear-gradient(to bottom right, #8b5cf6, #c084fc)',
+    3: 'linear-gradient(to bottom right, #475569, #94a3b8)',
+    4: 'linear-gradient(to bottom right, #7e22ce, #8b5cf6)',
+    5: 'linear-gradient(to bottom right, #0f172a, #334155)',
+    6: 'linear-gradient(to bottom right, #e11d48, #f472b6)',
+    7: 'linear-gradient(to bottom right, #047857, #2dd4bf)',
+    8: 'linear-gradient(to bottom right, #94a3b8, #cbd5e1)',
+};
 
 const fmtDate = (iso) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
 
 /**
- * CVCard — Phase 4 component
- * Hover overlay reveals action buttons. Stagger animation via CSS delay.
+ * CVCard — MUI Version
  */
 export default function CVCard({ cv, index = 0, onDelete, isDefault = false }) {
-  const navigate = useNavigate()
-  const [hovered, setHovered] = useState(false)
+    const navigate = useNavigate();
+    const [hovered, setHovered] = useState(false);
 
-  const gradient = TEMPLATE_GRADIENTS[cv.templateId] || TEMPLATE_GRADIENTS[1]
-  const p = cv.data?.personal || {}
+    const gradient = TEMPLATE_GRADIENTS[cv.templateId] || TEMPLATE_GRADIENTS[1];
+    const p = cv.data?.personal || {};
 
-  const handleEdit = () => navigate(`/cv-builder?id=${cv.id}`)
-  const handlePDF  = () => {
-    navigate(`/cv-builder?id=${cv.id}&print=1`)
-  }
+    const handleEdit = () => navigate(`/cv-builder?id=${cv.id}`);
+    const handlePDF  = () => navigate(`/cv-builder?id=${cv.id}&print=1`);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.07, ease: [0.23, 1, 0.32, 1] }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={cn(
-        'group relative flex flex-col rounded-2xl overflow-hidden',
-        'bg-card border border-border',
-        'shadow-soft-sm transition-all duration-300 ease-out',
-        'hover:shadow-soft-lg hover:-translate-y-1.5',
-        'cursor-pointer',
-      )}
-    >
-      {/* ── Thumbnail / Preview Cover ── */}
-      <div
-        className={cn(
-          'relative h-36 bg-gradient-to-br shrink-0 overflow-hidden',
-          gradient,
-        )}
-        onClick={handleEdit}
-      >
-        {/* Decorative CV lines */}
-        <div className="absolute inset-0 flex flex-col justify-center gap-2 px-5 py-4 opacity-25">
-          <div className="h-2.5 w-3/5 rounded-full bg-white" />
-          <div className="h-1.5 w-2/5 rounded-full bg-white" />
-          <div className="mt-2 space-y-1.5">
-            {[4, 5, 3, 4].map((w, i) => (
-              <div key={i} className={`h-1 rounded-full bg-white`} style={{ width: `${w * 12}%` }} />
-            ))}
-          </div>
-        </div>
-
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex gap-2">
-          <Badge variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
-            Mẫu {cv.templateId}
-          </Badge>
-          {isDefault && (
-            <Badge variant="warning" size="sm" className="bg-amber-400/90 text-amber-900 border-amber-300/50">
-              <Star size={10} className="fill-current" />
-              Mặc định
-            </Badge>
-          )}
-        </div>
-
-        {/* Hover overlay */}
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center gap-2"
+    return (
+        <Card
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            sx={{
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '16px',
+                border: '1px solid #f3f4f6',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
+                cursor: 'pointer',
+                animation: `fadeInUp 0.5s ease-out ${index * 0.07}s both`,
+                '&:hover': {
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    transform: 'translateY(-6px)',
+                },
+                '@keyframes fadeInUp': {
+                    '0%': { opacity: 0, transform: 'translateY(20px)' },
+                    '100%': { opacity: 1, transform: 'translateY(0)' }
+                }
+            }}
+        >
+            {/* ── Thumbnail / Preview Cover ── */}
+            <Box
+                onClick={handleEdit}
+                sx={{
+                    position: 'relative',
+                    height: 144,
+                    background: gradient,
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                }}
             >
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleEdit}
-                className="shadow-soft-md bg-white text-foreground hover:bg-white/90 gap-1.5"
-              >
-                <Pencil size={13} strokeWidth={2.5} />
-                Chỉnh sửa
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleEdit}
-                className="bg-white/20 text-white hover:bg-white/30 hover:text-white"
-                aria-label="Xem trước"
-                title="Xem trước"
-              >
-                <Eye size={15} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handlePDF}
-                className="bg-white/20 text-white hover:bg-white/30 hover:text-white"
-                aria-label="Xuất PDF"
-                title="Xuất PDF"
-              >
-                <Download size={15} />
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                {/* Decorative CV lines */}
+                <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1, px: 2.5, py: 2, opacity: 0.25 }}>
+                    <Box sx={{ height: 10, width: '60%', borderRadius: 5, bgcolor: '#fff' }} />
+                    <Box sx={{ height: 6, width: '40%', borderRadius: 3, bgcolor: '#fff' }} />
+                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                        {[4, 5, 3, 4].map((w, i) => (
+                            <Box key={i} sx={{ height: 4, borderRadius: 2, bgcolor: '#fff', width: `${w * 12}%` }} />
+                        ))}
+                    </Box>
+                </Box>
 
-      {/* ── Info ── */}
-      <div className="flex flex-col gap-3 p-4" onClick={handleEdit}>
-        {/* CV name */}
-        <div>
-          <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">
-            {cv.name || 'Chưa đặt tên'}
-          </p>
-          {p.fullName && (
-            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-              <FileText size={11} />
-              {p.fullName}
-            </p>
-          )}
-        </div>
+                {/* Badges */}
+                <Box sx={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 1 }}>
+                    <Chip 
+                        label={`Mẫu ${cv.templateId}`} 
+                        size="small" 
+                        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 600 }} 
+                    />
+                    {isDefault && (
+                        <Chip 
+                            icon={<StarIcon sx={{ color: '#b45309 !important', fontSize: 14 }} />} 
+                            label="Mặc định" 
+                            size="small" 
+                            sx={{ bgcolor: 'rgba(251,191,36,0.9)', color: '#78350f', border: '1px solid rgba(252,211,77,0.5)', fontWeight: 600 }} 
+                        />
+                    )}
+                </Box>
 
-        {p.jobTitle && (
-          <p className="text-xs text-primary/80 font-medium line-clamp-1">
-            {p.jobTitle}
-          </p>
-        )}
+                {/* Hover overlay */}
+                <Fade in={hovered} timeout={200}>
+                    <Box sx={{
+                        position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(2px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1
+                    }}>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                            startIcon={<EditIcon sx={{ fontSize: 16 }} />}
+                            sx={{ bgcolor: '#fff', color: '#0f172a', borderRadius: '8px', textTransform: 'none', fontWeight: 600, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
+                        >
+                            Chỉnh sửa
+                        </Button>
+                        <IconButton
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                            sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
+                            title="Xem trước"
+                        >
+                            <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); handlePDF(); }}
+                            sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
+                            title="Xuất PDF"
+                        >
+                            <DownloadIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                </Fade>
+            </Box>
 
-        <p className="text-xs text-muted-foreground/70 mt-auto">
-          Cập nhật: {fmtDate(cv.updatedAt)}
-        </p>
-      </div>
+            {/* ── Info ── */}
+            <Box onClick={handleEdit} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 2, flexGrow: 1 }}>
+                <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {cv.name || 'Chưa đặt tên'}
+                    </Typography>
+                    {p.fullName && (
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.5, color: '#6b7280' }}>
+                            <FileTextIcon sx={{ fontSize: 14 }} />
+                            <Typography variant="caption">{p.fullName}</Typography>
+                        </Stack>
+                    )}
+                </Box>
 
-      {/* ── Footer actions (always visible) ── */}
-      <div
-        className="flex items-center justify-between gap-2 px-4 pb-4 pt-0"
-        onClick={e => e.stopPropagation()}
-      >
-        <Button variant="default" size="xs" onClick={handleEdit} className="flex-1 gap-1.5">
-          <Pencil size={12} strokeWidth={2.5} />
-          Chỉnh sửa
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={handlePDF}
-          aria-label="Xuất PDF"
-          title="Xuất PDF"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <Download size={14} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={() => onDelete?.(cv.id)}
-          aria-label="Xóa CV"
-          title="Xóa CV"
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <Trash2 size={14} />
-        </Button>
-      </div>
-    </motion.div>
-  )
+                {p.jobTitle && (
+                    <Typography variant="caption" sx={{ color: '#2563eb', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.jobTitle}
+                    </Typography>
+                )}
+
+                <Typography variant="caption" sx={{ color: '#9ca3af', mt: 'auto' }}>
+                    Cập nhật: {fmtDate(cv.updatedAt)}
+                </Typography>
+            </Box>
+
+            {/* ── Footer actions (always visible) ── */}
+            <Box onClick={e => e.stopPropagation()} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, px: 2, pb: 2 }}>
+                <Button 
+                    variant="text" 
+                    size="small" 
+                    onClick={handleEdit} 
+                    startIcon={<EditIcon sx={{ fontSize: 14 }} />}
+                    sx={{ flex: 1, justifyContent: 'flex-start', color: '#4b5563', textTransform: 'none', borderRadius: '6px', '&:hover': { bgcolor: '#f3f4f6', color: '#111827' } }}
+                >
+                    Chỉnh sửa
+                </Button>
+                <IconButton
+                    size="small"
+                    onClick={handlePDF}
+                    title="Xuất PDF"
+                    sx={{ color: '#6b7280', '&:hover': { color: '#111827', bgcolor: '#f3f4f6' } }}
+                >
+                    <DownloadIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+                <IconButton
+                    size="small"
+                    onClick={() => onDelete?.(cv.id)}
+                    title="Xóa CV"
+                    sx={{ color: '#6b7280', '&:hover': { color: '#ef4444', bgcolor: '#fef2f2' } }}
+                >
+                    <DeleteIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+            </Box>
+        </Card>
+    );
 }

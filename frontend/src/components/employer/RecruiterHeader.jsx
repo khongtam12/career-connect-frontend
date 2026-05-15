@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FiBell, FiPlus, FiChevronDown, FiMenu, FiSearch } from "react-icons/fi";
+import { FiBell, FiPlus, FiChevronDown, FiMenu, FiSearch, FiMessageSquare } from "react-icons/fi";
 import { useState, useRef, useEffect } from "react";
 import { useUserStore } from "../../stores/useUserStore";
 import NotificationModal from "./model/NotificationModal";
@@ -20,6 +20,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
 
   const user = useUserStore((s) => s.user);
   const logout = useUserStore((s) => s.logout);
+  const unreadChatCount = useNotificationStore((s) => s.unreadChatCount);
 
   const ref = useRef(null);
 
@@ -139,6 +140,18 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
             notifications={notifications}
           />
         </div>
+
+        {/* Chat */}
+        <Link 
+          to="/employer/chat" 
+          className="p-2 text-gray-400 hover:text-purple-600 hover:bg-gray-50 rounded-lg relative group"
+          title="Tin nhắn"
+        >
+          <FiMessageSquare size={20} />
+          {unreadChatCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white shadow-sm group-hover:scale-110 transition-transform"></span>
+          )}
+        </Link>
 
         {/* Wallet */}
         <div className="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">

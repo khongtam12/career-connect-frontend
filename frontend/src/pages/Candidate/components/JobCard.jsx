@@ -20,6 +20,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
     const handleUpdate = () => setLocalSaved(isJobSaved(jobId));
     window.addEventListener('jobTrackerUpdated', handleUpdate);
     return () => window.removeEventListener('jobTrackerUpdated', handleUpdate);
+    
   }, [jobId]);
 
   const companyName =
@@ -64,25 +65,38 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
         <div className="flex gap-4 mb-4">
           <div
             className={`w-14 h-14 rounded-xl bg-linear-to-br ${job.color || 'from-emerald-500 to-teal-600'
-              } shrink-0 flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:scale-110 transition-transform duration-300`}
+              } shrink-0 flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:scale-110 transition-transform duration-300 overflow-hidden bg-white`}
           >
-            {companyName.charAt(0)}
+            {(job.logo || job.company?.logo) ? (
+              <img
+                src={job.logo || job.company?.logo}
+                alt={companyName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeplpRN1hSAQoBqsMoIHnQwfn4zC8yFJldEjYoL8Mi8g&s=10";
+                }}
+              />
+            ) : (
+              companyName.charAt(0)
+            )}
           </div>
 
           <div className="flex-1 min-w-0">
+            
+            <p className="text-xl sm:text-xl text-gray-600 mt-1.5 truncate font-medium">
+            Công Ty {companyName}
+            </p>
             <h3 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-2 group-hover:text-emerald-600 transition-colors">
               {job.title}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1.5 truncate font-medium">
-              {companyName}
-            </p>
           </div>
         </div>
 
         {/* Info */}
         <div className="space-y-3.5 my-4">
           <p className="text-xl sm:text-2xl font-black text-emerald-600">
-            {salaryLabel}
+            Lương: {salaryLabel} VNĐ
           </p>
 
           <div className="flex flex-wrap gap-2">

@@ -194,6 +194,8 @@ export default function Home() {
     return () => window.removeEventListener('jobTrackerUpdated', syncManagedJobs);
   }, []);
 
+  console.log("jobs",jobs);
+
   return (
     <div className="bg-white">
       {/* Hero Section with Search */}

@@ -150,11 +150,10 @@ export default function BestJobsSection({
                         setActiveFilterType(item.value);
                         setIsDropdownOpen(false);
                       }}
-                      className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                        activeFilterType === item.value
+                      className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${activeFilterType === item.value
                           ? 'text-emerald-600 bg-emerald-50'
                           : 'text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       {item.label}
                       {activeFilterType === item.value && <span className="text-emerald-600">✓</span>}
@@ -217,11 +216,10 @@ export default function BestJobsSection({
                     key={chip.label}
                     type="button"
                     onClick={() => handleChipClick(chip)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                      isActive
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isActive
                         ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-200 hover:text-emerald-600'
-                    }`}
+                      }`}
                   >
                     {chip.label}
                   </button>

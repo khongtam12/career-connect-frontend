@@ -12,6 +12,9 @@ RUN npm ci
 # Copy toàn bộ source code
 COPY . .
 
+ARG VITE_BACKEND_URL
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+
 # Build production bundle
 RUN npm run build
 

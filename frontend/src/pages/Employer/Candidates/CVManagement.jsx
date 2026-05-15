@@ -12,6 +12,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import EmptyCandidateState from '@/components/employer/EmptyCandidateState';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import {markNotificationAsRead} from "../../../service/notificationService"
+import {getCandidateInfo} from "../../../service/userService"
 const mapStatus = (status) => {
     switch (status) {
         case 'APPLIED': return 'Cho xu ly';
@@ -114,12 +115,13 @@ const CVManagement = () => {
             const mapped = (data || []).map((item) => ({
                 id: item.applicationId,
                 jobId: item.jobId,
+                candidateId: item.candidateId,
                 name: item.fullName,
                 role: item.jobName,
                 experience: item.experienceYear,
                 appliedAt: item.appliedAt,
                 appliedDate: item.appliedAt ? new Date(item.appliedAt).toLocaleDateString() : 'N/A',
-                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.fullName || 'Candidate')}`,
+                avatar: null,
                 rawStatus: item.status,
                 status: mapStatus(item.status),
                 location: 'N/A',
@@ -133,13 +135,28 @@ const CVManagement = () => {
                 matchInsight: item.matchInsight ?? null,
             }));
 
-            setCandidates(mapped);
-            if (mapped.length > 0) {
+            // Fetch avatar thật từ user-service
+            const mappedWithAvatar = await Promise.all(
+                mapped.map(async (c) => {
+                    if (c.candidateId) {
+                        try {
+                            const info = await getCandidateInfo(c.candidateId);
+                            return { ...c, avatar: info?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name || 'U')}&background=6366f1&color=fff` };
+                        } catch {
+                            return { ...c, avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name || 'U')}&background=6366f1&color=fff` };
+                        }
+                    }
+                    return { ...c, avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name || 'U')}&background=6366f1&color=fff` };
+                })
+            );
+
+            setCandidates(mappedWithAvatar);
+            if (mappedWithAvatar.length > 0) {
                 if (selectedCandidate) {
-                    const found = mapped.find((candidate) => candidate.id === selectedCandidate.id);
-                    setSelectedCandidate(found || mapped[0]);
+                    const found = mappedWithAvatar.find((candidate) => candidate.id === selectedCandidate.id);
+                    setSelectedCandidate(found || mappedWithAvatar[0]);
                 } else {
-                    setSelectedCandidate(mapped[0]);
+                    setSelectedCandidate(mappedWithAvatar[0]);
                 }
             } else {
                 setSelectedCandidate(null);

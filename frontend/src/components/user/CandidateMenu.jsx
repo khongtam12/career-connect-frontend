@@ -94,7 +94,7 @@ export default function CandidateMenu({ user }) {
                                     Cá nhân
                                 </div>
 
-                                <Link className="block px-6 py-2 rounded-md hover:bg-white">
+                                <Link to="/profile" className="block px-6 py-2 rounded-md hover:bg-white">
                                     Hồ sơ cá nhân
                                 </Link>
                             </div>
