@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { 
-    Dialog, 
-    DialogTitle, 
-    DialogContent, 
-    DialogActions, 
-    Button, 
-    Typography, 
-    Grid, 
-    Box, 
-    Avatar, 
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Typography,
+    Grid,
+    Box,
+    Avatar,
     Link,
     TextField,
     CircularProgress,
@@ -18,9 +18,9 @@ import {
     Divider,
     Stack
 } from '@mui/material';
-import { 
-    Close as CloseIcon, 
-    Verified as VerifiedIcon, 
+import {
+    Close as CloseIcon,
+    Verified as VerifiedIcon,
     Business as BusinessIcon,
     Language as LanguageIcon,
     Email as EmailIcon,
@@ -40,13 +40,14 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
     const [showRejectNote, setShowRejectNote] = useState(false);
     const [note, setNote] = useState('');
     
-    const { approve, reject } = useCompanyApprovalStore();
+    const { approve, reject, verifyTax, taxInfo, verifying, resetTaxInfo } = useCompanyApprovalStore();
 
     useEffect(() => {
         if (isOpen && companyId) {
             fetchDetail();
             setShowRejectNote(false);
             setNote('');
+            resetTaxInfo(); // Reset when opening new company
         }
     }, [isOpen, companyId]);
 
@@ -54,7 +55,7 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
         setLoadingDetail(true);
         try {
             const res = await companyService.getCompanyDetail(companyId);
-            setDetail(res?.data || res); 
+            setDetail(res?.data || res);
         } catch (error) {
             toast.error('Không thể lấy thông tin chi tiết công ty');
         } finally {
@@ -96,11 +97,29 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
         }
     };
 
+    const handleVerifyTax = async () => {
+        const taxCode = detail.submittedTaxCode || detail.taxCode;
+        if (!taxCode) {
+            toast.error('Không tìm thấy mã số thuế để đối chiếu');
+            return;
+        }
+        try {
+            const data = await verifyTax(taxCode);
+            if (data) {
+                toast.success('Đã lấy dữ liệu từ Tổng cục Thuế (VietQR)');
+            } else {
+                toast.warning('Không tìm thấy thông tin doanh nghiệp');
+            }
+        } catch (error) {
+            toast.error('Lỗi khi tra cứu mã số thuế');
+        }
+    };
+
     return (
-        <Dialog 
-            open={isOpen} 
-            onClose={onClose} 
-            maxWidth="md" 
+        <Dialog
+            open={isOpen}
+            onClose={onClose}
+            maxWidth="md"
             fullWidth
             PaperProps={{
                 sx: { borderRadius: '20px', boxShadow: '0 24px 48px rgba(0,0,0,0.2)' }
@@ -131,9 +150,9 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
                     <Box>
                         {/* Company Identity */}
                         <Paper elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #eee', mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-                            <Avatar 
-                                src={detail.logo} 
-                                variant="rounded" 
+                            <Avatar
+                                src={detail.logo}
+                                variant="rounded"
                                 sx={{ width: 120, height: 120, p: 1, bgcolor: 'white', border: '1px solid #f0f0f0' }}
                             >
                                 <BusinessIcon sx={{ fontSize: 60, color: '#ccc' }} />
@@ -197,10 +216,10 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
                                             <Typography variant="caption" sx={{ opacity: 0.7 }}>GIẤY PHÉP KINH DOANH (PDF/IMG)</Typography>
                                             <Box sx={{ mt: 1 }}>
                                                 {detail.businessLicense ? (
-                                                    <Button 
-                                                        href={detail.businessLicense} 
-                                                        target="_blank" 
-                                                        variant="contained" 
+                                                    <Button
+                                                        href={detail.businessLicense}
+                                                        target="_blank"
+                                                        variant="contained"
                                                         sx={{ bgcolor: 'white', color: 'primary.main', fontWeight: '900', '&:hover': { bgcolor: '#eee' } }}
                                                     >
                                                         XEM TÀI LIỆU GỐC
@@ -212,11 +231,80 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="caption" sx={{ opacity: 0.7 }}>MÃ SỐ THUẾ ĐỐI CHIẾU</Typography>
-                                            <Typography variant="h6" fontWeight="900" sx={{ mt: 1, letterSpacing: 1 }}>
-                                                {detail.submittedTaxCode || detail.taxCode}
-                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                                                <Typography variant="h6" fontWeight="900" sx={{ letterSpacing: 1 }}>
+                                                    {detail.submittedTaxCode || detail.taxCode}
+                                                </Typography>
+                                                <Button 
+                                                    size="small" 
+                                                    variant="contained" 
+                                                    onClick={handleVerifyTax}
+                                                    disabled={verifying}
+                                                    sx={{ 
+                                                        bgcolor: '#4caf50', 
+                                                        color: 'white', 
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: '900',
+                                                        '&:hover': { bgcolor: '#388e3c' }
+                                                    }}
+                                                >
+                                                    {verifying ? <CircularProgress size={16} color="inherit" /> : 'TRA CỨU TOÀN QUỐC'}
+                                                </Button>
+                                            </Box>
                                         </Grid>
                                     </Grid>
+
+                                    {/* Tax Verification Result */}
+                                    {taxInfo && (
+                                        <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.3)' }}>
+                                            <Typography variant="caption" fontWeight="900" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, color: '#a5d6a7' }}>
+                                                <VerifiedIcon sx={{ fontSize: 16 }} /> KẾT QUẢ ĐỐI CHIẾU QUỐC GIA
+                                            </Typography>
+                                            
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                        <Box>
+                                                            <Typography variant="caption" sx={{ opacity: 0.7, display: 'block' }}>TÊN DOANH NGHIỆP (GDT)</Typography>
+                                                            <Typography variant="body2" fontWeight="700" color={taxInfo.name?.toLowerCase().includes(detail.name.toLowerCase()) ? "#81c784" : "#ffb74d"}>
+                                                                {taxInfo.name}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Chip 
+                                                            label={taxInfo.status || 'Không rõ'} 
+                                                            size="small" 
+                                                            sx={{ 
+                                                                bgcolor: taxInfo.status?.includes('đang hoạt động') ? '#2e7d32' : '#c62828',
+                                                                color: 'white',
+                                                                fontSize: '0.6rem',
+                                                                fontWeight: '700'
+                                                            }} 
+                                                        />
+                                                    </Box>
+                                                </Grid>
+                                                <Grid item xs={12}>
+                                                    <Typography variant="caption" sx={{ opacity: 0.7, display: 'block' }}>ĐỊA CHỈ TRỤ SỞ (GDT)</Typography>
+                                                    <Typography variant="body2" sx={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                                                        {taxInfo.address}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
+
+                                            <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                {taxInfo.name?.toLowerCase().includes(detail.name.toLowerCase()) ? (
+                                                    <>
+                                                        <VerifiedIcon sx={{ color: '#81c784', fontSize: 16 }} />
+                                                        <Typography variant="caption" sx={{ color: '#81c784', fontWeight: '700' }}>Thông tin tên khớp với dữ liệu Tổng cục Thuế</Typography>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <InfoIcon sx={{ color: '#ffb74d', fontSize: 16 }} />
+                                                        <Typography variant="caption" sx={{ color: '#ffb74d', fontWeight: '700' }}>Lưu ý: Tên đăng ký có sự khác biệt</Typography>
+                                                    </>
+                                                )}
+                                            </Box>
+                                        </Box>
+                                    )}
                                 </Paper>
                             </Grid>
 
@@ -257,21 +345,21 @@ const ApprovalDetailModal = ({ isOpen, onClose, companyId }) => {
                     Hủy bỏ
                 </Button>
                 <Box sx={{ flex: 1 }} />
-                <Button 
-                    onClick={handleReject} 
-                    disabled={actionLoading} 
-                    variant="outlined" 
-                    color="error" 
+                <Button
+                    onClick={handleReject}
+                    disabled={actionLoading}
+                    variant="outlined"
+                    color="error"
                     sx={{ borderRadius: '10px', px: 3, fontWeight: '700' }}
                 >
                     {showRejectNote ? 'Xác nhận từ chối' : 'Từ chối hồ sơ'}
                 </Button>
                 {!showRejectNote && (
-                    <Button 
-                        onClick={handleApprove} 
-                        disabled={actionLoading} 
-                        variant="contained" 
-                        color="success" 
+                    <Button
+                        onClick={handleApprove}
+                        disabled={actionLoading}
+                        variant="contained"
+                        color="success"
                         sx={{ borderRadius: '10px', px: 4, fontWeight: '700', boxShadow: '0 4px 12px rgba(46, 125, 50, 0.2)' }}
                     >
                         {actionLoading ? <CircularProgress size={24} color="inherit" /> : 'Phê duyệt ngay'}

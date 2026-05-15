@@ -45,3 +45,8 @@ export const processApproval = async (payload) => {
     const res = await apiClient.post('/api/v1/company/approval', payload);
     return res.data;
 };
+
+export const verifyTaxCode = async (taxCode) => {
+    const res = await apiClient.get(`/api/v1/company/verify-tax/${taxCode}`);
+    return res.data;
+};
