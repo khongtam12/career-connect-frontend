@@ -9,10 +9,12 @@ import HowItWorks from '../../components/employer/home/HowItWorks';
 import HiringTips from '../../components/employer/home/HiringTips';
 import RecommendedActions from '../../components/employer/home/RecommendedActions';
 import AnalyticsOverview from '../../components/employer/home/AnalyticsOverview';
+import { useCartStore } from '../../stores/useCartStore';
 
 export default function Home() {
    const location = useLocation();
    const navigate = useNavigate();
+   const clearCart = useCartStore((state) => state.clearCart);
 
    useEffect(() => {
       const params = new URLSearchParams(location.search);
@@ -21,13 +23,14 @@ export default function Home() {
       if (!paymentStatus) return;
 
       if (paymentStatus === 'success') {
-         toast.success('Thanh toán thành công');
+         clearCart();
+         toast.success('Thanh toan thanh cong');
       } else {
-         toast.error('Thanh toán thất bại');
+         toast.error('Thanh toan that bai');
       }
 
       navigate(location.pathname, { replace: true });
-   }, [location.pathname, location.search, navigate]);
+   }, [clearCart, location.pathname, location.search, navigate]);
 
    return (
       <div className="max-w-[1440px] mx-auto space-y-6 pb-8">

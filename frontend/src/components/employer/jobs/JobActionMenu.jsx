@@ -13,6 +13,8 @@ import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import DoNotDisturbOnOutlinedIcon from '@mui/icons-material/DoNotDisturbOnOutlined';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
+import LayersClearOutlinedIcon from '@mui/icons-material/LayersClearOutlined';
 
 // chuyển trạng thái employer được phép
 const TRANSITIONS = {
@@ -24,7 +26,14 @@ const TRANSITIONS = {
   PAUSED: [{ to: 'ACTIVE', label: 'Tiếp tục đăng', Icon: PlayCircleOutlineIcon,     color: '#10b981' }],
 };
 
-export default function JobActionMenu({ job, onEdit, onDelete, onChangeStatus }) {
+export default function JobActionMenu({
+  job,
+  onEdit,
+  onDelete,
+  onChangeStatus,
+  onOpenMarketing,
+  onRemoveMarketing,
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -71,19 +80,35 @@ export default function JobActionMenu({ job, onEdit, onDelete, onChangeStatus })
           <ListItemText primaryTypographyProps={{ fontSize: '0.84rem' }}>Chỉnh sửa</ListItemText>
         </MenuItem>
 
-        {transitions.length > 0 && (
-          <>
-            {transitions.map(({ to, label, Icon, color }) => (
-              <MenuItem key={to} dense onClick={() => { handleClose(); onChangeStatus?.(job, to); }}>
-                <ListItemIcon>
-                  <Icon sx={{ fontSize: 17, color }} />
-                </ListItemIcon>
-                <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color }}>
-                  {label}
-                </ListItemText>
-              </MenuItem>
-            ))}
-          </>
+        {transitions.map(({ to, label, Icon, color }) => (
+          <MenuItem key={to} dense onClick={() => { handleClose(); onChangeStatus?.(job, to); }}>
+            <ListItemIcon>
+              <Icon sx={{ fontSize: 17, color }} />
+            </ListItemIcon>
+            <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color }}>
+              {label}
+            </ListItemText>
+          </MenuItem>
+        ))}
+
+        <MenuItem dense onClick={() => handle(onOpenMarketing)}>
+          <ListItemIcon>
+            <RocketLaunchOutlinedIcon sx={{ fontSize: 17, color: '#f59e0b' }} />
+          </ListItemIcon>
+          <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color: '#b45309' }}>
+            Áp dụng `highlight/effect`
+          </ListItemText>
+        </MenuItem>
+
+        {job?.marketingAssignmentId && (
+          <MenuItem dense onClick={() => handle(onRemoveMarketing)}>
+            <ListItemIcon>
+              <LayersClearOutlinedIcon sx={{ fontSize: 17, color: '#dc2626' }} />
+            </ListItemIcon>
+            <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color: '#dc2626' }}>
+              Gỡ gói hiển thị
+            </ListItemText>
+          </MenuItem>
         )}
 
         <MenuItem dense onClick={() => handle(onDelete)}>

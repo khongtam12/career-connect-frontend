@@ -13,6 +13,7 @@ import CreateJobDialog from '../../../components/employer/jobs/CreateJobDialog';
 import SubscriptionWarningBanner from '../../../components/employer/jobs/SubscriptionWarningBanner';
 import DeleteJobConfirmDialog from '../../../components/employer/jobs/DeleteJobConfirmDialog';
 import JobSnackbar from '../../../components/employer/jobs/JobSnackbar';
+import PushTopDialog from '../../../components/employer/jobs/PushTopDialog';
 import {
   getMyJobs,
   getMyStats,
@@ -20,8 +21,14 @@ import {
   updateJob,
   deleteJob,
   changeJobStatus,
+  applyMarketingPackage,
+  removeMarketingPackage,
 } from '../../../service/jobService';
-import { getCompanyDetail, getCompanySubscriptions } from '../../../service/companyService';
+import {
+  getCompanyDetail,
+  getCompanySubscriptions,
+  getCompanyMarketingEntitlements,
+} from '../../../service/companyService';
 import { useUserStore } from '../../../stores/useUserStore';
 import { validateJobForm } from '../../../validation/jobValidation';
 
@@ -55,6 +62,10 @@ function mapJobFromApi(job) {
     id: job.jobId,
     title: job.title || '',
     packageLabel: job.packageLabel || '',
+    marketingAssignmentId: job.marketingAssignmentId || '',
+    marketingPackageCategory: job.marketingPackageCategory || '',
+    marketingPackageType: job.marketingPackageType || '',
+    marketingPackageLabel: job.marketingPackageLabel || '',
     location: job.location || '',
     jobType: job.jobType || '',
     type: jobTypeLabel(job.jobType),
@@ -105,6 +116,9 @@ export default function JobManagement() {
   const [editingJob, setEditingJob] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, job: null });
+  const [marketingDialog, setMarketingDialog] = useState({ open: false, job: null });
+  const [marketingEntitlements, setMarketingEntitlements] = useState([]);
+  const [marketingLoading, setMarketingLoading] = useState(false);
 
   // ── Snackbar notification ──
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
@@ -183,7 +197,13 @@ export default function JobManagement() {
     try {
       const subscriptions = await getCompanySubscriptions(companyId);
       const options = (subscriptions || [])
-        .filter((sub) => String(sub.status || '').toUpperCase() === 'ACTIVE')
+        .filter((sub) => {
+          const statusOk = String(sub.status || '').toUpperCase() === 'ACTIVE';
+          const category = String(sub.packageCategory || '').toUpperCase();
+          const packageId = String(sub.packageId || '').toUpperCase();
+          const isJobPostingPackage = category === 'JOB_POSTING' || (!category && packageId.startsWith('JP'));
+          return statusOk && isJobPostingPackage;
+        })
         .map((sub) => {
           const limit = sub.jobPostLimit ?? 0;
           const posted = sub.jobPostedCount ?? 0;
@@ -412,6 +432,68 @@ export default function JobManagement() {
     }
   };
 
+  const handleOpenMarketing = async (job) => {
+    if (!companyId) {
+      showSnack('Không tìm thấy công ty của tài khoản hiện tại.', 'error');
+      return;
+    }
+
+    setMarketingDialog({ open: true, job });
+    setMarketingLoading(true);
+    try {
+      const entitlements = await getCompanyMarketingEntitlements(companyId);
+      const available = (entitlements || []).filter((item) => {
+        const statusOk = String(item.status || '').toUpperCase() === 'ACTIVE';
+        const scopeOk = String(item.targetScope || '').toUpperCase() === 'JOB';
+        const remaining = Number(item.remainingCount || 0) > 0;
+        return statusOk && scopeOk && remaining;
+      });
+      setMarketingEntitlements(available);
+    } catch (err) {
+      console.error('Lỗi khi tải gói marketing:', err);
+      setMarketingEntitlements([]);
+      showSnack('Không thể tải danh sách gói highlight/effect.', 'error');
+    } finally {
+      setMarketingLoading(false);
+    }
+  };
+
+  const handleCloseMarketing = () => {
+    setMarketingDialog({ open: false, job: null });
+    setMarketingEntitlements([]);
+    setMarketingLoading(false);
+  };
+
+  const handleApplyMarketing = async (job, entitlement) => {
+    if (!job?.id || !entitlement?.id) return;
+    try {
+      await applyMarketingPackage(job.id, { entitlementId: entitlement.id, placement: null });
+      showSnack(`Đã áp dụng ${entitlement.packageLabel} cho tin "${job.title}".`);
+      handleCloseMarketing();
+      fetchJobs();
+    } catch (err) {
+      console.error('Lỗi khi áp dụng gói marketing:', err);
+      const backendMessage = err.response?.data?.message || err.response?.data?.error || err.message;
+      showSnack(`Không thể áp dụng gói hiển thị: ${backendMessage}`, 'error');
+    }
+  };
+
+  const handleRemoveMarketing = async (job) => {
+    if (!job?.id) return;
+    try {
+      await removeMarketingPackage(job.id);
+      showSnack(`Đã gỡ gói hiển thị khỏi tin "${job.title}".`);
+      if (marketingDialog.open) {
+        handleCloseMarketing();
+      }
+      fetchJobs();
+    } catch (err) {
+      console.error('Lỗi khi gỡ gói marketing:', err);
+      const backendMessage = err.response?.data?.message || err.response?.data?.error || err.message;
+      showSnack(`Không thể gỡ gói hiển thị: ${backendMessage}`, 'error');
+    }
+  };
+
   return (
     <Box sx={{ width: '100%', px: { xs: 2, md: 3 } }}>
       {/* Page Header */}
@@ -516,6 +598,8 @@ export default function JobManagement() {
         onEdit={handleEdit}
         onDelete={handleDeleteRequest}
         onChangeStatus={handleChangeStatus}
+        onOpenMarketing={handleOpenMarketing}
+        onRemoveMarketing={handleRemoveMarketing}
       />
 
       {/* Create Job Dialog */}
@@ -571,6 +655,16 @@ export default function JobManagement() {
         jobTitle={deleteConfirm.job?.title}
         onClose={handleDeleteConfirmClose}
         onConfirm={handleDelete}
+      />
+
+      <PushTopDialog
+        open={marketingDialog.open}
+        job={marketingDialog.job}
+        entitlements={marketingEntitlements}
+        loading={marketingLoading}
+        onClose={handleCloseMarketing}
+        onConfirm={handleApplyMarketing}
+        onRemove={handleRemoveMarketing}
       />
 
       <JobSnackbar

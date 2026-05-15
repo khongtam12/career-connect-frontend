@@ -44,9 +44,8 @@ export const router = createBrowserRouter([
     {
         path: "/",
         element: (
-            <PrivateCandidateRouteRedirect>
-                <LayoutDefault />
-            </PrivateCandidateRouteRedirect>
+
+            <LayoutDefault />
 
         ),
         children: [

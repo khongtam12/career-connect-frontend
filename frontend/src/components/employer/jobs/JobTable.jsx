@@ -178,6 +178,8 @@ export default function JobTable({
   onEdit,
   onDelete,
   onChangeStatus,
+  onOpenMarketing,
+  onRemoveMarketing,
 }) {
   return (
     <Paper
@@ -246,6 +248,7 @@ export default function JobTable({
                           fontSize: '0.85rem',
                           color: '#1f2937',
                           lineHeight: 1.4,
+                          ...(job.marketingPackageType === 'EFFECT_BOLD' ? { fontWeight: 800 } : {}),
                         }}
                       >
                         {job.title}
@@ -279,6 +282,30 @@ export default function JobTable({
                           />
                         );
                       })()}
+                      {job.marketingPackageLabel && (
+                        <Chip
+                          label={job.marketingPackageType === 'EFFECT_HOT' ? `HOT • ${job.marketingPackageLabel}` : job.marketingPackageLabel}
+                          size="small"
+                          sx={{
+                            bgcolor: job.marketingPackageCategory === 'HIGHLIGHT' ? '#fff7ed' : '#fdf2f8',
+                            color: job.marketingPackageCategory === 'HIGHLIGHT' ? '#9a3412' : '#9d174d',
+                            border: job.marketingPackageCategory === 'HIGHLIGHT'
+                              ? '1px solid #fdba74'
+                              : '1px solid #f9a8d4',
+                            fontWeight: 700,
+                            fontSize: '0.64rem',
+                            height: 20,
+                            borderRadius: '5px',
+                            flexShrink: 0,
+                            '& .MuiChip-label': {
+                              px: 1,
+                              lineHeight: '20px',
+                              display: 'block',
+                              whiteSpace: 'nowrap',
+                            },
+                          }}
+                        />
+                      )}
                     </Box>
                   </TableCell>
 
@@ -399,6 +426,8 @@ export default function JobTable({
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onChangeStatus={onChangeStatus}
+                      onOpenMarketing={onOpenMarketing}
+                      onRemoveMarketing={onRemoveMarketing}
                     />
                   </TableCell>
                 </TableRow>

@@ -1,7 +1,5 @@
 import apiClient from './apiClient';
 
-// ── EMPLOYER: Quản lý tin tuyển dụng ──
-
 export const createJob = async (payload) => {
   const res = await apiClient.post('/api/v1/job/employer/create', payload);
   return res.data;
@@ -37,7 +35,15 @@ export const changeJobStatus = async (jobId, status) => {
   return res.data;
 };
 
-// ── PUBLIC: Xem / tìm kiếm ──
+export const applyMarketingPackage = async (jobId, payload) => {
+  const res = await apiClient.post(`/api/v1/job/employer/${jobId}/marketing`, payload);
+  return res.data;
+};
+
+export const removeMarketingPackage = async (jobId) => {
+  const res = await apiClient.delete(`/api/v1/job/employer/${jobId}/marketing`);
+  return res.data;
+};
 
 export const getJobById = async (jobId) => {
   const res = await apiClient.get(`/api/v1/job/${jobId}`);
@@ -96,26 +102,12 @@ export const getJobFilters = async () => {
 export const getJobStats = async () => {
   const response = await apiClient.get('/api/v1/job/stats');
   return response.data;
-
-}
-/**
-* Apply for a job — POST /api/v1/apply
-* @param {{ jobId: string, cvId: string, note?: string }} payload
-*/
-
-
-
-// ── CANDIDATE ──
-
-/**
- * Apply for a job — POST /api/v1/apply
- */
+};
 
 export const applyForJob = async (payload) => {
   const res = await apiClient.post('/api/v1/apply', payload);
   return res.data;
 };
-
 
 export const getJobsByAdmin = async (search, status, page = 0, size = 10) => {
   const params = { page, size };
@@ -126,14 +118,12 @@ export const getJobsByAdmin = async (search, status, page = 0, size = 10) => {
 };
 
 export const adminChangeJobStatus = async (jobId, status, adminId) => {
-  // We specify jobId in path and status as request param
   const res = await apiClient.put(`/api/v1/job/admin/${jobId}/status`, null, {
     params: { status },
     headers: { 'X-Admin-Id': adminId || 'ADMIN001' }
   });
   return res.data;
 };
-
 
 export const adminDeleteJob = async (jobId, adminId) => {
   const res = await apiClient.delete(`/api/v1/job/admin/${jobId}`, {
