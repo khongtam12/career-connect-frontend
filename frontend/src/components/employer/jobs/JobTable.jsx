@@ -11,7 +11,10 @@ import {
   Box,
   Chip,
   Pagination,
+  Tooltip,
 } from '@mui/material';
+import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -180,6 +183,8 @@ export default function JobTable({
   onChangeStatus,
   onOpenMarketing,
   onRemoveMarketing,
+  onRenew,
+  allSubscriptions = [],
 }) {
   return (
     <Paper
@@ -248,7 +253,6 @@ export default function JobTable({
                           fontSize: '0.85rem',
                           color: '#1f2937',
                           lineHeight: 1.4,
-                          ...(job.marketingPackageType === 'EFFECT_BOLD' ? { fontWeight: 800 } : {}),
                         }}
                       >
                         {job.title}
@@ -259,10 +263,32 @@ export default function JobTable({
                         const displayLabel = _uppercase
                           ? job.packageLabel.toUpperCase()
                           : job.packageLabel;
-                        return (
+                          
+                        const currentSub = allSubscriptions?.find(s => s.id === job.companySubscriptionId);
+                        let isExpiringSoon = false;
+                        let text = null;
+                        let iconEl = undefined;
+                        
+                        if (currentSub && currentSub.endDate) {
+                          const expDate = new Date(currentSub.endDate);
+                          expDate.setHours(0, 0, 0, 0);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diffDays = Math.round((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          
+                          isExpiringSoon = diffDays <= 1;
+                          text = diffDays < 0 ? 'Gói đã hết hạn' : `Hạn gói: ${String(expDate.getDate()).padStart(2, '0')}/${String(expDate.getMonth() + 1).padStart(2, '0')}/${expDate.getFullYear()}`;
+                          
+                          if (isExpiringSoon) {
+                            iconEl = diffDays < 0 ? <ErrorOutlineIcon /> : <TimerOutlinedIcon />;
+                          }
+                        }
+                          
+                        const chipEl = (
                           <Chip
                             label={displayLabel}
                             size="small"
+                            icon={iconEl}
                             sx={{
                               ...cleanStyle,
                               fontWeight: 600,
@@ -277,14 +303,27 @@ export default function JobTable({
                                 display: 'block',
                                 whiteSpace: 'nowrap',
                               },
+                              '& .MuiChip-icon': {
+                                width: '12px',
+                                height: '12px',
+                                ml: 0.8,
+                                color: isExpiringSoon ? '#ef4444' : 'inherit',
+                              },
                               transition: 'box-shadow 0.2s',
+                              ...(isExpiringSoon ? { border: '1px solid #ef4444' } : {})
                             }}
                           />
                         );
+                        
+                        return text ? (
+                          <Tooltip title={text} arrow placement="top">
+                            {chipEl}
+                          </Tooltip>
+                        ) : chipEl;
                       })()}
                       {job.marketingPackageLabel && (
                         <Chip
-                          label={job.marketingPackageType === 'EFFECT_HOT' ? `HOT • ${job.marketingPackageLabel}` : job.marketingPackageLabel}
+                          label={job.marketingPackageLabel}
                           size="small"
                           sx={{
                             bgcolor: job.marketingPackageCategory === 'HIGHLIGHT' ? '#fff7ed' : '#fdf2f8',
@@ -334,31 +373,40 @@ export default function JobTable({
 
                   {/* Mức lương */}
                   <TableCell sx={bodyCellSx}>
-                    <Box
-                      sx={{
-                        bgcolor: '#f0fdf4',
-                        color: '#16a34a',
-                        px: 1.2,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        display: 'inline-block',
-                        textAlign: 'center',
-                        border: '1.5px solid #86efac',
-                      }}
-                    >
-                      {job.salaryNegotiable ? (
-                        <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
-                          Thỏa thuận
+                    {job.salaryNegotiable ? (
+                      <Chip
+                        label="Thỏa thuận"
+                        size="small"
+                        sx={{
+                          bgcolor: '#f0fdf4',
+                          color: '#16a34a',
+                          border: '1px solid #86efac',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          height: 26,
+                          borderRadius: '6px',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          bgcolor: '#f0fdf4',
+                          color: '#16a34a',
+                          px: 1,
+                          py: 0.4,
+                          borderRadius: '6px',
+                          display: 'inline-block',
+                          textAlign: 'center',
+                          border: '1px solid #86efac',
+                          minWidth: '60px',
+                        }}
+                      >
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.75rem', lineHeight: 1.2 }}>
+                          {Math.round((job.salaryMin || 0) / 1_000_000)} - {Math.round((job.salaryMax || 0) / 1_000_000)}
                         </Typography>
-                      ) : (
-                        <>
-                          <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', lineHeight: 1.2 }}>
-                            {Math.round((job.salaryMin || 0) / 1_000_000)} - {Math.round((job.salaryMax || 0) / 1_000_000)}
-                          </Typography>
-                          <Typography sx={{ fontSize: '0.7rem', fontWeight: 700 }}>triệu</Typography>
-                        </>
-                      )}
-                    </Box>
+                        <Typography sx={{ fontSize: '0.65rem', fontWeight: 600 }}>triệu</Typography>
+                      </Box>
+                    )}
                   </TableCell>
 
                   {/* Ứng viên */}
@@ -421,14 +469,31 @@ export default function JobTable({
 
                   {/* Thao tác */}
                   <TableCell sx={{ ...bodyCellSx, textAlign: 'center' }}>
-                    <JobActionMenu
-                      job={job}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onChangeStatus={onChangeStatus}
-                      onOpenMarketing={onOpenMarketing}
-                      onRemoveMarketing={onRemoveMarketing}
-                    />
+                    {(() => {
+                      const currentSub = allSubscriptions?.find(s => s.id === job.companySubscriptionId);
+                      let packageExpiringSoon = false;
+                      if (currentSub?.endDate) {
+                        const expDate = new Date(currentSub.endDate);
+                        expDate.setHours(0, 0, 0, 0);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const diffDays = Math.round((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 1) packageExpiringSoon = true;
+                      }
+
+                      return (
+                        <JobActionMenu
+                          job={job}
+                          onEdit={onEdit}
+                          onDelete={onDelete}
+                          onChangeStatus={onChangeStatus}
+                          onOpenMarketing={onOpenMarketing}
+                          onRemoveMarketing={onRemoveMarketing}
+                          onRenew={onRenew}
+                          packageExpiringSoon={packageExpiringSoon}
+                        />
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))
