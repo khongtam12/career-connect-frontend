@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Send, Search, MoreVertical, MessageSquare, Phone, Video, Info, User, Check, CheckCheck } from 'lucide-react';
 import { useUserStore } from "../../stores/useUserStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
@@ -7,6 +8,8 @@ import { getCandidatesForEmployer } from "../../service/applicationService";
 import { getCandidateInfo } from "../../service/userService";
 
 export default function EmployerChat() {
+  const [searchParams] = useSearchParams();
+  const candidateIdQuery = searchParams.get('candidateId');
   const user = useUserStore((s) => s.user);
   const setUnreadChatCount = useNotificationStore((s) => s.setUnreadChatCount);
   const [conversations, setConversations] = useState([]);
@@ -22,6 +25,11 @@ export default function EmployerChat() {
   );
 
   const messagesEndRef = useRef(null);
+  const selectedIdRef = useRef(selectedId);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,7 +48,7 @@ export default function EmployerChat() {
   const filteredConversations = conversations.filter(c =>
     c.candidateName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => new Date(b.lastUpdate) - new Date(a.lastUpdate));
 
   // 1. Fetch Rooms & Connect WebSocket
   useEffect(() => {
@@ -127,14 +135,23 @@ export default function EmployerChat() {
 
         // Fetch history cho phòng đầu tiên luôn để đảm bảo hiện tin nhắn ngay lập tức
         if (sortedRooms.length > 0) {
-          const firstRoom = sortedRooms[0];
+          let roomToSelect = sortedRooms[0];
+          
+          if (candidateIdQuery) {
+            const targetRoomId = `${candidateIdQuery}_${user.companyId}`;
+            const foundRoom = sortedRooms.find(r => r.id === targetRoomId);
+            if (foundRoom) {
+              roomToSelect = foundRoom;
+            }
+          }
+
           try {
-            const history = await fetchChatHistory(firstRoom.id);
-            firstRoom.messages = history;
+            const history = await fetchChatHistory(roomToSelect.id);
+            roomToSelect.messages = history;
           } catch (e) {
             console.error("Failed to fetch initial history", e);
           }
-          setSelectedId(firstRoom.id);
+          setSelectedId(roomToSelect.id);
         }
 
         setConversations(sortedRooms);
@@ -172,7 +189,7 @@ export default function EmployerChat() {
             messages: [...(conv.messages || []), newMessage],
             lastMessage: newMessage.content,
             lastUpdate: newMessage.timestamp,
-            unreadCountEmployer: conv.id === selectedId ? 0 : (conv.unreadCountEmployer || 0) + 1
+            unreadCountEmployer: conv.id === selectedIdRef.current ? 0 : (conv.unreadCountEmployer || 0) + 1
           };
         }
         return conv;
@@ -183,7 +200,7 @@ export default function EmployerChat() {
     return () => {
       if (client) client.disconnect();
     };
-  }, [user?.companyId, selectedId]);
+  }, [user?.companyId, candidateIdQuery]);
 
   // 2. Fetch History when selected room changes
   useEffect(() => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     FiSearch, FiFilter, FiMapPin, FiClock,
-    FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash, FiRefreshCw,
+    FiDownload, FiCheckCircle, FiCalendar, FiXCircle, FiSlash, FiRefreshCw,FiMessageSquare
 
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -13,6 +13,7 @@ import EmptyCandidateState from '@/components/employer/EmptyCandidateState';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import {markNotificationAsRead} from "../../../service/notificationService"
 import {getCandidateInfo} from "../../../service/userService"
+import { useNavigate } from 'react-router-dom';
 const mapStatus = (status) => {
     switch (status) {
         case 'APPLIED': return 'Cho xu ly';
@@ -104,6 +105,7 @@ const CVManagement = () => {
     const setHasNewCandidate = useNotificationStore((state) => state.setHasNewCandidate);
     const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
     const notifications = useNotificationStore((state) => state.notifications);
+    const navigate = useNavigate();
 
     const fetchCandidates = async () => {
         try {
@@ -435,8 +437,17 @@ const CVManagement = () => {
                                         <p className="text-gray-600 text-[14px] mb-1 line-clamp-1">{candidate.role}</p>
 
                                         <div className="flex flex-col gap-1 mt-1.5">
-                                            <div className="text-gray-500 text-[13px] flex items-center gap-1 whitespace-nowrap">
-                                                <FiClock className="text-gray-400 text-[9px]" /> {candidate.experience} nam kinh nghiem
+                                           <div className="text-gray-500 text-[13px] flex items-center justify-between w-full">
+                                                <div className="flex items-center gap-1 whitespace-nowrap">
+                                                    <FiClock className="text-gray-400 text-[9px]" />
+                                                    {candidate.experience} năm kinh nghiệm
+                                                </div>
+
+                                                <button 
+                                                    onClick={()=>navigate(`/employer/chat?candidateId=${candidate.candidateId}`)}
+                                                >
+                                                    <FiMessageSquare size={15} />
+                                                </button>
                                             </div>
                                             <div className="flex justify-between items-center gap-2">
                                                 <span className={`px-2 py-0.5 rounded-full inline-flex items-center justify-center font-bold text-[10px] whitespace-nowrap ${scoreTone(candidate.matchScore)}`}>

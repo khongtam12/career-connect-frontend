@@ -28,6 +28,7 @@ import EmployerList from "../pages/Admin/EmployerManagement/EmployerList";
 import CandidateManagement from "../pages/Admin/CandidateManagement";
 import PendingApprovals from "../pages/Admin/CompanyApproval";
 import AdminProfile from "../pages/Admin/Profile/AdminProfile.jsx";
+import CompanyDetail from "../pages/Candidate/CompanyDetail.jsx";
 
 import LoginCD from "../pages/Candidate/Login/login.jsx";
 import Login from "../pages/Employer/Login/login.jsx";
@@ -38,6 +39,7 @@ import Error from "../pages/Error.jsx/Error";
 import PrivateCandidateRouteRedirect from "./PrivateCandidateRouteRedirect";
 import PrivateEmployerRouteRedirect from "./PrivateEmployerRouteRedirect";
 import PrivateAdminRouteRedirect from "./PrivateAdminRouteRedirect";
+
 
 export const router = createBrowserRouter([
     // ================= PUBLIC + CANDIDATE =================
@@ -73,7 +75,10 @@ export const router = createBrowserRouter([
                 path: "applied-jobs",
                 element: <AppliedJobs />
             },
-
+ {
+                path: "company/:id",
+                element: <CompanyDetail />
+            },
             {
                 path: "cv-dashboard",
                 element: (
