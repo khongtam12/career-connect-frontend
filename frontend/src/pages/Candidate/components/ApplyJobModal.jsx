@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileText, CheckCircle2, AlertTriangle, Loader2, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { applyForJob,uploadApplicationFile } from '../../../service/applicationService';
+import { applyForJob, uploadApplicationFile } from '../../../service/applicationService';
 import { addAppliedJob } from '../utils/jobTracker';
 import * as cvService from '../../../service/cvService';
 import { useUserStore } from '../../../stores/useUserStore';
@@ -9,11 +9,11 @@ import { useUserStore } from '../../../stores/useUserStore';
 export default function ApplyJobModal({ open, onClose, job }) {
   const [cvList, setCvList] = useState([]);
   const [selectedCvId, setSelectedCvId] = useState('');
-  
+
   // --- Thêm state cho tính năng Upload ---
   const [uploadMode, setUploadMode] = useState('library'); // 'library' | 'local'
   const [localFile, setLocalFile] = useState(null);
-  
+
   const [note, setNote] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,14 +29,14 @@ export default function ApplyJobModal({ open, onClose, job }) {
         try {
           const list = await cvService.getMyCVs();
           setCvList(list);
-          console.log("cv",list)
+          console.log("cv", list)
           if (list.length > 0) setSelectedCvId(list[0].id);
         } catch {
           setCvList([]);
         }
       };
       fetchCVs();
-      
+
       // Reset states
       setNote('');
       setAgreed(false);
@@ -48,88 +48,94 @@ export default function ApplyJobModal({ open, onClose, job }) {
   }, [open, user]);
 
   const handleSubmit = async () => {
-  if (uploadMode === 'library' && !selectedCvId) {
-    setError('Vui lòng chọn CV để ứng tuyển.');
-    return;
-  }
-
-  if (uploadMode === 'local' && !localFile) {
-    setError('Vui lòng tải lên CV của bạn.');
-    return;
-  }
-
-  if (!agreed) {
-    setError('Vui lòng đồng ý với điều khoản sử dụng.');
-    return;
-  }
-
-  setLoading(true);
-  setError('');
-
-  try {
-    let cvId;
-    let url;
-
-    if (uploadMode === 'library') {
-      cvId = selectedCvId;
-
-      const selectedCv = cvList.find((cv) => cv.id === selectedCvId);
-      url = selectedCv?.fileUrl || undefined;
-    } else {
-      const uploaded = await uploadApplicationFile(localFile);
-      cvId = uploaded.data.id;
-      url = uploaded.data.url;
-  
-
+    const deadlineDate = job?.deadline ? new Date(job.deadline) : null;
+    if (deadlineDate && deadlineDate.setHours(0,0,0,0) < new Date().setHours(0,0,0,0)) {
+      setError(`Công việc này đã hết hạn ứng tuyển vào ngày ${deadlineDate.toLocaleDateString('vi-VN')}.`);
+      return;
     }
-    console.log("job",job);
-    console.log("company",job.companyId);
-    console.log("industry",job.industryId);
 
-    const payload = {
-      jobId: String(job.id),
-      cvId,
-      companyId: job.companyId,
-      industryId: job.industryId,
-      url,
-      note: note.trim() || undefined,
-    };
+    if (uploadMode === 'library' && !selectedCvId) {
+      setError('Vui lòng chọn CV để ứng tuyển.');
+      return;
+    }
 
-    await applyForJob(payload);
-    setSuccess(true);
-  } catch (err) {
-    const msg =
-      err?.response?.data?.message ||
-      'Đã xảy ra lỗi khi nộp hồ sơ. Vui lòng thử lại.';
-    setError(msg);
-  } finally {
-    setLoading(false);
-  }
-};
+    if (uploadMode === 'local' && !localFile) {
+      setError('Vui lòng tải lên CV của bạn.');
+      return;
+    }
+
+    if (!agreed) {
+      setError('Vui lòng đồng ý với điều khoản sử dụng.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      let cvId;
+      let url;
+
+      if (uploadMode === 'library') {
+        cvId = selectedCvId;
+
+        const selectedCv = cvList.find((cv) => cv.id === selectedCvId);
+        url = selectedCv?.fileUrl || undefined;
+      } else {
+        const uploaded = await uploadApplicationFile(localFile);
+        cvId = uploaded.data.id;
+        url = uploaded.data.url;
+
+
+      }
+      console.log("job", job);
+      console.log("company", job.companyId);
+      console.log("industry", job.industryId);
+
+      const payload = {
+        jobId: String(job.id),
+        cvId,
+        companyId: job.companyId,
+        industryId: job.industryId,
+        url,
+        note: note.trim() || undefined,
+      };
+
+      await applyForJob(payload);
+      setSuccess(true);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        'Đã xảy ra lỗi khi nộp hồ sơ. Vui lòng thử lại.';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const allowedTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ];
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
 
-  if (!allowedTypes.includes(file.type)) {
-    setError('Chỉ hỗ trợ file PDF, DOC, DOCX.');
-    return;
-  }
+    if (!allowedTypes.includes(file.type)) {
+      setError('Chỉ hỗ trợ file PDF, DOC, DOCX.');
+      return;
+    }
 
-  if (file.size > 5 * 1024 * 1024) {
-    setError('File tối đa 5MB.');
-    return;
-  }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File tối đa 5MB.');
+      return;
+    }
 
-  setLocalFile(file);
-  setError('');
-};
+    setLocalFile(file);
+    setError('');
+  };
 
   if (!open) return null;
 
@@ -205,26 +211,24 @@ export default function ApplyJobModal({ open, onClose, job }) {
 
                   {/* ─── Body ─── */}
                   <div className="px-6 py-6 max-h-[65vh] overflow-y-auto space-y-6">
-                    
+
                     {/* CV Selection / Upload Area */}
                     <div>
                       <div className="flex gap-6 mb-4 border-b border-gray-200">
                         <button
-                          className={`pb-2 text-sm font-bold transition-colors ${
-                            uploadMode === 'library'
-                              ? 'text-emerald-600 border-b-2 border-emerald-600'
-                              : 'text-gray-400 hover:text-gray-600'
-                          }`}
+                          className={`pb-2 text-sm font-bold transition-colors ${uploadMode === 'library'
+                            ? 'text-emerald-600 border-b-2 border-emerald-600'
+                            : 'text-gray-400 hover:text-gray-600'
+                            }`}
                           onClick={() => setUploadMode('library')}
                         >
                           CV đã tạo trên hệ thống
                         </button>
                         <button
-                          className={`pb-2 text-sm font-bold transition-colors ${
-                            uploadMode === 'local'
-                              ? 'text-emerald-600 border-b-2 border-emerald-600'
-                              : 'text-gray-400 hover:text-gray-600'
-                          }`}
+                          className={`pb-2 text-sm font-bold transition-colors ${uploadMode === 'local'
+                            ? 'text-emerald-600 border-b-2 border-emerald-600'
+                            : 'text-gray-400 hover:text-gray-600'
+                            }`}
                           onClick={() => setUploadMode('local')}
                         >
                           Tải CV từ máy tính
@@ -251,11 +255,10 @@ export default function ApplyJobModal({ open, onClose, job }) {
                             {cvList.map((cv) => (
                               <label
                                 key={cv.id}
-                                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                                  selectedCvId === cv.id
-                                    ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
+                                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${selectedCvId === cv.id
+                                  ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                  }`}
                               >
                                 <input
                                   type="radio"
@@ -266,11 +269,10 @@ export default function ApplyJobModal({ open, onClose, job }) {
                                   className="sr-only"
                                 />
                                 <div
-                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                                    selectedCvId === cv.id
-                                      ? 'border-emerald-500'
-                                      : 'border-gray-300'
-                                  }`}
+                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${selectedCvId === cv.id
+                                    ? 'border-emerald-500'
+                                    : 'border-gray-300'
+                                    }`}
                                 >
                                   {selectedCvId === cv.id && (
                                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -298,10 +300,9 @@ export default function ApplyJobModal({ open, onClose, job }) {
                         )
                       ) : (
                         // Giao diện upload file từ local
-                        <div 
-                          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
-                            localFile ? 'border-emerald-500 bg-emerald-50' : 'border-gray-300 hover:bg-gray-50'
-                          }`}
+                        <div
+                          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${localFile ? 'border-emerald-500 bg-emerald-50' : 'border-gray-300 hover:bg-gray-50'
+                            }`}
                           onClick={() => document.getElementById('cv-upload').click()}
                         >
                           <UploadCloud size={36} className={`mx-auto mb-3 ${localFile ? 'text-emerald-500' : 'text-gray-400'}`} />
@@ -399,11 +400,10 @@ export default function ApplyJobModal({ open, onClose, job }) {
                     <button
                       onClick={handleSubmit}
                       disabled={loading || (uploadMode === 'library' ? !selectedCvId : !localFile)}
-                      className={`w-full py-3.5 rounded-xl font-bold text-white text-base transition-all duration-200 flex items-center justify-center gap-2 ${
-                        loading || (uploadMode === 'library' ? !selectedCvId : !localFile)
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'
-                      }`}
+                      className={`w-full py-3.5 rounded-xl font-bold text-white text-base transition-all duration-200 flex items-center justify-center gap-2 ${loading || (uploadMode === 'library' ? !selectedCvId : !localFile)
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'
+                        }`}
                     >
                       {loading ? (
                         <>

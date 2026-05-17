@@ -35,10 +35,10 @@ const Header = ({ rightSlot }) => {
 
             {/* Menu */}
             <nav className="hidden lg:flex space-x-1 text-sm font-medium text-gray-700">
-              <div className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
+              <Link to="/" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
                 <span>Việc làm</span>
                 <ChevronDown size={16} />
-              </div>
+              </Link>
               <Link to="/cv-dashboard" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
                 <span>Hồ sơ & CV</span>
                 <ChevronDown size={16} />
