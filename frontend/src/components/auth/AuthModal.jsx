@@ -10,6 +10,7 @@ export default function AuthModal() {
     const isClosable = useUserStore((s) => s.isDialogClosable);
     const closeAuthDialog = useUserStore((s) => s.closeAuthDialog);
     const handleLoginSuccess = useUserStore((s) => s.handleLoginSuccess);
+    const authDialogCallback = useUserStore((s) => s.authDialogCallback);
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -33,7 +34,10 @@ export default function AuthModal() {
         setLoading(true);
         try {
             await login({ username, password, type: "CANDIDATE" });
-            await handleLoginSuccess();
+            const userData = await handleLoginSuccess();
+            if (authDialogCallback) {
+                authDialogCallback(userData);
+            }
             closeAuthDialog();
         } catch {
             setError("Tên đăng nhập hoặc mật khẩu không hợp lệ");
