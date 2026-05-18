@@ -1,130 +1,222 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import {
+  Briefcase,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  SearchX,
+  Loader2,
+} from 'lucide-react';
+
 import JobCard from './JobCard';
 import JobDetailPanel from './JobDetailPanel';
 import JobListItem from './JobListItem';
 
 export default function JobSection({
-  jobs,
-  totalElements,
+  jobs = [],
+  totalElements = 0,
   filters,
   filterOptions,
   onChange,
   onApply,
-  page,
-  totalPages,
+  page = 0,
+  totalPages = 0,
   onPageChange,
-  loading,
+  loading = false,
   selectedJob,
   onSelectJob,
   showDetailPanel = false,
 }) {
+  const hasJobs = useMemo(() => jobs.length > 0, [jobs]);
+
   return (
-    <section className="py-12 sm:py-16 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="lg:w-1/4">
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Lọc nâng cao</h3>
+    <section className="bg-gradient-to-b from-white via-slate-50 to-slate-100 py-12 sm:py-16 min-h-screen">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Loại hình</label>
-                  <select
-                    value={filters.jobType}
-                    onChange={(e) => onChange({ jobType: e.target.value })}
-                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                  >
-                    <option value="">Tất cả</option>
-                    {filterOptions.jobTypes.map((item) => (
-                      <option key={item} value={item}>
-                        {formatJobType(item)}
-                      </option>
-                    ))}
-                  </select>
+        {/* Header */}
+        <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-700">
+              <Briefcase className="h-4 w-4" />
+              Career Opportunities
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+              Khám phá việc làm phù hợp
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-500">
+              Tìm kiếm hàng nghìn cơ hội việc làm chất lượng với mức lương hấp dẫn
+              từ các doanh nghiệp hàng đầu.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+            <p className="text-sm text-slate-500">Tổng số việc làm</p>
+            <h3 className="mt-1 text-3xl font-black text-emerald-600">
+              {totalElements}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-8 lg:flex-row">
+
+          {/* Sidebar */}
+          <aside className="lg:w-[300px] shrink-0">
+            <div className="sticky top-24 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+
+              {/* Sidebar Header */}
+              <div className="border-b border-slate-100 bg-slate-50 px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+                    <Filter className="h-5 w-5" />
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900">
+                      Bộ lọc nâng cao
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Tối ưu kết quả tìm kiếm
+                    </p>
+                  </div>
                 </div>
+              </div>
 
+              {/* Sidebar Body */}
+              <div className="space-y-6 p-6">
+
+                {/* Job Type */}
+                <FilterSelect
+                  label="Loại hình"
+                  value={filters.jobType}
+                  onChange={(e) => onChange({ jobType: e.target.value })}
+                >
+                  <option value="">Tất cả</option>
+
+                  {filterOptions.jobTypes.map((item) => (
+                    <option key={item} value={item}>
+                      {formatJobType(item)}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                {/* Experience */}
                 <div>
-                  <label className="text-sm font-semibold text-gray-700">Kinh nghiệm</label>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <input
+                  <label className="mb-3 block text-sm font-semibold text-slate-700">
+                    Kinh nghiệm
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
                       type="number"
                       min="0"
                       value={filters.experienceMin}
-                      onChange={(e) => onChange({ experienceMin: e.target.value })}
+                      onChange={(e) =>
+                        onChange({ experienceMin: e.target.value })
+                      }
                       placeholder="Từ năm"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                     />
-                    <input
+
+                    <Input
                       type="number"
                       min="0"
                       value={filters.experienceMax}
-                      onChange={(e) => onChange({ experienceMax: e.target.value })}
+                      onChange={(e) =>
+                        onChange({ experienceMax: e.target.value })
+                      }
                       placeholder="Đến năm"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                     />
                   </div>
                 </div>
 
+                {/* Salary */}
                 <div>
-                  <label className="text-sm font-semibold text-gray-700">Mức lương (triệu)</label>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <input
+                  <label className="mb-3 block text-sm font-semibold text-slate-700">
+                    Mức lương (triệu)
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
                       type="number"
                       min="0"
                       value={filters.salaryMin}
-                      onChange={(e) => onChange({ salaryMin: e.target.value })}
+                      onChange={(e) =>
+                        onChange({ salaryMin: e.target.value })
+                      }
                       placeholder="Từ"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                     />
-                    <input
+
+                    <Input
                       type="number"
                       min="0"
                       value={filters.salaryMax}
-                      onChange={(e) => onChange({ salaryMax: e.target.value })}
+                      onChange={(e) =>
+                        onChange({ salaryMax: e.target.value })
+                      }
                       placeholder="Đến"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Ngành nghề</label>
-                  <select
-                    value={filters.industryId}
-                    onChange={(e) => onChange({ industryId: e.target.value })}
-                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                  >
-                    <option value="">Tất cả</option>
-                    {filterOptions.industries.map((item) => (
-                      <option key={item.industryId} value={item.industryId}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Industry */}
+                <FilterSelect
+                  label="Ngành nghề"
+                  value={filters.industryId}
+                  onChange={(e) =>
+                    onChange({ industryId: e.target.value })
+                  }
+                >
+                  <option value="">Tất cả</option>
 
+                  {filterOptions.industries.map((item) => (
+                    <option
+                      key={item.industryId}
+                      value={item.industryId}
+                    >
+                      {item.name}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                {/* Button */}
                 <button
                   onClick={onApply}
-                  className="w-full rounded-lg bg-emerald-600 py-2.5 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+                  className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-200"
                 >
+                  <Filter className="h-4 w-4 transition-transform group-hover:rotate-12" />
                   Áp dụng bộ lọc
                 </button>
               </div>
             </div>
           </aside>
 
-          <div className={showDetailPanel ? "lg:w-2/3" : "lg:w-3/4"}>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          {/* Main Content */}
+          <div className="min-w-0 flex-1">
+
+            {/* Toolbar */}
+            <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Tuyển dụng</h2>
-                <p className="text-sm text-gray-500 mt-1">Tìm thấy {totalElements} việc làm phù hợp</p>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Danh sách tuyển dụng
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Hiển thị {jobs.length} / {totalElements} việc làm
+                </p>
               </div>
+
               <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600">Sắp xếp</label>
+                <span className="text-sm font-medium text-slate-600">
+                  Sắp xếp
+                </span>
+
                 <select
                   value={filters.sortBy}
-                  onChange={(e) => onChange({ sortBy: e.target.value })}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  onChange={(e) =>
+                    onChange({ sortBy: e.target.value })
+                  }
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                 >
                   <option value="createdAt">Mới nhất</option>
                   <option value="salaryMax">Lương cao nhất</option>
@@ -134,68 +226,161 @@ export default function JobSection({
               </div>
             </div>
 
-            {jobs.length === 0 && loading ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500">
-                Đang tải việc làm...
+            {/* Loading */}
+            {loading && !hasJobs && (
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-6 py-20 text-center shadow-sm">
+                <Loader2 className="mb-4 h-10 w-10 animate-spin text-emerald-600" />
+
+                <h3 className="text-lg font-bold text-slate-800">
+                  Đang tải việc làm...
+                </h3>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Hệ thống đang cập nhật dữ liệu mới nhất
+                </p>
               </div>
-            ) : jobs.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500">
-                Không tìm thấy việc làm phù hợp
-              </div>
-            ) : (
-              showDetailPanel ? (
-                <div className="space-y-4">
-                  {jobs.map((job) => (
-                    <JobListItem
-                      key={job.jobId || job.id}
-                      job={job}
-                      isActive={(selectedJob?.jobId || selectedJob?.id) === (job.jobId || job.id)}
-                      onSelect={onSelectJob}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {jobs.map((job) => (
-                    <JobCard key={job.jobId || job.id} job={job} />
-                  ))}
-                </div>
-              )
             )}
 
-            {loading && jobs.length > 0 && (
-              <div className="mt-4 text-sm text-gray-500">Đang cập nhật kết quả...</div>
+            {/* Empty */}
+            {!loading && !hasJobs && (
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
+                <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
+                  <SearchX className="h-10 w-10 text-slate-400" />
+                </div>
+
+                <h3 className="text-xl font-bold text-slate-800">
+                  Không tìm thấy việc làm
+                </h3>
+
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500">
+                  Hãy thử thay đổi từ khóa hoặc điều chỉnh bộ lọc để
+                  tìm được công việc phù hợp hơn.
+                </p>
+              </div>
             )}
 
+            {/* Job Content */}
+            {hasJobs && (
+              <>
+                {showDetailPanel ? (
+                  <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+                    {/* Left */}
+                    <div className="space-y-4">
+                      {jobs.map((job) => (
+                        <JobListItem
+                          key={job.jobId || job.id}
+                          job={job}
+                          isActive={
+                            (selectedJob?.jobId || selectedJob?.id) ===
+                            (job.jobId || job.id)
+                          }
+                          onSelect={onSelectJob}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Right */}
+                    <div className="sticky top-24 h-fit">
+                      <JobDetailPanel job={selectedJob} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {jobs.map((job) => (
+                      <JobCard
+                        key={job.jobId || job.id}
+                        job={job}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Updating */}
+            {loading && hasJobs && (
+              <div className="mt-5 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Đang cập nhật kết quả...
+              </div>
+            )}
+
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+
                 <button
                   onClick={() => onPageChange(page - 1)}
                   disabled={page <= 0}
-                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm disabled:opacity-40"
+                  className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-emerald-500 hover:text-emerald-600 disabled:pointer-events-none disabled:opacity-40"
                 >
+                  <ChevronLeft className="h-4 w-4" />
                   Trước
                 </button>
-                <span className="text-sm text-gray-600">Trang {page + 1} / {totalPages}</span>
+
+                <div className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200">
+                  Trang {page + 1} / {totalPages}
+                </div>
+
                 <button
                   onClick={() => onPageChange(page + 1)}
                   disabled={page >= totalPages - 1}
-                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm disabled:opacity-40"
+                  className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-emerald-500 hover:text-emerald-600 disabled:pointer-events-none disabled:opacity-40"
                 >
                   Sau
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             )}
           </div>
-
-          {showDetailPanel && (
-            <div className="lg:w-1/3">
-              <JobDetailPanel job={selectedJob} />
-            </div>
-          )}
         </div>
       </div>
     </section>
+  );
+}
+
+/* -------------------------------- */
+/* Components */
+/* -------------------------------- */
+
+function Input(props) {
+  return (
+    <input
+      {...props}
+      className="
+        w-full rounded-xl border border-slate-200
+        bg-white px-4 py-2.5 text-sm text-slate-700
+        outline-none transition-all
+        placeholder:text-slate-400
+        hover:border-slate-300
+        focus:border-emerald-500
+        focus:ring-4 focus:ring-emerald-100
+      "
+    />
+  );
+}
+
+function FilterSelect({ label, children, ...props }) {
+  return (
+    <div>
+      <label className="mb-3 block text-sm font-semibold text-slate-700">
+        {label}
+      </label>
+
+      <select
+        {...props}
+        className="
+          w-full rounded-xl border border-slate-200
+          bg-white px-4 py-2.5 text-sm text-slate-700
+          outline-none transition-all
+          hover:border-slate-300
+          focus:border-emerald-500
+          focus:ring-4 focus:ring-emerald-100
+        "
+      >
+        {children}
+      </select>
+    </div>
   );
 }
 
@@ -207,5 +392,6 @@ const formatJobType = (jobType) => {
     REMOTE: 'Remote',
     FREELANCE: 'Freelance',
   };
+
   return map[jobType] || jobType;
 };
