@@ -28,6 +28,7 @@ import EmployerList from "../pages/Admin/EmployerManagement/EmployerList";
 import CandidateManagement from "../pages/Admin/CandidateManagement";
 import PendingApprovals from "../pages/Admin/CompanyApproval";
 import AdminProfile from "../pages/Admin/Profile/AdminProfile.jsx";
+import ServiceManagement from "../pages/Admin/ServiceManagement";
 import CompanyDetail from "../pages/Candidate/CompanyDetail.jsx";
 
 import LoginCD from "../pages/Candidate/Login/login.jsx";
@@ -223,6 +224,11 @@ export const router = createBrowserRouter([
             {
                 path: "profile",
                 element: <AdminProfile />
+            }
+            ,
+            {
+                path: "services",
+                element: <ServiceManagement />
             }
         ]
     },
