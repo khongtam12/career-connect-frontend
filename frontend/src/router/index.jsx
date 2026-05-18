@@ -32,7 +32,9 @@ import ServiceManagement from "../pages/Admin/ServiceManagement";
 import CompanyDetail from "../pages/Candidate/CompanyDetail.jsx";
 
 import LoginCD from "../pages/Candidate/Login/login.jsx";
+import RegisterCD from "../pages/Candidate/Register/Register.jsx";
 import Login from "../pages/Employer/Login/login.jsx";
+import EmployerRegister from "../pages/Employer/Register/Register.jsx";
 import LoginAM from "../pages/Admin/Login/login.jsx";
 
 import Error from "../pages/Error.jsx/Error";
@@ -118,10 +120,18 @@ export const router = createBrowserRouter([
         path: "/login",
         element: <LoginCD />
     },
+    {
+        path: "/register",
+        element: <RegisterCD />
+    },
 
     {
         path: "/employer/login",
         element: <Login />
+    },
+    {
+        path: "/employer/register",
+        element: <EmployerRegister />
     },
 
     {

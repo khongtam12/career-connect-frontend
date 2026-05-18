@@ -11,9 +11,9 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 
 const STATUS_OPTIONS = [
-  { value: '',         label: 'Tất cả trạng thái' },
-  { value: 'ACTIVE',   label: 'Đang hiển thị' },
-  { value: 'PENDING',  label: 'Chờ duyệt' },
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'ACTIVE', label: 'Đang hiển thị' },
+  { value: 'PENDING', label: 'Chờ duyệt' },
   { value: 'REJECTED', label: 'Đã từ chối' },
 ];
 
@@ -27,11 +27,12 @@ export default function JobSearchFilter({
     <Paper
       variant="outlined"
       sx={{
-        borderRadius: 2,
-        borderColor: '#e5e7eb',
+        borderRadius: 4,
+        borderColor: '#dbeafe',
         p: 2,
         mb: 3,
         bgcolor: '#fff',
+        boxShadow: '0 8px 24px rgba(148, 163, 184, 0.08)',
       }}
     >
       <Box
@@ -41,7 +42,6 @@ export default function JobSearchFilter({
           gap: 2,
         }}
       >
-        {/* Ô tìm kiếm */}
         <TextField
           fullWidth
           size="small"
@@ -51,31 +51,31 @@ export default function JobSearchFilter({
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                <SearchIcon sx={{ color: '#60a5fa', fontSize: 20 }} />
               </InputAdornment>
             ),
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              bgcolor: '#fff',
-              '& fieldset': { borderColor: '#e5e7eb' },
-              '&:hover fieldset': { borderColor: '#d1d5db' },
-              '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+              borderRadius: 999,
+              bgcolor: '#f8fbff',
+              '& fieldset': { borderColor: '#dbeafe' },
+              '&:hover fieldset': { borderColor: '#93c5fd' },
+              '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
             },
             '& .MuiOutlinedInput-input': {
               fontSize: '0.85rem',
               py: 1.1,
+              color: '#0f172a',
             },
             '& .MuiOutlinedInput-input::placeholder': {
               fontSize: '0.85rem',
-              color: '#9ca3af',
+              color: '#94a3b8',
               opacity: 1,
             },
           }}
         />
 
-        {/* Dropdown lọc trạng thái */}
         <FormControl
           size="small"
           sx={{
@@ -88,18 +88,20 @@ export default function JobSearchFilter({
             onChange={(e) => onStatusChange(e.target.value)}
             displayEmpty
             sx={{
-              borderRadius: 2,
-              bgcolor: '#fff',
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' },
+              borderRadius: 999,
+              bgcolor: '#f8fbff',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#dbeafe' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#93c5fd' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
               '& .MuiSelect-select': {
                 fontSize: '0.85rem',
                 py: 1.1,
-                fontWeight: 600
+                fontWeight: 700,
+                color: '#0f172a',
               },
               '& .MuiSvgIcon-root': {
                 fontSize: 18,
+                color: '#60a5fa',
               },
             }}
           >

@@ -36,7 +36,7 @@ const RecruiterSidebar = ({ isOpen, setIsOpen }) => {
       <aside className={`fixed lg:relative top-0 left-0 h-full bg-white border-r border-gray-100 shadow-sm z-50 transition-all duration-300 ease-in-out flex flex-col ${isOpen ? 'w-[72px] translate-x-0' : 'w-0 -translate-x-full lg:-translate-x-full lg:w-0 lg:opacity-0 lg:invisible overflow-hidden'}`}>
         {/* Toggle Button for mobile branding */}
         <div className="h-16 flex items-center justify-center border-b border-gray-50 shrink-0">
-          <div className="bg-purple-600 w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-purple-200">
+          <div className="bg-emerald-600 w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-200">
             C
           </div>
         </div>
@@ -49,20 +49,20 @@ const RecruiterSidebar = ({ isOpen, setIsOpen }) => {
                 key={index}
                 to={item.path}
                 className={`relative group w-full flex flex-col items-center py-4 transition-all duration-300 ${active
-                  ? 'text-purple-600'
-                  : 'text-gray-400 hover:text-purple-500'
+                  ? 'text-emerald-600'
+                  : 'text-gray-400 hover:text-emerald-500'
                   }`}
               >
                 {/* Active Indicator Bar */}
                 {active && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-purple-600 rounded-r-full shadow-lg shadow-purple-200" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-emerald-600 rounded-r-full shadow-lg shadow-emerald-200" />
                 )}
 
-                <div className={`mb-1 transition-transform group-hover:scale-110 ${active ? 'bg-purple-50 p-2.5 rounded-2xl' : ''}`}>
+                <div className={`mb-1 transition-transform group-hover:scale-110 ${active ? 'bg-emerald-50 p-2.5 rounded-2xl' : ''}`}>
                   {item.icon}
                 </div>
 
-                <span className={`text-[10px] font-black uppercase tracking-tighter text-center px-1 transition-colors ${active ? 'text-purple-700' : 'text-gray-400'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-tighter text-center px-1 transition-colors ${active ? 'text-emerald-700' : 'text-gray-400'}`}>
                   {item.name}
                 </span>
 

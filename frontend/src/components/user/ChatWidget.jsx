@@ -4,6 +4,7 @@ import Markdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../../stores/useUserStore";
 import { createChatStream } from "../../service/aiService";
+import { toast } from "react-toastify";
 
 const formatMessageContent = (content) => {
   if (!content) return "";
@@ -54,10 +55,9 @@ const ChatWidget = () => {
   }, [messages]);
 
   const clearChat = () => {
-    if (window.confirm("Bạn có chắc chắn muốn xoá toàn bộ lịch sử trò chuyện với AI không?")) {
-      setMessages([]);
-      localStorage.removeItem("career_connect_ai_messages");
-    }
+    setMessages([]);
+    localStorage.removeItem("career_connect_ai_messages");
+    toast.success("Đã xoá toàn bộ lịch sử trò chuyện thành công!");
   };
 
   const sendMessage = async () => {
@@ -196,50 +196,63 @@ const ChatWidget = () => {
                     : "bg-white text-gray-800 border border-gray-100 mr-auto rounded-bl-none shadow-sm"
                 }`}
               >
-                <Markdown
-                  components={{
-                    a: ({ href, children, ...props }) => {
-                      const isJobLink = href && (href.includes("/job/") || href.includes("/jobs/"));
-                      
-                      const handleClick = (e) => {
-                        e.preventDefault();
-                        if (isJobLink) {
-                          let targetUrl = href;
-                          
-                          if (!isAuthenticated) {
-                            openAuthDialog({
-                              closable: true,
-                              onSuccess: () => {
-                                navigate(targetUrl);
-                              }
-                            });
+                {msg.role === "ai" && !msg.content && loading ? (
+                  <div className="flex items-center gap-2 py-1 px-0.5">
+                    <span className="text-xs text-gray-400 font-medium tracking-wide animate-pulse">
+                      AI đang suy nghĩ
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '0.8s' }}></span>
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms', animationDuration: '0.8s' }}></span>
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms', animationDuration: '0.8s' }}></span>
+                    </div>
+                  </div>
+                ) : (
+                  <Markdown
+                    components={{
+                      a: ({ href, children, ...props }) => {
+                        const isJobLink = href && (href.includes("/job/") || href.includes("/jobs/"));
+                        
+                        const handleClick = (e) => {
+                          e.preventDefault();
+                          if (isJobLink) {
+                            let targetUrl = href;
+                            
+                            if (!isAuthenticated) {
+                              openAuthDialog({
+                                closable: true,
+                                onSuccess: () => {
+                                  navigate(targetUrl);
+                                }
+                              });
+                            } else {
+                              navigate(targetUrl);
+                            }
                           } else {
-                            navigate(targetUrl);
+                            if (href.startsWith("http")) {
+                              window.open(href, "_blank", "noopener,noreferrer");
+                            } else {
+                              navigate(href);
+                            }
                           }
-                        } else {
-                          if (href.startsWith("http")) {
-                            window.open(href, "_blank", "noopener,noreferrer");
-                          } else {
-                            navigate(href);
-                          }
-                        }
-                      };
+                        };
 
-                      return (
-                        <a
-                          href={href}
-                          onClick={handleClick}
-                          className="text-blue-600 hover:text-blue-800 underline font-semibold cursor-pointer break-all"
-                          {...props}
-                        >
-                          {children}
-                        </a>
-                      );
-                    }
-                  }}
-                >
-                  {formatMessageContent(msg.content || (msg.role === "ai" && loading ? "Đang gõ..." : ""))}
-                </Markdown>
+                        return (
+                          <a
+                            href={href}
+                            onClick={handleClick}
+                            className="text-blue-600 hover:text-blue-800 underline font-semibold cursor-pointer break-all"
+                            {...props}
+                          >
+                            {children}
+                          </a>
+                        );
+                      }
+                    }}
+                  >
+                    {formatMessageContent(msg.content)}
+                  </Markdown>
+                )}
               </div>
             ))}
 

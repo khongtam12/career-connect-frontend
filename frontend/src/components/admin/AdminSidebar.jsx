@@ -12,62 +12,20 @@ import {
   FiCheckSquare,
   FiX
 } from 'react-icons/fi';
-import { HiOutlineOfficeBuilding } from 'react-icons/hi';
 
 const AdminSidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const menuItems = [
-    {
-      name: 'Tổng quan',
-      subtitle: 'Thống kê hệ thống',
-      icon: <FiPieChart />,
-      path: '/admin'
-    },
-    {
-      name: 'Nhà tuyển dụng',
-      subtitle: 'Quản lý tài khoản',
-      icon: <FiUsers />,
-      path: '/admin/recruiters',
-    },
-    {
-      name: 'Phê duyệt công ty',
-      subtitle: 'Xét duyệt hồ sơ',
-      icon: <FiCheckSquare />,
-      path: '/admin/company-approvals',
-      badge: 'Mới'
-    },
-    {
-      name: 'Người dùng',
-      subtitle: 'Quản lý tài khoản',
-      icon: <FiUsers />,
-      path: '/admin/candidates'
-    },
-    {
-      name: 'Tin tuyển dụng',
-      subtitle: 'Quản lý tin đăng',
-      icon: <FiBriefcase />,
-      path: '/admin/jobs'
-    },
-    {
-      name: 'Ngành nghề',
-      subtitle: 'Quản lý danh mục',
-      icon: <FiLayers />,
-      path: '/admin/categories'
-    },
-    {
-      name: 'Gói dịch vụ',
-      subtitle: 'Quản lý gói & giá',
-      icon: <FiPackage />,
-      path: '/admin/services'
-    },
-    {
-      name: 'Bài viết',
-      subtitle: 'Quản lý nội dung',
-      icon: <FiFileText />,
-      path: '/admin/posts'
-    },
+    { name: 'Tổng quan', subtitle: 'Thống kê hệ thống', icon: <FiPieChart />, path: '/admin' },
+    { name: 'Nhà tuyển dụng', subtitle: 'Quản lý tài khoản', icon: <FiUsers />, path: '/admin/recruiters' },
+    { name: 'Phê duyệt công ty', subtitle: 'Xét duyệt hồ sơ', icon: <FiCheckSquare />, path: '/admin/company-approvals' },
+    { name: 'Người dùng', subtitle: 'Quản lý tài khoản', icon: <FiUsers />, path: '/admin/candidates' },
+    { name: 'Tin tuyển dụng', subtitle: 'Quản lý tin đăng', icon: <FiBriefcase />, path: '/admin/jobs' },
+    { name: 'Ngành nghề', subtitle: 'Quản lý danh mục', icon: <FiLayers />, path: '/admin/categories' },
+    { name: 'Gói dịch vụ', subtitle: 'Quản lý gói & giá', icon: <FiPackage />, path: '/admin/services' },
+    { name: 'Bài viết', subtitle: 'Quản lý nội dung', icon: <FiFileText />, path: '/admin/posts' },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -79,27 +37,25 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      {/* Overlay mobile - smooth fade in/out */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-all duration-300"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-sm transition-all duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      <aside className={`fixed top-0 left-0 h-full w-[280px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-r border-indigo-500/10 z-50 transform transition-all duration-300 ease-out flex flex-col shadow-2xl
+      <aside className={`fixed top-0 left-0 h-full w-[230px] bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 border-r border-emerald-500/10 z-50 transform transition-all duration-300 ease-out flex flex-col shadow-2xl
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:h-screen lg:z-30`}>
 
-        {/* LOGO - Enhanced with gradient and smooth animation */}
-        <div className="px-5 py-4 flex items-center justify-between shrink-0 border-b border-indigo-500/10">
+        <div className="px-5 py-4 flex items-center justify-between shrink-0 border-b border-emerald-500/10">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg hover:shadow-indigo-500/50 transition-shadow duration-300">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg">
               <FiLayout size={24} />
             </div>
             <div>
               <h1 className="font-bold text-white text-base">JobPortal</h1>
-              <p className="text-[8px] text-indigo-300/60 font-semibold uppercase tracking-widest">
+              <p className="text-[8px] text-emerald-200/70 font-semibold uppercase tracking-widest">
                 Admin
               </p>
             </div>
@@ -112,52 +68,44 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           </button>
         </div>
 
-        {/* SEARCH - Enhanced with better styling and animations */}
         <div className="px-4 py-3">
           <div className="relative group">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors duration-200 z-10" size={16} />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors duration-200 z-10" size={16} />
             <input
               type="text"
               placeholder="Tìm kiếm menu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-800/50 text-slate-200 text-xs py-2 pl-10 pr-3 rounded-lg focus:outline-none focus:bg-slate-700/60 focus:ring-1 focus:ring-indigo-500/50 transition-all duration-200 placeholder:text-slate-500"
+              className="w-full bg-slate-800/60 text-slate-200 text-xs py-2 pl-10 pr-3 rounded-xl focus:outline-none focus:bg-slate-700/70 focus:ring-1 focus:ring-emerald-500/50 transition-all duration-200 placeholder:text-slate-500"
             />
           </div>
         </div>
 
-        {/* NAV - Smooth navigation with enhanced styling */}
         <div className="flex-1 overflow-hidden px-3 pb-4">
-
           {filteredItems.length > 0 && (
             <div className="mb-2 px-2 text-[10px] font-semibold text-slate-500 tracking-wide uppercase">
               Menu
             </div>
           )}
 
-          <nav className="space-y-0.5">
+          <nav className="space-y-1">
             {filteredItems.length > 0 ? (
-              filteredItems.map((item, idx) => {
+              filteredItems.map((item) => {
                 const active = isActive(item.path);
 
                 return (
                   <Link
-                    key={idx}
+                    key={item.path}
                     to={item.path}
                     onClick={() => setIsOpen(false)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 ease-out relative overflow-hidden
+                    className={`group flex items-center justify-between px-3 py-2.5 rounded-2xl transition-all duration-200 ease-out relative overflow-hidden
                       ${active
-                        ? 'bg-indigo-500/90 text-white shadow-lg shadow-indigo-500/20'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                       }`}
                   >
-                    {/* Background glow on hover/active */}
-                    {active && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-200" />
-                    )}
-
                     <div className="flex items-center gap-3 relative z-10 min-w-0">
-                      <span className={`text-lg flex-shrink-0 transition-all duration-200 ${active ? 'text-white scale-100' : 'text-slate-500 group-hover:text-indigo-400 group-hover:scale-110'}`}>
+                      <span className={`text-lg flex-shrink-0 transition-all duration-200 ${active ? 'text-white' : 'text-slate-500 group-hover:text-emerald-400'}`}>
                         {item.icon}
                       </span>
 
@@ -165,18 +113,15 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                         <div className={`text-xs font-semibold transition-colors duration-200 truncate ${active ? 'text-white' : 'group-hover:text-slate-100'}`}>
                           {item.name}
                         </div>
-                        <div className={`text-[10px] mt-0.5 transition-colors duration-200 truncate ${active ? 'text-indigo-100/70' : 'text-slate-500 group-hover:text-slate-400'}`}>
+                        <div className={`text-[10px] mt-0.5 transition-colors duration-200 truncate ${active ? 'text-emerald-100/80' : 'text-slate-500 group-hover:text-slate-400'}`}>
                           {item.subtitle}
                         </div>
                       </div>
                     </div>
 
                     {item.badge && (
-                      <span className={`px-2 py-0.5 rounded-md text-xs font-bold transition-all duration-200 relative z-10 flex-shrink-0
-                        ${active
-                          ? 'bg-white/25 text-white'
-                          : 'bg-rose-500/90 text-white group-hover:bg-rose-600'
-                        }`}>
+                      <span className={`px-2 py-0.5 rounded-md text-xs font-bold relative z-10 flex-shrink-0
+                        ${active ? 'bg-white/20 text-white' : 'bg-rose-500/90 text-white'}`}>
                         {item.badge}
                       </span>
                     )}
@@ -191,8 +136,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           </nav>
         </div>
 
-        {/* FOOTER - System status indicator */}
-        <div className="px-3 py-3 border-t border-indigo-500/10 bg-gradient-to-t from-slate-950 to-transparent shrink-0">
+        <div className="px-3 py-3 border-t border-emerald-500/10 bg-gradient-to-t from-slate-950 to-transparent shrink-0">
           <div className="flex items-center gap-2 text-slate-400 text-[10px]">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50 flex-shrink-0"></div>
             <span className="font-semibold uppercase tracking-wide truncate">
@@ -200,7 +144,6 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
             </span>
           </div>
         </div>
-
       </aside>
     </>
   );
