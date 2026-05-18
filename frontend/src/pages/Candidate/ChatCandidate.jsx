@@ -41,7 +41,7 @@ export default function ChatCandidate() {
   const filteredConversations = conversations.filter(c =>
     c.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => new Date(b.lastUpdate) - new Date(a.lastUpdate));
 
   // 1. Fetch Rooms & Connect WebSocket
   useEffect(() => {

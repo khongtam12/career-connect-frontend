@@ -205,7 +205,11 @@ export default function JobDetail() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Thu nhập</p>
+                        {job.salaryNegotiable ? 
+                        <p className="font-bold text-emerald-600">Thỏa thuận</p>:
                         <p className="font-bold text-emerald-600">{job.salary}</p>
+                        }
+                      
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -499,9 +503,9 @@ export default function JobDetail() {
                   </div>
                 </div>
 
-                <a href="#" className="block mt-4 text-sm text-emerald-600 font-semibold hover:underline text-center">
+                <Link to={`/company/${job.companyId}`} className="block mt-4 text-sm text-emerald-600 font-semibold hover:underline text-center">
                   Xem trang công ty →
-                </a>
+                </Link>
               </div>
 
               {/* ── General Info Card ── */}

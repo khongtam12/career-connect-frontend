@@ -10,3 +10,8 @@ export const paymentPackage = async (body) => {
     );
     return response.data;
 };
+
+export const updatePackage = async (packageId, body) => {
+    const response = await apiClient.put(`/api/v1/package/${packageId}`, body);
+    return response.data;
+};

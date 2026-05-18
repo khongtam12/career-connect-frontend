@@ -10,6 +10,11 @@ export const updateJob = async (jobId, payload) => {
   return res.data;
 };
 
+export const renewJob = async (jobId, payload) => {
+  const res = await apiClient.put(`/api/v1/job/employer/${jobId}/renew`, payload);
+  return res.data;
+};
+
 export const deleteJob = async (jobId) => {
   const res = await apiClient.delete(`/api/v1/job/employer/${jobId}`);
   return res.data;

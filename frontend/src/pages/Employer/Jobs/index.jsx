@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -14,6 +14,7 @@ import SubscriptionWarningBanner from '../../../components/employer/jobs/Subscri
 import DeleteJobConfirmDialog from '../../../components/employer/jobs/DeleteJobConfirmDialog';
 import JobSnackbar from '../../../components/employer/jobs/JobSnackbar';
 import PushTopDialog from '../../../components/employer/jobs/PushTopDialog';
+import RenewJobDialog from '../../../components/employer/jobs/RenewJobDialog';
 import {
   getMyJobs,
   getMyStats,
@@ -21,6 +22,7 @@ import {
   updateJob,
   deleteJob,
   changeJobStatus,
+  renewJob,
   applyMarketingPackage,
   removeMarketingPackage,
 } from '../../../service/jobService';
@@ -62,6 +64,8 @@ function mapJobFromApi(job) {
     id: job.jobId,
     title: job.title || '',
     packageLabel: job.packageLabel || '',
+    companySubscriptionId: job.companySubscriptionId || '',
+    packageId: job.packageId || '',
     marketingAssignmentId: job.marketingAssignmentId || '',
     marketingPackageCategory: job.marketingPackageCategory || '',
     marketingPackageType: job.marketingPackageType || '',
@@ -108,6 +112,7 @@ export default function JobManagement() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [subscriptionOptions, setSubscriptionOptions] = useState([]);
+  const [allSubscriptions, setAllSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [companyStatus, setCompanyStatus] = useState(null);
 
@@ -116,6 +121,7 @@ export default function JobManagement() {
   const [editingJob, setEditingJob] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, job: null });
+  const [renewDialog, setRenewDialog] = useState({ open: false, job: null });
   const [marketingDialog, setMarketingDialog] = useState({ open: false, job: null });
   const [marketingEntitlements, setMarketingEntitlements] = useState([]);
   const [marketingLoading, setMarketingLoading] = useState(false);
@@ -187,22 +193,35 @@ export default function JobManagement() {
     fetchStats();
   }, [fetchStats]);
 
-  const fetchSubscriptions = useCallback(async () => {
+  const fetchSubscriptions = useCallback(async (silent = false) => {
     if (!companyId) {
       setSubscriptionOptions([]);
       return;
     }
 
-    setSubscriptionsLoading(true);
+    if (!silent) setSubscriptionsLoading(true);
     try {
       const subscriptions = await getCompanySubscriptions(companyId);
+      setAllSubscriptions(subscriptions || []);
       const options = (subscriptions || [])
         .filter((sub) => {
           const statusOk = String(sub.status || '').toUpperCase() === 'ACTIVE';
           const category = String(sub.packageCategory || '').toUpperCase();
           const packageId = String(sub.packageId || '').toUpperCase();
           const isJobPostingPackage = category === 'JOB_POSTING' || (!category && packageId.startsWith('JP'));
-          return statusOk && isJobPostingPackage;
+          
+          let notExpired = true;
+          if (sub.endDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const endDate = new Date(sub.endDate);
+            endDate.setHours(0, 0, 0, 0);
+            if (endDate < today) {
+              notExpired = false;
+            }
+          }
+          
+          return statusOk && isJobPostingPackage && notExpired;
         })
         .map((sub) => {
           const limit = sub.jobPostLimit ?? 0;
@@ -222,9 +241,9 @@ export default function JobManagement() {
       setSubscriptionOptions(options);
     } catch (err) {
       console.error('Lỗi khi tải gói tin đã mua:', err);
-      setSubscriptionOptions([]);
+      if (!silent) setSubscriptionOptions([]);
     } finally {
-      setSubscriptionsLoading(false);
+      if (!silent) setSubscriptionsLoading(false);
     }
   }, [companyId]);
 
@@ -279,6 +298,7 @@ export default function JobManagement() {
     setPage(1);
     fetchJobs({ search: undefined, status: 'all', page: 1 });
     fetchStats();
+    fetchSubscriptions();
   };
 
   const handleCreateJob = async (formData, isDraft = false) => {
@@ -340,7 +360,9 @@ export default function JobManagement() {
   const handleUpdateJob = async (job, formData) => {
     if (!job) return;
     try {
-      const errors = validateJobForm(formData, { requireSubscription: false });
+      const allowEditSubscription = ['DRAFT', 'PENDING', 'REJECTED'].includes((job.status || '').toUpperCase());
+      const requireSubscription = allowEditSubscription && (job.status || '').toUpperCase() === 'PENDING';
+      const errors = validateJobForm(formData, { requireSubscription });
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         showSnack('Vui lòng kiểm tra lại các trường bắt buộc.', 'error');
@@ -372,6 +394,9 @@ export default function JobManagement() {
         relatedCategories: formData.relatedCategories || [],
         skills: formData.skills || [],
       };
+      if (allowEditSubscription && formData.companySubscriptionId) {
+        payload.companySubscriptionId = formData.companySubscriptionId;
+      }
       await updateJob(job.id, payload);
       setDialogOpen(false);
       setEditingJob(null);
@@ -386,11 +411,13 @@ export default function JobManagement() {
     }
   };
 
+
   const handleEdit = (job) => {
     setEditingJob(job);
     setDialogMode('edit');
     setDialogOpen(true);
     setFieldErrors({});
+    fetchSubscriptions();
   };
 
   const handleDeleteRequest = (job) => {
@@ -419,6 +446,13 @@ export default function JobManagement() {
 
   const handleChangeStatus = async (job, newStatus) => {
     try {
+      if (newStatus === 'PENDING') {
+        const hasSubscription = Boolean(job?.companySubscriptionId);
+        if (!hasSubscription) {
+          showSnack('Vui lòng chọn gói tin trước khi gửi duyệt.', 'error');
+          return;
+        }
+      }
       await changeJobStatus(job.id, newStatus);
       fetchJobs();
       fetchStats();
@@ -429,6 +463,27 @@ export default function JobManagement() {
     } catch (err) {
       console.error('Lỗi khi đổi trạng thái:', err);
       showSnack('Không thể đổi trạng thái: ' + (err.response?.data?.error || err.message), 'error');
+    }
+  };
+
+  const handleRenewRequest = (job) => {
+    setRenewDialog({ open: true, job });
+    fetchSubscriptions(true);
+  };
+
+  const handleRenewSubmit = async (payload) => {
+    const { job } = renewDialog;
+    if (!job) return;
+    try {
+      await renewJob(job.id, payload);
+      setRenewDialog({ open: false, job: null });
+      fetchJobs();
+      fetchStats();
+      fetchSubscriptions();
+      showSnack('Gia hạn tin tuyển dụng thành công!');
+    } catch (err) {
+      console.error('Lỗi khi gia hạn tin:', err);
+      showSnack('Gia hạn thất bại: ' + (err.response?.data?.error || err.message), 'error');
     }
   };
 
@@ -493,6 +548,36 @@ export default function JobManagement() {
       showSnack(`Không thể gỡ gói hiển thị: ${backendMessage}`, 'error');
     }
   };
+
+  const editInitialValues = useMemo(() => {
+    if (dialogMode !== 'edit' || !editingJob) return undefined;
+    return {
+      title: editingJob.title || '',
+      address: editingJob.location || '',
+      jobType: jobTypeLabel(editingJob.jobType) || editingJob.type || '',
+      salaryMin: editingJob.salaryMin ?? '',
+      salaryMax: editingJob.salaryMax ?? '',
+      salaryNegotiable: editingJob.salaryNegotiable || false,
+      deadline: toISODateInput(editingJob.deadline),
+      experience: editingJob.experience || '',
+      industry: editingJob.industry || '',
+      rank: editingJob.rank || '',
+      education: editingJob.education || '',
+      quantity: editingJob.quantity ?? '',
+      ageRange: editingJob.ageRange || '',
+      requirementTags: editingJob.requirementTags || [],
+      benefitTags: editingJob.benefitTags || [],
+      specialties: editingJob.specialties || [],
+      description: editingJob.description || '',
+      candidateRequirements: editingJob.candidateRequirements || '',
+      salaryDetail: editingJob.salaryDetail || '',
+      benefitsDetail: editingJob.benefitsDetail || '',
+      workSchedule: editingJob.workSchedule || '',
+      relatedCategories: editingJob.relatedCategories || [],
+      skills: editingJob.skills || [],
+      companySubscriptionId: editingJob.companySubscriptionId || '',
+    };
+  }, [dialogMode, editingJob]);
 
   return (
     <Box sx={{ width: '100%', px: { xs: 2, md: 3 } }}>
@@ -592,6 +677,7 @@ export default function JobManagement() {
       {/* Job Table */}
       <JobTable
         jobs={jobs}
+        allSubscriptions={allSubscriptions}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -600,37 +686,18 @@ export default function JobManagement() {
         onChangeStatus={handleChangeStatus}
         onOpenMarketing={handleOpenMarketing}
         onRemoveMarketing={handleRemoveMarketing}
+        onRenew={handleRenewRequest}
       />
 
       {/* Create Job Dialog */}
       <CreateJobDialog
         open={dialogOpen}
         mode={dialogMode}
-        initialValues={dialogMode === 'edit' && editingJob ? {
-          title: editingJob.title || '',
-          address: editingJob.location || '',
-          jobType: jobTypeLabel(editingJob.jobType) || editingJob.type || '',
-          salaryMin: editingJob.salaryMin ?? '',
-          salaryMax: editingJob.salaryMax ?? '',
-          salaryNegotiable: editingJob.salaryNegotiable || false,
-          deadline: toISODateInput(editingJob.deadline),
-          experience: editingJob.experience || '',
-          industry: editingJob.industry || '',
-          rank: editingJob.rank || '',
-          education: editingJob.education || '',
-          quantity: editingJob.quantity ?? '',
-          ageRange: editingJob.ageRange || '',
-          requirementTags: editingJob.requirementTags || [],
-          benefitTags: editingJob.benefitTags || [],
-          specialties: editingJob.specialties || [],
-          description: editingJob.description || '',
-          candidateRequirements: editingJob.candidateRequirements || '',
-          salaryDetail: editingJob.salaryDetail || '',
-          benefitsDetail: editingJob.benefitsDetail || '',
-          workSchedule: editingJob.workSchedule || '',
-          relatedCategories: editingJob.relatedCategories || [],
-          skills: editingJob.skills || [],
-        } : undefined}
+        initialValues={editInitialValues}
+        allowEditSubscription={dialogMode === 'edit' && editingJob
+          ? ['DRAFT', 'PENDING', 'REJECTED'].includes((editingJob.status || '').toUpperCase())
+          : false}
+        currentSubscriptionLabel={editingJob?.packageLabel}
         onClose={() => {
           setDialogOpen(false);
           setEditingJob(null);
@@ -655,6 +722,14 @@ export default function JobManagement() {
         jobTitle={deleteConfirm.job?.title}
         onClose={handleDeleteConfirmClose}
         onConfirm={handleDelete}
+      />
+
+      <RenewJobDialog
+        open={renewDialog.open}
+        job={renewDialog.job}
+        subscriptionOptions={subscriptionOptions}
+        onClose={() => setRenewDialog({ open: false, job: null })}
+        onSubmit={handleRenewSubmit}
       />
 
       <PushTopDialog

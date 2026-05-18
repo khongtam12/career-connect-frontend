@@ -1,10 +1,12 @@
 import React from 'react';
-import { isHotJob } from '../utils/jobBadges';
+import { isBoldJob, isFrameJob, isHotJob } from '../utils/jobBadges';
 
 export default function JobListItem({ job, isActive, onSelect }) {
   const salaryLabel = formatSalary(job.salaryMin, job.salaryMax);
   const jobTypeLabel = formatJobType(job.jobType);
   const showHotBadge = isHotJob(job);
+  const isFrame = isFrameJob(job);
+  const isBold = isBoldJob(job);
 
   return (
     <button
@@ -14,7 +16,7 @@ export default function JobListItem({ job, isActive, onSelect }) {
         isActive
           ? 'border-emerald-500 bg-emerald-50/60 shadow-md'
           : 'border-emerald-200 bg-white hover:border-emerald-400 hover:shadow-md'
-      }`}
+      } ${isFrame ? 'ring-2 ring-orange-200 border-orange-200' : ''}`}
     >
       <div className="flex gap-4">
         {job.companyLogoUrl ? (
@@ -30,7 +32,9 @@ export default function JobListItem({ job, isActive, onSelect }) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2">
-            <p className="text-sm font-semibold text-gray-900 line-clamp-2">{job.title}</p>
+            <p className={`text-sm text-gray-900 line-clamp-2 ${isBold ? 'font-extrabold' : 'font-semibold'}`}>
+              {job.title}
+            </p>
             {showHotBadge && (
               <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">
                 🔥 HOT

@@ -8,8 +8,8 @@ export function TransformJob(data) {
     salary: `${data.salaryMin} - ${data.salaryMax} VND`,
     location: data.location,
     experience: data.experience,
-    deadline: data.deadline,
-
+    deadline: formatVietnamDate(data.deadline),
+    salaryNegotiable:data.salaryNegotiable,
     requirements: safeParse(data.requirementTags),
     benefits: safeParse(data.benefitTags),
     specialties: safeParse(data.specialties),
@@ -59,4 +59,13 @@ function splitToArray(str) {
   if (!str) return [];
   if (isHtmlString(str)) return [str];
   return str.split(',').map(s => s.trim());
+}
+function formatVietnamDate(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  return date.toLocaleDateString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
 }

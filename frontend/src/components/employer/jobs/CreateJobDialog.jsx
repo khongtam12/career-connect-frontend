@@ -109,6 +109,8 @@ export default function CreateJobDialog({
   initialValues,
   subscriptionOptions = [],
   subscriptionsLoading = false,
+  allowEditSubscription = false,
+  currentSubscriptionLabel,
   fieldErrors = {},
   onClearError,
 }) {
@@ -205,6 +207,7 @@ export default function CreateJobDialog({
   } : {};
 
   const isEdit = mode === 'edit';
+  const showSubscriptionSection = !isEdit || allowEditSubscription;
 
   return (
     <Dialog
@@ -225,7 +228,7 @@ export default function CreateJobDialog({
       </DialogTitle>
 
       <DialogContent dividers sx={{ px: 3, py: 2.5 }}>
-        {!isEdit && (
+        {showSubscriptionSection && (
           <>
             <Typography sx={sectionTitleSx}>Gói tin đã mua</Typography>
             <Box sx={{ mb: 2.5 }}>
@@ -237,7 +240,13 @@ export default function CreateJobDialog({
                   displayEmpty
                   sx={selectSx}
                   MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-                  renderValue={(val) => val ? subscriptionOptions.find((opt) => opt.id === val)?.label : <span style={{ color: '#9ca3af' }}>Chọn gói tin</span>}
+                  renderValue={(val) => {
+                    if (!val) {
+                      return <span style={{ color: '#9ca3af' }}>Chọn gói tin</span>;
+                    }
+                    const selected = subscriptionOptions.find((opt) => opt.id === val);
+                    return selected?.label || currentSubscriptionLabel || 'Gói đã chọn';
+                  }}
                 >
                   {subscriptionsLoading && (
                     <MenuItem disabled>Đang tải gói tin...</MenuItem>
@@ -677,6 +686,7 @@ export default function CreateJobDialog({
         >
           {isEdit ? 'Lưu thay đổi' : 'Đăng tin'}
         </Button>
+
       </DialogActions>
     </Dialog>
   );
