@@ -1,236 +1,324 @@
-import React from 'react';
-import { Building, CreditCard, Phone, MapPin, Globe, Mail, Users, Calendar } from 'lucide-react';
+import React from "react";
+import {
+  Box,
+  Button,
+  FormHelperText,
+  InputAdornment,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
+  Building,
+  Calendar,
+  CreditCard,
+  Globe,
+  Image as ImageIcon,
+  Mail,
+  MapPin,
+  Phone,
+  Users,
+} from "lucide-react";
 
-const fieldClass = (hasError) =>
-  `w-full px-5 py-3.5 bg-slate-50 border rounded-xl transition-all shadow-sm ${
-    hasError ? 'border-rose-400 focus:ring-2 focus:ring-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-purple-500'
-  }`;
-
-const inputWithIconClass = (hasError) =>
-  `w-full pl-12 pr-5 py-3.5 bg-slate-50 border rounded-xl transition-all shadow-sm ${
-    hasError ? 'border-rose-400 focus:ring-2 focus:ring-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-purple-500'
-  }`;
+const fieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "16px",
+    backgroundColor: "#fbfefc",
+    "& fieldset": {
+      borderColor: "#d8efe1",
+    },
+    "&:hover fieldset": {
+      borderColor: "#7cc89a",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#00b14f",
+      borderWidth: "2px",
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#00833b",
+  },
+};
 
 export default function CompanyInfoStep({ formData, handleInputChange, setLogoFile, errors = {} }) {
   return (
-    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
-        <Building className="w-6 h-6 text-purple-600" />
-        <h2 className="text-2xl font-semibold text-slate-800">Thong tin cong ty</h2>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-        <div className="md:col-span-2">
-          <label className="text-sm font-semibold text-slate-700 mb-3 block">
-            Logo cong ty
-          </label>
-
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shadow-sm">
-              {formData.logo ? (
-                <img
-                  src={formData.logo}
-                  alt="logo"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Building className="w-8 h-8 text-slate-300" />
-              )}
-            </div>
-
-            <div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-
-                  setLogoFile(file);
-                  const previewUrl = URL.createObjectURL(file);
-
-                  handleInputChange({
-                    target: {
-                      name: 'logo',
-                      value: previewUrl,
-                    },
-                  });
-                }}
-                className="hidden"
-                id="logoUpload"
-              />
-
-              <label
-                htmlFor="logoUpload"
-                className="inline-block px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 transition-all shadow-sm font-medium"
-              >
-                Chon logo
-              </label>
-
-              <p className="text-xs text-slate-400 mt-2">
-                PNG, JPG (toi da 2MB)
-              </p>
-              {errors.logo && <p className="text-sm text-rose-500 mt-2">{errors.logo}</p>}
-            </div>
+    <Box className="space-y-8">
+      <div className="grid gap-4 rounded-[24px] bg-[linear-gradient(135deg,#f4fff8_0%,#ffffff_100%)] p-5 md:grid-cols-[120px_minmax(0,1fr)] md:items-center">
+        <div className="flex justify-center md:justify-start">
+          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-dashed border-[#bfe5ce] bg-white shadow-sm">
+            {formData.logo ? (
+              <img src={formData.logo} alt="logo" className="h-full w-full object-cover" />
+            ) : (
+              <ImageIcon className="h-10 w-10 text-slate-300" />
+            )}
           </div>
         </div>
 
+        <div className="space-y-3">
+          <div>
+            <Typography variant="h6" className="font-black text-slate-900">
+              Nhận diện thương hiệu công ty
+            </Typography>
+            <Typography className="mt-1 text-sm text-slate-500">
+              Tải logo rõ nét để trang hồ sơ nhà tuyển dụng trông chuyên nghiệp và dễ nhận diện hơn.
+            </Typography>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                setLogoFile(file);
+                const previewUrl = URL.createObjectURL(file);
+
+                handleInputChange({
+                  target: {
+                    name: "logo",
+                    value: previewUrl,
+                  },
+                });
+              }}
+              className="hidden"
+              id="logoUpload"
+            />
+
+            <label htmlFor="logoUpload">
+              <Button
+                component="span"
+                variant="contained"
+                sx={{
+                  backgroundColor: "#00b14f",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  borderRadius: "999px",
+                  px: 2.5,
+                  "&:hover": {
+                    backgroundColor: "#009a44",
+                  },
+                }}
+              >
+                {formData.logo ? "Đổi logo" : "Tải logo"}
+              </Button>
+            </label>
+
+            <Typography className="text-xs text-slate-400">
+              PNG, JPG hoặc WEBP, tối đa 2MB
+            </Typography>
+          </div>
+
+          {errors.logo && <FormHelperText error>{errors.logo}</FormHelperText>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="md:col-span-2">
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Ten cong ty <span className="text-rose-500">*</span>
-          </label>
-          <input
-            type="text"
+          <TextField
+            fullWidth
+            label="Tên công ty"
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            placeholder="Nhap ten theo giay phep kinh doanh"
-            className={`${fieldClass(!!errors.name)} placeholder-slate-400 font-medium text-slate-700`}
+            error={!!errors.name}
+            helperText={errors.name}
+            placeholder="Nhập đúng tên theo giấy phép kinh doanh"
+            required
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Building size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
-          {errors.name && <p className="text-sm text-rose-500 mt-2">{errors.name}</p>}
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 flex justify-between">
-            <span>Ma so thue <span className="text-rose-500">*</span></span>
-          </label>
-          <div className="relative">
-            <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              name="taxCode"
-              value={formData.taxCode}
-              onChange={handleInputChange}
-              placeholder="Nhap MST cong ty"
-              className={inputWithIconClass(!!errors.taxCode)}
-            />
-          </div>
-          {errors.taxCode && <p className="text-sm text-rose-500 mt-2">{errors.taxCode}</p>}
+          <TextField
+            fullWidth
+            label="Mã số thuế"
+            name="taxCode"
+            value={formData.taxCode}
+            onChange={handleInputChange}
+            error={!!errors.taxCode}
+            helperText={errors.taxCode}
+            placeholder="Nhập mã số thuế công ty"
+            required
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <CreditCard size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            So dien thoai <span className="text-rose-500">*</span>
-          </label>
-          <div className="relative">
-            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="So dien thoai"
-              className={inputWithIconClass(!!errors.phone)}
-            />
-          </div>
-          {errors.phone && <p className="text-sm text-rose-500 mt-2">{errors.phone}</p>}
+          <TextField
+            fullWidth
+            label="Số điện thoại"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            error={!!errors.phone}
+            helperText={errors.phone}
+            placeholder="Nhập số liên hệ chính"
+            required
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Phone size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Email
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="company@email.com"
-              className={inputWithIconClass(!!errors.email)}
-            />
-          </div>
-          {errors.email && <p className="text-sm text-rose-500 mt-2">{errors.email}</p>}
+          <TextField
+            fullWidth
+            label="Email công ty"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            error={!!errors.email}
+            helperText={errors.email}
+            placeholder="company@email.com"
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Mail size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Website
-          </label>
-          <div className="relative">
-            <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              name="website"
-              value={formData.website}
-              onChange={handleInputChange}
-              placeholder="https://company.com"
-              className={inputWithIconClass(!!errors.website)}
-            />
-          </div>
-          {errors.website && <p className="text-sm text-rose-500 mt-2">{errors.website}</p>}
+          <TextField
+            fullWidth
+            label="Website"
+            name="website"
+            value={formData.website}
+            onChange={handleInputChange}
+            error={!!errors.website}
+            helperText={errors.website}
+            placeholder="https://company.com"
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Globe size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Quy mo cong ty
-          </label>
-          <div className="relative">
-            <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="number"
-              name="companySize"
-              value={formData.companySize}
-              onChange={handleInputChange}
-              placeholder="VD: 50"
-              className={inputWithIconClass(!!errors.companySize)}
-            />
-          </div>
-          {errors.companySize && <p className="text-sm text-rose-500 mt-2">{errors.companySize}</p>}
+          <TextField
+            fullWidth
+            label="Quy mô nhân sự"
+            name="companySize"
+            type="number"
+            value={formData.companySize}
+            onChange={handleInputChange}
+            error={!!errors.companySize}
+            helperText={errors.companySize}
+            placeholder="Ví dụ: 50"
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Users size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Nam thanh lap
-          </label>
-          <div className="relative">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="number"
-              name="foundedYear"
-              value={formData.foundedYear}
-              onChange={handleInputChange}
-              placeholder="VD: 2020"
-              className={inputWithIconClass(!!errors.foundedYear)}
-            />
-          </div>
-          {errors.foundedYear && <p className="text-sm text-rose-500 mt-2">{errors.foundedYear}</p>}
+          <TextField
+            fullWidth
+            label="Năm thành lập"
+            name="foundedYear"
+            type="number"
+            value={formData.foundedYear}
+            onChange={handleInputChange}
+            error={!!errors.foundedYear}
+            helperText={errors.foundedYear}
+            placeholder="Ví dụ: 2020"
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Calendar size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div className="md:col-span-2">
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Dia chi
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              placeholder="Dia chi cong ty"
-              className={inputWithIconClass(!!errors.address)}
-            />
-          </div>
-          {errors.address && <p className="text-sm text-rose-500 mt-2">{errors.address}</p>}
+          <TextField
+            fullWidth
+            label="Địa chỉ trụ sở"
+            name="address"
+            value={formData.address}
+            onChange={handleInputChange}
+            error={!!errors.address}
+            helperText={errors.address}
+            placeholder="Nhập địa chỉ công ty"
+            sx={fieldSx}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <MapPin size={18} className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </div>
 
         <div className="md:col-span-2">
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">
-            Mo ta cong ty
-          </label>
-          <textarea
+          <TextField
+            fullWidth
+            label="Mô tả về công ty"
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            rows="4"
-            placeholder="Gioi thieu ve cong ty..."
-            className={`${fieldClass(!!errors.description)} resize-none`}
+            error={!!errors.description}
+            helperText={errors.description}
+            multiline
+            minRows={5}
+            placeholder="Chia sẻ ngắn gọn về lĩnh vực hoạt động, văn hóa và điểm mạnh của công ty..."
+            sx={fieldSx}
           />
-          {errors.description && <p className="text-sm text-rose-500 mt-2">{errors.description}</p>}
         </div>
       </div>
-    </div>
+    </Box>
   );
 }
