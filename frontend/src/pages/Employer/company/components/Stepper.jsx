@@ -1,50 +1,57 @@
-import React from 'react';
-import { Building2, FileText, Briefcase, CheckCircle2 } from 'lucide-react';
+import React from "react";
+import { Building2, CheckCircle2, FileBadge2 } from "lucide-react";
 
 export default function Stepper({ currentStep, setCurrentStep }) {
   const steps = [
-    { step: 1, label: 'Thông tin công ty', icon: Building2 },
-    { step: 2, label: 'Xác thực pháp lý', icon: FileText },
+    { step: 1, label: "Thông tin công ty", hint: "Hồ sơ cơ bản", icon: Building2 },
+    { step: 2, label: "Xác thực pháp lý", hint: "Giấy tờ doanh nghiệp", icon: FileBadge2 },
   ];
 
   return (
-    <div className="relative mb-16 max-w-2xl mx-auto">
-      {/* Progress Bar Background */}
-      <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -translate-y-1/2 rounded-full overflow-hidden">
-        {/* Active Progress */}
-        <div
-          className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-700 ease-in-out"
-          style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
-        />
-      </div>
+    <div className="space-y-4">
+      {steps.map((item) => {
+        const Icon = item.icon;
+        const active = currentStep === item.step;
+        const completed = currentStep > item.step;
 
-      <div className="relative flex justify-between z-10">
-        {steps.map((item) => {
-          const Icon = item.icon;
-          return (
+        return (
+          <button
+            key={item.step}
+            type="button"
+            onClick={() => setCurrentStep(item.step)}
+            className={`flex w-full items-center gap-4 rounded-2xl border px-4 py-3 text-left transition ${
+              active
+                ? "border-[#00b14f] bg-[#f4fff8] shadow-[0_12px_28px_rgba(0,177,79,0.12)]"
+                : completed
+                  ? "border-[#cfe9d9] bg-white"
+                  : "border-slate-200 bg-white hover:border-[#b9dfc9] hover:bg-[#fbfffc]"
+            }`}
+          >
             <div
-              key={item.step}
-              className="flex flex-col items-center group cursor-pointer"
-              onClick={() => setCurrentStep(item.step)}
+              className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                active
+                  ? "bg-[#00b14f] text-white"
+                  : completed
+                    ? "bg-[#e9fff2] text-[#00b14f]"
+                    : "bg-slate-100 text-slate-500"
+              }`}
             >
-              <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm
-                  ${currentStep === item.step
-                    ? 'bg-purple-600 text-white shadow-purple-200 shadow-lg scale-110'
-                    : currentStep > item.step
-                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
-                      : 'bg-white text-slate-400 border-2 border-slate-100 group-hover:border-purple-200 group-hover:text-purple-400'
-                  }`}
-              >
-                {currentStep > item.step ? <CheckCircle2 className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
-              </div>
-              <span className={`mt-4 text-sm font-medium transition-colors duration-300 ${currentStep === item.step ? 'text-purple-700' : 'text-slate-500'}`}>
-                {item.label}
-              </span>
+              {completed ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
             </div>
-          );
-        })}
-      </div>
+
+            <div className="min-w-0 flex-1">
+              <div className={`text-sm font-bold ${active ? "text-slate-900" : "text-slate-700"}`}>
+                {item.label}
+              </div>
+              <div className="mt-1 text-xs text-slate-500">{item.hint}</div>
+            </div>
+
+            <div className={`text-xs font-bold ${active ? "text-[#00b14f]" : "text-slate-400"}`}>
+              0{item.step}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

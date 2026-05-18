@@ -2,10 +2,10 @@ import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 
 const statStyles = [
-  { color: '#6366f1', label: 'Tổng tin' },
-  { color: '#16a34a', label: 'Đang hiển thị' },
-  { color: '#d97706', label: 'Chờ duyệt' },
-  { color: '#ef4444', label: 'Đã từ chối' },
+  { color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe', label: 'Tổng tin' },
+  { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', label: 'Đang hiển thị' },
+  { color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', label: 'Chờ duyệt' },
+  { color: '#ef4444', bg: '#fef2f2', border: '#fecaca', label: 'Đã từ chối' },
 ];
 
 export default function JobStatsCards({ stats = {} }) {
@@ -25,41 +25,58 @@ export default function JobStatsCards({ stats = {} }) {
         mb: 3,
       }}
     >
-      {statStyles.map((s, i) => (
+      {statStyles.map((stat, index) => (
         <Paper
-          key={i}
+          key={stat.label}
           variant="outlined"
           sx={{
             p: 2.5,
             textAlign: 'center',
-            borderRadius: 2,
-            borderColor: '#e5e7eb',
+            borderRadius: 4,
+            borderColor: stat.border,
             bgcolor: '#fff',
-            transition: 'box-shadow 0.2s',
-            '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+            boxShadow: '0 8px 24px rgba(148, 163, 184, 0.08)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 12px 28px rgba(37, 99, 235, 0.12)',
+            },
           }}
         >
+          {/* <Box
+            sx={{
+              width: 44,
+              height: 44,
+              mx: 'auto',
+              mb: 1.5,
+              borderRadius: '14px',
+              bgcolor: stat.bg,
+              border: `1px solid ${stat.border}`,
+            }}
+          /> */}
+
           <Typography
             sx={{
               fontSize: '2rem',
               fontWeight: 800,
-              color: s.color,
+              color: stat.color,
               lineHeight: 1.2,
             }}
           >
-            {values[i]}
+            {values[index]}
           </Typography>
+
           <Typography
             sx={{
               fontSize: '0.85rem',
-              color: '#6b7280',
+              color: '#475569',
               mt: 0.5,
-              fontWeight: 600,
+              fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.025em'
+              letterSpacing: '0.025em',
             }}
           >
-            {s.label}
+            {stat.label}
           </Typography>
         </Paper>
       ))}

@@ -13,7 +13,7 @@ import {
   Stack,
   Slide,
   Grid,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
@@ -28,13 +28,15 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
 });
 
+const ADMIN_APPROVAL_GRACE_HOURS = 24;
+
 const labelSx = {
   fontSize: '0.75rem',
   color: '#64748b',
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.025em',
-  mb: 0.5
+  mb: 0.5,
 };
 
 const valueSx = {
@@ -54,14 +56,32 @@ const SectionHeader = ({ title }) => (
     py: 0.75,
     borderRadius: 1.5,
     mb: 2,
-    mt: 1
+    mt: 1,
   }}>
     {title}
   </Typography>
 );
 
+function getEarliestApprovalTime(job) {
+  const submittedAtRaw = job?.updatedAt || job?.createdAt;
+  if (!submittedAtRaw) return null;
+  const submittedAt = new Date(submittedAtRaw);
+  if (Number.isNaN(submittedAt.getTime())) return null;
+  return new Date(submittedAt.getTime() + ADMIN_APPROVAL_GRACE_HOURS * 60 * 60 * 1000);
+}
+
+function canApproveJob(job) {
+  if (job?.status !== 'PENDING') return false;
+  const earliestApprovalTime = getEarliestApprovalTime(job);
+  if (!earliestApprovalTime) return false;
+  return Date.now() >= earliestApprovalTime.getTime();
+}
+
 export default function JobDetailDialog({ open, job, onClose, loading, onStatusChange }) {
   if (!job && !loading) return null;
+
+  const canApprove = canApproveJob(job);
+  const earliestApprovalTime = getEarliestApprovalTime(job);
 
   const handleAction = (status) => {
     onStatusChange(job, status);
@@ -86,7 +106,7 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
           right: 0,
           top: 0,
           borderRadius: { xs: 0, sm: '24px 0 0 24px' },
-          boxShadow: '-10px 0 40px rgba(0,0,0,0.1)'
+          boxShadow: '-10px 0 40px rgba(0,0,0,0.1)',
         },
       }}
     >
@@ -95,7 +115,7 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
         alignItems: 'center',
         justifyContent: 'space-between',
         p: 3,
-        borderBottom: '1px solid #f1f5f9'
+        borderBottom: '1px solid #f1f5f9',
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ bgcolor: '#eff6ff', p: 1, borderRadius: 2, color: '#3b82f6' }}>
@@ -123,7 +143,6 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
         ) : (
           <Box sx={{ p: 4 }}>
             <Stack spacing={4}>
-              {/* Header Info */}
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2.5 }}>
                 <Avatar
                   src={job.company?.logoUrl}
@@ -134,7 +153,7 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                     bgcolor: '#f8fafc',
                     border: '1px solid #e2e8f0',
                     p: 1,
-                    '& img': { objectFit: 'contain' }
+                    '& img': { objectFit: 'contain' },
                   }}
                 >
                   <BusinessOutlinedIcon sx={{ color: '#94a3b8' }} />
@@ -149,27 +168,43 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     <Chip
                       label={
-                        job.status === 'ACTIVE' ? 'Đang hiển thị' : 
-                        job.status === 'PENDING' ? 'Chờ duyệt' : 
-                        job.status === 'CLOSED' ? 'Đã đóng' : 'Đã từ chối'
+                        job.status === 'ACTIVE'
+                          ? 'Đang hiển thị'
+                          : job.status === 'PENDING'
+                            ? 'Chờ duyệt'
+                            : job.status === 'CLOSED'
+                              ? 'Đã đóng'
+                              : 'Đã từ chối'
                       }
                       size="small"
                       sx={{
                         fontWeight: 800,
                         fontSize: '0.65rem',
-                        bgcolor: 
-                          job.status === 'ACTIVE' ? '#f0fdf4' : 
-                          job.status === 'PENDING' ? '#fffbeb' : 
-                          job.status === 'CLOSED' ? '#f1f5f9' : '#fef2f2',
-                        color: 
-                          job.status === 'ACTIVE' ? '#16a34a' : 
-                          job.status === 'PENDING' ? '#d97706' : 
-                          job.status === 'CLOSED' ? '#64748b' : '#ef4444',
+                        bgcolor:
+                          job.status === 'ACTIVE'
+                            ? '#f0fdf4'
+                            : job.status === 'PENDING'
+                              ? '#fffbeb'
+                              : job.status === 'CLOSED'
+                                ? '#f1f5f9'
+                                : '#fef2f2',
+                        color:
+                          job.status === 'ACTIVE'
+                            ? '#16a34a'
+                            : job.status === 'PENDING'
+                              ? '#d97706'
+                              : job.status === 'CLOSED'
+                                ? '#64748b'
+                                : '#ef4444',
                         border: '1px solid',
-                        borderColor: 
-                          job.status === 'ACTIVE' ? '#dcfce7' : 
-                          job.status === 'PENDING' ? '#fef3c7' : 
-                          job.status === 'CLOSED' ? '#e2e8f0' : '#fee2e2'
+                        borderColor:
+                          job.status === 'ACTIVE'
+                            ? '#dcfce7'
+                            : job.status === 'PENDING'
+                              ? '#fef3c7'
+                              : job.status === 'CLOSED'
+                                ? '#e2e8f0'
+                                : '#fee2e2',
                       }}
                     />
                     <Chip label={job.jobType} size="small" sx={{ fontWeight: 800, fontSize: '0.65rem', bgcolor: '#f1f5f9', color: '#475569' }} />
@@ -178,13 +213,12 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                 </Box>
               </Box>
 
-              {/* Stats Overview */}
               <Grid container spacing={2}>
                 {[
                   { icon: <RemoveRedEyeOutlinedIcon />, label: 'Lượt xem', value: job.views, color: '#6366f1' },
                   { icon: <PeopleOutlinedIcon />, label: 'Ứng tuyển', value: job.numberOfApplications, color: '#10b981' },
                   { icon: <AttachMoneyOutlinedIcon />, label: 'Mức lương', value: job.salaryNegotiable ? 'Thỏa thuận' : `${job.salaryMin}-${job.salaryMax} triệu`, color: '#f59e0b' },
-                  { icon: <CalendarTodayOutlinedIcon />, label: 'Hạn chót', value: job.deadline, color: '#ef4444' }
+                  { icon: <CalendarTodayOutlinedIcon />, label: 'Hạn chót', value: job.deadline, color: '#ef4444' },
                 ].map((item, idx) => (
                   <Grid item xs={6} key={idx}>
                     <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 3, border: '1px solid #f1f5f9' }}>
@@ -198,7 +232,6 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                 ))}
               </Grid>
 
-              {/* Detail Sections */}
               <Box>
                 <SectionHeader title="Thông tin chi tiết" />
                 <Grid container spacing={3}>
@@ -252,96 +285,59 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                   {job.benefitsDetail || 'Chưa có thông tin quyền lợi'}
                 </Typography>
               </Box>
-
-              {/* Tags Section */}
-              <Box sx={{ pb: 4 }}>
-                <SectionHeader title="Tags & Kỹ năng" />
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {(() => {
-                    const parseTags = (data) => {
-                      if (!data) return [];
-                      if (Array.isArray(data)) return data;
-                      try {
-                        const parsed = JSON.parse(data);
-                        if (Array.isArray(parsed)) return parsed;
-                      } catch (e) {}
-                      return data.split(',').map(s => s.trim()).filter(s => s);
-                    };
-
-                    const sTags = parseTags(job.skills);
-                    const rTags = parseTags(job.requirementTags);
-                    
-                    // Unify and unique tags
-                    const uniqueTags = Array.from(new Set([...sTags, ...rTags]));
-
-                    return (
-                      <>
-                        {uniqueTags.map((tag, i) => (
-                          <Chip 
-                            key={i} 
-                            label={tag} 
-                            size="small" 
-                            variant="outlined" 
-                            sx={{ 
-                              fontSize: '0.75rem', 
-                              fontWeight: 600, 
-                              color: '#64748b',
-                              bgcolor: '#f8fafc',
-                              borderColor: '#e2e8f0'
-                            }} 
-                          />
-                        ))}
-                      </>
-                    );
-                  })()}
-                </Box>
-              </Box>
             </Stack>
           </Box>
         )}
       </DialogContent>
 
       <DialogActions sx={{ p: 3, bgcolor: '#f8fafc', borderTop: '1px solid #f1f5f9', gap: 1.5, flexDirection: 'column' }}>
+        {job?.status === 'PENDING' && !canApprove && earliestApprovalTime && (
+          <Typography sx={{ width: '100%', fontSize: '0.8rem', color: '#b45309', fontWeight: 600 }}>
+            Tin này chỉ có thể được phê duyệt sau {earliestApprovalTime.toLocaleString('vi-VN')}.
+          </Typography>
+        )}
+
         <Box sx={{ display: 'flex', gap: 1.5, width: '100%' }}>
-          {job?.status === 'PENDING' && (
-            <>
-              <Button
-                fullWidth
-                variant="contained"
-                color="success"
-                onClick={() => handleAction('ACTIVE')}
-                sx={{
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontWeight: 800,
-                  py: 1.25,
-                  boxShadow: 'none',
-                  bgcolor: '#10b981',
-                  '&:hover': { boxShadow: 'none', bgcolor: '#059669' }
-                }}
-              >
-                Phê duyệt tin
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                color="error"
-                onClick={() => handleAction('REJECTED')}
-                sx={{
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontWeight: 800,
-                  py: 1.25,
-                  boxShadow: 'none',
-                  bgcolor: '#ef4444',
-                  '&:hover': { boxShadow: 'none', bgcolor: '#dc2626' }
-                }}
-              >
-                Từ chối tin
-              </Button>
-            </>
+          {job?.status === 'PENDING' && canApprove && (
+            <Button
+              fullWidth
+              variant="contained"
+              color="success"
+              onClick={() => handleAction('ACTIVE')}
+              sx={{
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 800,
+                py: 1.25,
+                boxShadow: 'none',
+                bgcolor: '#10b981',
+                '&:hover': { boxShadow: 'none', bgcolor: '#059669' },
+              }}
+            >
+              Phê duyệt tin
+            </Button>
           )}
-          
+
+          {job?.status === 'PENDING' && (
+            <Button
+              fullWidth
+              variant="contained"
+              color="error"
+              onClick={() => handleAction('REJECTED')}
+              sx={{
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 800,
+                py: 1.25,
+                boxShadow: 'none',
+                bgcolor: '#ef4444',
+                '&:hover': { boxShadow: 'none', bgcolor: '#dc2626' },
+              }}
+            >
+              Từ chối tin
+            </Button>
+          )}
+
           {job?.status === 'ACTIVE' && (
             <Button
               fullWidth
@@ -355,10 +351,10 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                 boxShadow: 'none',
                 bgcolor: '#64748b',
                 color: '#fff',
-                '&:hover': { boxShadow: 'none', bgcolor: '#475569' }
+                '&:hover': { boxShadow: 'none', bgcolor: '#475569' },
               }}
             >
-              Đóng tin (Closed)
+              Đóng tin
             </Button>
           )}
 
@@ -375,13 +371,14 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
                 boxShadow: 'none',
                 bgcolor: '#10b981',
                 color: '#fff',
-                '&:hover': { boxShadow: 'none', bgcolor: '#059669' }
+                '&:hover': { boxShadow: 'none', bgcolor: '#059669' },
               }}
             >
-              Mở lại tin (Re-open)
+              Mở lại tin
             </Button>
           )}
         </Box>
+
         <Button
           fullWidth
           variant="outlined"
@@ -393,7 +390,7 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
             py: 1.25,
             color: '#64748b',
             borderColor: '#e2e8f0',
-            '&:hover': { bgcolor: '#fff', borderColor: '#cbd5e1' }
+            '&:hover': { bgcolor: '#fff', borderColor: '#cbd5e1' },
           }}
         >
           Đóng cửa sổ
