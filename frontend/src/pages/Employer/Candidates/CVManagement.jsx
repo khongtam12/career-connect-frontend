@@ -72,6 +72,8 @@ const normalizeInsightItems = (items) => {
         .map((item) => item.trim())
         .filter(Boolean)
         .filter((item) => item !== 'ul' && item !== '/ul')
+        .filter((item) => item.length <= 40)
+        .filter((item) => item.split(/\s+/).length <= 4)
         .filter((item, index, array) => array.findIndex((value) => value.toLowerCase() === item.toLowerCase()) === index);
 };
 
@@ -253,6 +255,21 @@ const CVManagement = () => {
 
     const missingSkills = useMemo(
         () => normalizeInsightItems(selectedCandidate?.matchInsight?.missingSkills),
+        [selectedCandidate]
+    );
+
+    const insightStrengths = useMemo(
+        () => normalizeInsightItems(selectedCandidate?.matchInsight?.strengths),
+        [selectedCandidate]
+    );
+
+    const insightConcerns = useMemo(
+        () => normalizeInsightItems(selectedCandidate?.matchInsight?.concerns),
+        [selectedCandidate]
+    );
+
+    const interviewFocus = useMemo(
+        () => normalizeInsightItems(selectedCandidate?.matchInsight?.interviewFocus),
         [selectedCandidate]
     );
 
@@ -581,7 +598,7 @@ const CVManagement = () => {
                                 <div>
                                     <h3 className="font-bold text-emerald-800 text-sm">AI CV-Job Matching</h3>
                                     <p className="text-xs text-emerald-700 mt-1">
-                                        He thong tu dong danh gia muc do phu hop cua CV voi JD hien tai.
+                                        Hệ thống tự động đánh giá mức độ phù hợp của CV với JD hiện tại.
                                     </p>
                                 </div>
                                 <div className={`px-3 py-1 rounded-full font-bold text-sm ${scoreTone(selectedCandidate.matchScore)}`}>
@@ -591,15 +608,15 @@ const CVManagement = () => {
 
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 text-sm">
                                 <div className="bg-white rounded-lg p-3 border border-emerald-100">
-                                    <p className="text-gray-500 text-xs mb-1">Ky nang</p>
+                                    <p className="text-gray-500 text-xs mb-1">Kỹ năng</p>
                                     <p className="font-bold text-gray-900">{formatScore(selectedCandidate.matchInsight.skillScore)}</p>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 border border-emerald-100">
-                                    <p className="text-gray-500 text-xs mb-1">Kinh nghiem</p>
+                                    <p className="text-gray-500 text-xs mb-1">Kinh nghiệm</p>
                                     <p className="font-bold text-gray-900">{formatScore(selectedCandidate.matchInsight.experienceScore)}</p>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 border border-emerald-100">
-                                    <p className="text-gray-500 text-xs mb-1">Hoc van</p>
+                                    <p className="text-gray-500 text-xs mb-1">Học vấn</p>
                                     <p className="font-bold text-gray-900">{formatScore(selectedCandidate.matchInsight.educationScore)}</p>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 border border-emerald-100">
@@ -609,12 +626,21 @@ const CVManagement = () => {
                             </div>
 
                             <p className="text-sm text-gray-700 mb-4">
-                                {selectedCandidate.matchInsight.recommendation || 'Chua co goi y tu dong.'}
+                                {selectedCandidate.matchInsight.recommendation || 'Chưa có gợi ý tự động.'}
                             </p>
+
+                            {selectedCandidate.matchInsight.summary && (
+                                <div className="mb-4 rounded-lg border border-emerald-100 bg-white/80 p-3">
+                                    <p className="text-xs font-bold uppercase tracking-wide text-emerald-800 mb-1">
+                                        Tóm tắt phân tích
+                                    </p>
+                                    <p className="text-sm text-gray-700">{selectedCandidate.matchInsight.summary}</p>
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 <div>
-                                        <p className="text-xs font-bold text-emerald-800 mb-2">Ky nang khop</p>
+                                        <p className="text-xs font-bold text-emerald-800 mb-2">Kỹ năng khớp</p>
                                     <div className="flex flex-wrap gap-2">
                                         {matchedSkills.length > 0 ? (
                                             matchedSkills.map((skill) => (
@@ -623,13 +649,13 @@ const CVManagement = () => {
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="text-xs text-gray-500">Chua phat hien ky nang khop ro rang.</span>
+                                            <span className="text-xs text-gray-500">Chưa phát hiện kỹ năng khớp rõ ràng.</span>
                                         )}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <p className="text-xs font-bold text-red-700 mb-2">Ky nang con thieu</p>
+                                    <p className="text-xs font-bold text-red-700 mb-2">Kỹ năng còn thiếu</p>
                                     <div className="flex flex-wrap gap-2">
                                         {missingSkills.length > 0 ? (
                                             missingSkills.map((skill) => (
@@ -638,24 +664,67 @@ const CVManagement = () => {
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="text-xs text-gray-500">Khong co thieu hut ky nang lon theo JD.</span>
+                                            <span className="text-xs text-gray-500">Không có thiếu hụt kỹ năng lớn theo JD.</span>
                                         )}
                                     </div>
                                 </div>
                             </div>
+
+                            {(insightStrengths.length > 0 || insightConcerns.length > 0 || interviewFocus.length > 0) && (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+                                    <div className="bg-white rounded-lg p-3 border border-emerald-100">
+                                        <p className="text-xs font-bold text-emerald-800 mb-2">Điểm mạnh nổi bật</p>
+                                        <div className="space-y-2">
+                                            {insightStrengths.length > 0 ? (
+                                                insightStrengths.map((item) => (
+                                                    <p key={item} className="text-xs text-gray-700">• {item}</p>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-gray-500">Chưa có đánh giá bổ sung.</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-lg p-3 border border-amber-100">
+                                        <p className="text-xs font-bold text-amber-800 mb-2">Điểm cần xác minh</p>
+                                        <div className="space-y-2">
+                                            {insightConcerns.length > 0 ? (
+                                                insightConcerns.map((item) => (
+                                                    <p key={item} className="text-xs text-gray-700">• {item}</p>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-gray-500">Không có cảnh báo lớn.</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-lg p-3 border border-sky-100">
+                                        <p className="text-xs font-bold text-sky-800 mb-2">Gợi ý phỏng vấn</p>
+                                        <div className="space-y-2">
+                                            {interviewFocus.length > 0 ? (
+                                                interviewFocus.map((item) => (
+                                                    <p key={item} className="text-xs text-gray-700">• {item}</p>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-gray-500">Chưa có gợi ý cụ thể.</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
                     <div className="mt-4 rounded-xl shadow-sm border border-gray-100 bg-white overflow-hidden flex flex-col min-h-[1000px]">
                         <div className="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center shrink-0">
                             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-                                Ho so dinh kem (PDF)
+                                Hồ sơ đính kèm (PDF)
                             </h3>
                             <button
                                 onClick={() => handleDownloadCV(selectedCandidate)}
                                 className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-xs font-bold transition-colors"
                             >
-                                <FiDownload /> Tai xuong
+                                <FiDownload /> Tải xuống
                             </button>
                         </div>
                         <div className="flex-1 w-full bg-gray-200 relative min-h-0">
