@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getJobById } from "../../service/jobService";
 import { TransformJob } from './utils/TransformJob';
@@ -80,6 +80,26 @@ export default function JobDetail() {
 
   const [job, setJob] = useState(null);
   const { isAuthenticated, openAuthDialog } = useUserStore();
+  const location = useLocation();
+  const applyTriggered = React.useRef(false);
+
+  useEffect(() => {
+    if (job && (location.search.includes('apply=true') || location.state?.openApply)) {
+      if (!applyTriggered.current) {
+        applyTriggered.current = true;
+        if (!isAuthenticated) {
+          openAuthDialog({
+            closable: true,
+            onSuccess: () => setApplyOpen(true),
+          });
+        } else {
+          setApplyOpen(true);
+        }
+      }
+    } else {
+      applyTriggered.current = false;
+    }
+  }, [job, location.search, location.state, isAuthenticated, openAuthDialog]);
 
   // ── Handler ứng tuyển ──
   const handleApply = () => {

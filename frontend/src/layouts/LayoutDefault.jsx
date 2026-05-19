@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import Header from "../components/user/Header"
 import { Outlet, useLocation } from 'react-router-dom'
 import Footer from '../components/user/Footer'
+import ChatWidget from '../components/user/ChatWidget'
 import { useUserStore } from '../stores/useUserStore'
 
 
@@ -26,6 +27,9 @@ export default function LayoutDefault() {
                 <Outlet />
             </div>
             {showFooter && <Footer />}
+            
+            {/* Tích hợp ChatWidget AI */}
+            {!isPrintMode && <ChatWidget />}
         </div>
     )
 }
