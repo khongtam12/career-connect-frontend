@@ -27,3 +27,18 @@ export const verifyOtp = async (email, otp) => {
     const res = await apiClient.post(`/api/v1/user/auth/verify-otp`, { email, otp });
     return res.data;
 };
+
+export const outboundAuthenticate = async (code, type) => {
+    const res = await apiClient.post(`/api/v1/user/auth/outbound/authentication?code=${code}&type=${type}`);
+    return res.data;
+};
+
+export const forgotPassword = async (email, type) => {
+    const res = await apiClient.post(`/api/v1/user/auth/forgot-password?type=${type}`, { email });
+    return res.data;
+};
+
+export const resetPassword = async (data, type) => {
+    const res = await apiClient.post(`/api/v1/user/auth/reset-password?type=${type}`, data);
+    return res.data;
+};

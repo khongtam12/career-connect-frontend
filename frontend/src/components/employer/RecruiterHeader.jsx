@@ -9,6 +9,8 @@ import { Stomp } from '@stomp/stompjs'
 import SockJS from 'sockjs-client';
 import axios from 'axios';
 import { useNotificationStore } from "../../stores/useNotificationStore";
+import UserAvatar from "../common/UserAvatar";
+
 
 const RecruiterHeader = ({ setSidebarOpen }) => {
   const [showProfile, setShowProfile] = useState(false);
@@ -63,14 +65,6 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // avatar fallback
-  const initials =
-    user?.username
-      ?.split(" ")
-      .map((w) => w[0])
-      .slice(-2)
-      .join("")
-      .toUpperCase() || "U";
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-100 shadow-sm h-16 flex items-center justify-between px-6">
@@ -170,17 +164,11 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
             className={`flex items-center gap-2 px-2 py-1.5 rounded-xl transition ${showProfile ? "bg-gray-100" : "hover:bg-gray-50"
               }`}
           >
-            {user?.avatar ? (
-              <img
-                className="h-9 w-9 rounded-full border object-cover"
-                src={user.avatar}
-                alt=""
-              />
-            ) : (
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xs font-bold">
-                {initials}
-              </div>
-            )}
+            <UserAvatar
+              src={user?.avatar}
+              name={user?.username}
+              className="h-9 w-9"
+            />
 
             <div className="hidden xl:flex flex-col items-start">
               <span className="text-sm font-semibold text-gray-800">
@@ -207,9 +195,11 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
           >
             {/* User card */}
             <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-indigo-50 border-b">
-              <div className="h-10 w-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold">
-                {initials}
-              </div>
+              <UserAvatar
+                src={user?.avatar}
+                name={user?.username}
+                className="h-10 w-10"
+              />
               <div>
                 <p className="text-sm font-bold text-gray-900">
                   {user?.username}

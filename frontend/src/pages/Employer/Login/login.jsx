@@ -8,9 +8,10 @@ import {
   Button,
   Divider,
 } from "@mui/material";
-import { login } from "../../../service/authService";
+import { login, outboundAuthenticate } from "../../../service/authService";
 import { useUserStore } from "../../../stores/useUserStore";
 import { toast } from "react-toastify";
+import { useGoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -49,7 +50,9 @@ export default function Login() {
       await handleLoginSuccess();
       toast.success("Chào mừng nhà tuyển dụng trở lại!");
     } catch (err) {
-      console.error(err);
+      if (!err.response || err.response.status >= 500) {
+        console.error(err);
+      }
       const msg = err.response?.data?.message || "Tài khoản hoặc mật khẩu không chính xác!";
       setError(msg);
       toast.error(msg);
@@ -57,6 +60,26 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (response) => {
+      setLoading(true);
+      try {
+        await outboundAuthenticate(response.code, "EMPLOYER");
+        await handleLoginSuccess();
+        toast.success("Đăng nhập bằng Google thành công!");
+      } catch (err) {
+        console.error(err);
+        toast.error("Đăng nhập bằng Google thất bại!");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      toast.error("Đăng nhập bằng Google thất bại!");
+    },
+    flow: "auth-code",
+  });
 
   return (
     <div className="min-h-screen flex bg-white font-sans overflow-x-hidden">
@@ -83,6 +106,8 @@ export default function Login() {
             <Button
               fullWidth
               variant="outlined"
+              onClick={() => handleGoogleLogin()}
+              disabled={loading}
               startIcon={<img src="https://www.svgrepo.com/show/355037/google.svg" className="w-5 h-5" alt="Google" />}
               sx={{
                 py: 1.5,
@@ -96,7 +121,7 @@ export default function Login() {
                 borderRadius: "6px",
               }}
             >
-              Đăng nhập bằng Google
+              {loading ? "Đang xử lý..." : "Đăng nhập bằng Google"}
             </Button>
 
             <div className="relative">
@@ -163,7 +188,7 @@ export default function Login() {
               </div>
 
               <div className="flex justify-end">
-                <Link to="/forgot-password" size="small" className="text-sm text-[#00b14f] hover:underline font-medium">
+                <Link to="/forgot-password?type=EMPLOYER" size="small" className="text-sm text-[#00b14f] hover:underline font-medium">
                   Quên mật khẩu?
                 </Link>
               </div>
