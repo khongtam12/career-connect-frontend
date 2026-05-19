@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../../stores/useUserStore";
 import { Briefcase, FileText, Settings, User, LogOut } from "lucide-react";
+import UserAvatar from "../common/UserAvatar";
+
 
 export default function CandidateMenu({ user }) {
     const [open, setOpen] = useState(false);
@@ -15,10 +17,10 @@ export default function CandidateMenu({ user }) {
         >
             {/* Avatar */}
             <div className="flex items-center gap-2 cursor-pointer">
-                <img
-                    src={user?.avatar || ""}
-                    className="w-8 h-8 rounded-full"
-                    alt="avatar"
+                <UserAvatar
+                    src={user?.avatar}
+                    name={user?.fullName || user?.username}
+                    className="w-8 h-8"
                 />
                 <span className="text-sm font-medium">{user?.username}</span>
             </div>
@@ -30,10 +32,10 @@ export default function CandidateMenu({ user }) {
 
                         {/* Header */}
                         <div className="p-4 flex items-center gap-3 border-b bg-white">
-                            <img
-                                src={user?.avatar || ""}
-                                className="w-10 h-10 rounded-full"
-                                alt=""
+                            <UserAvatar
+                                src={user?.avatar}
+                                name={user?.fullName}
+                                className="w-12 h-12"
                             />
                             <div>
                                 <p className="font-semibold text-sm">{user?.fullName}</p>

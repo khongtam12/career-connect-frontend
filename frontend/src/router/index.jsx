@@ -36,6 +36,7 @@ import RegisterCD from "../pages/Candidate/Register/Register.jsx";
 import Login from "../pages/Employer/Login/login.jsx";
 import EmployerRegister from "../pages/Employer/Register/Register.jsx";
 import LoginAM from "../pages/Admin/Login/login.jsx";
+import ForgotPassword from "../pages/Candidate/ForgotPassword.jsx";
 
 import Error from "../pages/Error.jsx/Error";
 
@@ -137,6 +138,10 @@ export const router = createBrowserRouter([
     {
         path: "/admin/login",
         element: <LoginAM />
+    },
+    {
+        path: "/forgot-password",
+        element: <ForgotPassword />
     },
 
 
