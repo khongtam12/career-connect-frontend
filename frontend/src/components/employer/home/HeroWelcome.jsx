@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-export default function HeroWelcome() {
+export default function HeroWelcome({ newApplicants = 0 }) {
+  const resolvedCount = Number.isFinite(newApplicants) ? newApplicants : 0;
+  const badgeText = resolvedCount > 0 ? `+${resolvedCount} hồ sơ` : '0 hồ sơ';
+
   return (
     <div className="relative overflow-hidden bg-white px-6 sm:px-12 py-16 flex flex-col md:flex-row items-center justify-between gap-12">
       {/* Background soft accents */}
@@ -49,8 +52,8 @@ export default function HeroWelcome() {
                      <FiArrowRight />
                   </div>
                   <div>
-                     <div className="text-[10px] text-gray-400 font-bold uppercase">Ứng tuyển mới</div>
-                     <div className="text-sm font-black text-gray-800">+12 hồ sơ</div>
+                    <div className="text-[10px] text-gray-400 font-bold uppercase">Ứng tuyển mới</div>
+                    <div className="text-sm font-black text-gray-800">{badgeText}</div>
                   </div>
                </div>
             </div>

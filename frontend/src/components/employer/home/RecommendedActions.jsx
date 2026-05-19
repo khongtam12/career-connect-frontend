@@ -1,34 +1,58 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiUser, FiDatabase, FiArrowRight } from 'react-icons/fi';
 
-const actions = [
-  {
-    icon: FiPlus,
-    title: 'Tạo tin tuyển dụng đầu tiên',
-    description: 'Bắt đầu thu hút ứng viên chất lượng cho vị trí bạn đang tuyển.',
-    cta: 'Tạo ngay',
-    gradient: 'from-emerald-500 to-teal-600',
-    iconBg: 'bg-emerald-400/20',
-  },
-  {
-    icon: FiUser,
-    title: 'Hoàn thiện hồ sơ công ty',
-    description: 'Công ty có profile đầy đủ nhận được gấp 3 lần lượt ứng tuyển.',
-    cta: 'Cập nhật',
-    gradient: 'from-blue-500 to-indigo-600',
-    iconBg: 'bg-blue-400/20',
-  },
-  {
-    icon: FiDatabase,
-    title: 'Khám phá kho ứng viên',
-    description: 'Hơn 50,000 hồ sơ ứng viên IT chất lượng đang chờ bạn khám phá.',
-    cta: 'Xem ngay',
-    gradient: 'from-violet-500 to-purple-600',
-    iconBg: 'bg-violet-400/20',
-  },
-];
+export default function RecommendedActions({ stats, profileCompletion, totalCandidates, isLoading }) {
+  const navigate = useNavigate();
 
-export default function RecommendedActions() {
+  const actions = useMemo(() => {
+    const active = stats?.active || 0;
+    const paused = stats?.paused || 0;
+    const closed = stats?.closed || 0;
+    const totalJobs = active + paused + closed;
+    const completion = Number.isFinite(profileCompletion) ? profileCompletion : 0;
+    const candidateCount = totalCandidates || 0;
+
+    return [
+      {
+        icon: FiPlus,
+        title: totalJobs > 0 ? 'Tạo thêm tin tuyển dụng' : 'Tạo tin tuyển dụng đầu tiên',
+        description:
+          totalJobs > 0
+            ? `Bạn đang có ${totalJobs} tin tuyển dụng. Tạo thêm để mở rộng phạm vi tiếp cận.`
+            : 'Bắt đầu thu hút ứng viên chất lượng cho vị trí bạn đang tuyển.',
+        cta: totalJobs > 0 ? 'Tạo tin mới' : 'Tạo ngay',
+        gradient: 'from-emerald-500 to-teal-600',
+        iconBg: 'bg-emerald-400/20',
+        onClick: () => navigate('/employer/jobs'),
+      },
+      {
+        icon: FiUser,
+        title: completion < 70 ? 'Hoàn thiện hồ sơ công ty' : 'Cập nhật hồ sơ công ty',
+        description:
+          completion < 70
+            ? `Hồ sơ công ty đã hoàn thiện ${completion}%. Hoàn thiện để tăng độ tin cậy.`
+            : 'Cập nhật thông tin công ty để giữ hồ sơ luôn mới và đáng tin cậy.',
+        cta: 'Cập nhật',
+        gradient: 'from-blue-500 to-indigo-600',
+        iconBg: 'bg-blue-400/20',
+        onClick: () => navigate('/employer/profile'),
+      },
+      {
+        icon: FiDatabase,
+        title: 'Khám phá kho ứng viên',
+        description:
+          candidateCount > 0
+            ? `Bạn có ${candidateCount} hồ sơ ứng tuyển đang chờ đánh giá.`
+            : 'Tìm kiếm ứng viên phù hợp và quản lý quy trình phỏng vấn.',
+        cta: 'Xem ngay',
+        gradient: 'from-violet-500 to-purple-600',
+        iconBg: 'bg-violet-400/20',
+        onClick: () => navigate('/employer/candidates'),
+      },
+    ];
+  }, [navigate, profileCompletion, stats, totalCandidates]);
+
   return (
     <div>
       <h2 className="text-lg font-bold text-gray-900 mb-1">Hành động đề xuất</h2>
@@ -52,7 +76,12 @@ export default function RecommendedActions() {
               <h3 className="text-sm font-bold mb-1">{action.title}</h3>
               <p className="text-xs text-white/80 leading-relaxed mb-4">{action.description}</p>
 
-              <button className="flex items-center gap-1.5 text-xs font-semibold bg-white/15 hover:bg-white/25 backdrop-blur-sm px-3.5 py-1.5 rounded-lg transition-all duration-200 border border-white/10">
+              <button
+                type="button"
+                onClick={action.onClick}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 text-xs font-semibold bg-white/15 hover:bg-white/25 disabled:opacity-60 disabled:cursor-not-allowed backdrop-blur-sm px-3.5 py-1.5 rounded-lg transition-all duration-200 border border-white/10"
+              >
                 {action.cta}
                 <FiArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
