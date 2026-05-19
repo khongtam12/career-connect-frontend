@@ -122,11 +122,11 @@ export default function JobDetail() {
     setIsSaved(toggleSavedJob(job));
   };
 
-  const hasFetched = React.useRef(false);
+  const lastFetchedId = React.useRef(null);
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
+    if (lastFetchedId.current === id) return;
+    lastFetchedId.current = id;
 
     const fetchJob = async () => {
       try {
