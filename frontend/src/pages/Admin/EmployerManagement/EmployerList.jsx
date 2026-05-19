@@ -116,66 +116,99 @@ export default function EmployerList() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mb: 0.5 }}>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: '1.5rem',
+              color: '#1f2937',
+              lineHeight: 1.3,
+            }}
+          >
             Quản lý nhà tuyển dụng
           </Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280' }}>
+          <Typography sx={{ color: '#6b7280', fontSize: '0.9rem', mt: 0.3 }}>
             Xem danh sách và quản lý tài khoản nhà tuyển dụng
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={handleRefresh}
-          sx={{
-            borderRadius: '10px',
-            textTransform: 'none',
-            borderColor: '#e5e7eb',
-            color: '#374151',
-            '&:hover': {
+
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={handleRefresh}
+            sx={{
               borderColor: '#d1d5db',
-              backgroundColor: '#f9fafb',
-            },
-          }}
-        >
-          Làm mới
-        </Button>
+              color: '#374151',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              '&:hover': { borderColor: '#9ca3af', bgcolor: '#f9fafb' },
+            }}
+          >
+            Làm mới
+          </Button>
+        </Box>
       </Box>
 
       <EmployerStatsCards stats={stats} />
 
-      <Box sx={{ mt: 4, mb: 3 }}>
-        <EmployerSearchFilter
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-        />
-      </Box>
+      <EmployerSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={(val) => {
+          setSearchTerm(val);
+          setPage(1);
+        }}
+        statusFilter={statusFilter}
+        onStatusChange={(val) => {
+          setStatusFilter(val);
+          setPage(1);
+        }}
+      />
 
-      <Box sx={{ backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f3f4f6', overflow: 'hidden' }}>
-        <EmployerTable
-          employers={pagedEmployers}
-          loading={loading}
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          onChangeStatus={handleChangeStatus}
-        />
-      </Box>
+      <EmployerTable
+        employers={pagedEmployers}
+        loading={loading}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        onChangeStatus={handleChangeStatus}
+      />
 
-      <Snackbar open={snack.open} autoHideDuration={4000} onClose={closeSnack}>
-        <Alert onClose={closeSnack} severity={snack.severity} variant="filled">
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={closeSnack}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={closeSnack}
+          severity={snack.severity}
+          sx={{
+            borderRadius: 2,
+            fontSize: '0.84rem',
+            fontWeight: 500,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: snack.severity === 'success' ? '#bbf7d0' : '#fecaca',
+            bgcolor: snack.severity === 'success' ? '#f0fdf4' : '#fff5f5',
+            color: snack.severity === 'success' ? '#15803d' : '#dc2626',
+            '& .MuiAlert-icon': {
+              color: snack.severity === 'success' ? '#16a34a' : '#ef4444',
+            },
+          }}
+        >
           {snack.message}
         </Alert>
       </Snackbar>

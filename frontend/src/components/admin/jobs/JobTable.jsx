@@ -19,7 +19,6 @@ import {
   ListItemText,
   Tooltip,
 } from '@mui/material';
-import { FiBriefcase } from 'react-icons/fi';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
@@ -28,27 +27,24 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
-import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 const headCellSx = {
-  fontWeight: 700,
-  fontSize: '0.75rem',
-  color: '#64748b',
+  fontWeight: 600,
+  fontSize: '0.8rem',
+  color: '#374151',
   whiteSpace: 'nowrap',
-  py: 2,
-  borderBottom: '2px solid #dbeafe',
-  bgcolor: '#f8fbff',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  py: 1.5,
+  borderBottom: '2px solid #e5e7eb',
+  bgcolor: '#f9fafb',
 };
 
 const bodyCellSx = {
   fontSize: '0.85rem',
-  color: '#334155',
-  py: 2,
-  borderBottom: '1px solid #eff6ff',
+  color: '#374151',
+  py: 1.8,
+  borderBottom: '1px solid #f3f4f6',
 };
 
 const ADMIN_APPROVAL_GRACE_HOURS = 24;
@@ -78,91 +74,108 @@ function JobActionMenu({ job, onStatusChange, onViewDetail, onDelete }) {
 
   return (
     <>
-      <IconButton onClick={handleClick} size="small" sx={{ bgcolor: 'transparent', '&:hover': { bgcolor: '#eff6ff' } }}>
-        <MoreVertIcon fontSize="small" sx={{ color: '#94a3b8' }} />
+      <IconButton onClick={handleClick} size="small">
+        <MoreVertIcon fontSize="small" sx={{ color: '#6b7280' }} />
       </IconButton>
       <Menu
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        elevation={0}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{
+          elevation: 0,
           sx: {
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
             mt: 0.5,
-            minWidth: 220,
-            borderRadius: 3,
-            border: '1px solid #dbeafe',
-            boxShadow: '0 18px 40px rgba(37, 99, 235, 0.12)',
+            minWidth: 150,
+            borderRadius: 2,
+            border: '1px solid #e5e7eb',
           },
         }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={() => { handleClose(); onViewDetail(job); }} sx={{ py: 1.2, px: 2, '&:hover': { bgcolor: '#f8fbff' } }}>
-          <ListItemIcon sx={{ minWidth: 36 }}>
-            <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#3b82f6' }} />
+        <MenuItem onClick={() => { handleClose(); onViewDetail(job); }} sx={{ py: 1 }}>
+          <ListItemIcon>
+            <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6366f1' }} />
           </ListItemIcon>
-          <ListItemText primary="Xem chi tiết" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+          <ListItemText
+            primary="Xem chi tiết"
+            primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+          />
         </MenuItem>
 
-        <Box sx={{ my: 0.5, height: '1px', bgcolor: '#e2e8f0' }} />
-
         {job.status === 'PENDING' && canApprove && (
-          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'ACTIVE'); }} sx={{ py: 1.2, px: 2, color: '#2563eb', '&:hover': { bgcolor: '#eff6ff' } }}>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <CheckCircleOutlinedIcon fontSize="small" sx={{ color: 'inherit' }} />
+          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'ACTIVE'); }} sx={{ py: 1 }}>
+            <ListItemIcon>
+              <CheckCircleOutlinedIcon fontSize="small" sx={{ color: '#10b981' }} />
             </ListItemIcon>
-            <ListItemText primary="Phê duyệt tin" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+            <ListItemText
+              primary="Phê duyệt tin"
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+            />
           </MenuItem>
         )}
 
         {job.status === 'PENDING' && !canApprove && (
-          <MenuItem disabled sx={{ py: 1.2, px: 2 }}>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <CheckCircleOutlinedIcon fontSize="small" sx={{ color: '#cbd5e1' }} />
+          <MenuItem disabled sx={{ py: 1 }}>
+            <ListItemIcon>
+              <CheckCircleOutlinedIcon fontSize="small" sx={{ color: '#d1d5db' }} />
             </ListItemIcon>
             <ListItemText
               primary="Chưa thể phê duyệt"
               secondary={getEarliestApprovalTime(job)?.toLocaleString('vi-VN') ? `Sau ${getEarliestApprovalTime(job).toLocaleString('vi-VN')}` : ''}
-              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
               secondaryTypographyProps={{ fontSize: '0.72rem' }}
             />
           </MenuItem>
         )}
 
         {job.status === 'PENDING' && (
-          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'REJECTED'); }} sx={{ py: 1.2, px: 2, color: '#ef4444', '&:hover': { bgcolor: '#fef2f2' } }}>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <HighlightOffOutlinedIcon fontSize="small" sx={{ color: 'inherit' }} />
+          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'REJECTED'); }} sx={{ py: 1 }}>
+            <ListItemIcon>
+              <HighlightOffOutlinedIcon fontSize="small" sx={{ color: '#ef4444' }} />
             </ListItemIcon>
-            <ListItemText primary="Từ chối tin" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+            <ListItemText
+              primary="Từ chối tin"
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+            />
           </MenuItem>
         )}
 
         {job.status === 'ACTIVE' && (
-          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'CLOSED'); }} sx={{ py: 1.2, px: 2, color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' } }}>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <LockOutlinedIcon fontSize="small" sx={{ color: '#64748b' }} />
+          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'CLOSED'); }} sx={{ py: 1 }}>
+            <ListItemIcon>
+              <LockOutlinedIcon fontSize="small" sx={{ color: '#ef4444' }} />
             </ListItemIcon>
-            <ListItemText primary="Đóng tin" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+            <ListItemText
+              primary="Đóng tin"
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+            />
           </MenuItem>
         )}
 
         {job.status === 'CLOSED' && (
-          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'ACTIVE'); }} sx={{ py: 1.2, px: 2, color: '#2563eb', '&:hover': { bgcolor: '#eff6ff' } }}>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <PlayCircleOutlineIcon fontSize="small" sx={{ color: 'inherit' }} />
+          <MenuItem onClick={() => { handleClose(); onStatusChange(job, 'ACTIVE'); }} sx={{ py: 1 }}>
+            <ListItemIcon>
+              <PlayCircleOutlineIcon fontSize="small" sx={{ color: '#10b981' }} />
             </ListItemIcon>
-            <ListItemText primary="Mở lại tin" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+            <ListItemText
+              primary="Mở lại tin"
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+            />
           </MenuItem>
         )}
 
         {job.status !== 'ACTIVE' && job.status !== 'PENDING' && (
-          <MenuItem onClick={() => { handleClose(); onDelete(job); }} sx={{ py: 1.2, px: 2, color: '#ef4444', '&:hover': { bgcolor: '#fef2f2' } }}>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <DeleteOutlineIcon fontSize="small" sx={{ color: 'inherit' }} />
+          <MenuItem onClick={() => { handleClose(); onDelete(job); }} sx={{ py: 1 }}>
+            <ListItemIcon>
+              <DeleteOutlineIcon fontSize="small" sx={{ color: '#ef4444' }} />
             </ListItemIcon>
-            <ListItemText primary="Xóa vĩnh viễn" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+            <ListItemText
+              primary="Xóa vĩnh viễn"
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+            />
           </MenuItem>
         )}
       </Menu>
@@ -183,40 +196,44 @@ export default function JobTable({
 }) {
   return (
     <Paper
-      elevation={0}
-      sx={{
-        borderRadius: '28px',
-        border: '1px solid #dbeafe',
-        overflow: 'hidden',
-        boxShadow: '0 14px 36px rgba(148, 163, 184, 0.12)',
-      }}
+      variant="outlined"
+      sx={{ borderRadius: 2, borderColor: '#e5e7eb', overflow: 'hidden' }}
     >
-      <TableContainer sx={{ minHeight: 440 }}>
-        <Table stickyHeader>
+      <TableContainer>
+        <Table sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ ...headCellSx, pl: 4, minWidth: 320 }}>Tin tuyển dụng</TableCell>
-              <TableCell sx={{ ...headCellSx, minWidth: 180 }}>Địa điểm</TableCell>
-              <TableCell sx={{ ...headCellSx, minWidth: 150 }}>Mức lương</TableCell>
-              <TableCell sx={{ ...headCellSx, minWidth: 120 }}>Ứng viên</TableCell>
-              <TableCell sx={{ ...headCellSx, minWidth: 150 }}>Trạng thái</TableCell>
-              <TableCell sx={{ ...headCellSx, minWidth: 130 }}>Ngày đăng</TableCell>
-              <TableCell sx={{ ...headCellSx, textAlign: 'center', pr: 4, minWidth: 80 }}>Thao tác</TableCell>
+              <TableCell sx={{ ...headCellSx, minWidth: 280 }}>
+                Tin tuyển dụng
+              </TableCell>
+              <TableCell sx={{ ...headCellSx, minWidth: 150 }}>
+                Địa điểm
+              </TableCell>
+              <TableCell sx={{ ...headCellSx, minWidth: 130 }}>
+                Mức lương
+              </TableCell>
+              <TableCell sx={{ ...headCellSx, minWidth: 100 }}>
+                Ứng viên
+              </TableCell>
+              <TableCell sx={{ ...headCellSx, minWidth: 120 }}>
+                Trạng thái
+              </TableCell>
+              <TableCell sx={{ ...headCellSx, minWidth: 120 }}>
+                Ngày đăng
+              </TableCell>
+              <TableCell sx={{ ...headCellSx, textAlign: 'center', minWidth: 60 }}>
+                Thao tác
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {jobs.length === 0 && !loading ? (
               <TableRow>
-                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: '#eff6ff', width: 64, height: 64 }}>
-                      <FiBriefcase size={32} color="#60a5fa" />
-                    </Avatar>
-                    <Typography sx={{ fontWeight: 700, color: '#94a3b8', fontSize: '0.9rem' }}>
-                      Không tìm thấy tin tuyển dụng nào
-                    </Typography>
-                  </Box>
+                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 6 }}>
+                  <Typography color="text.secondary">
+                    Không tìm thấy tin tuyển dụng nào
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -225,46 +242,32 @@ export default function JobTable({
                   key={job.jobId || idx}
                   hover
                   sx={{
-                    '&:hover': { bgcolor: '#f8fbff' },
-                    transition: 'background-color 0.2s',
+                    '&:hover': { bgcolor: '#fafafa' },
+                    transition: 'background-color 0.15s',
                   }}
                 >
-                  <TableCell sx={{ ...bodyCellSx, pl: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TableCell sx={bodyCellSx}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar
                         src={job.companyLogoUrl}
                         variant="rounded"
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          bgcolor: '#f8fbff',
-                          border: '1px solid #dbeafe',
-                          p: 0.5,
-                          '& img': { objectFit: 'contain' },
-                        }}
-                      >
-                        <FiBriefcase size={20} color="#60a5fa" />
-                      </Avatar>
+                        sx={{ width: 40, height: 40 }}
+                      />
                       <Box sx={{ minWidth: 0 }}>
                         <Typography
                           noWrap
                           sx={{
-                            fontWeight: 800,
-                            fontSize: '0.875rem',
-                            color: '#0f172a',
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            color: '#1f2937',
+                            lineHeight: 1.4,
                           }}
                         >
                           {job.title}
                         </Typography>
                         <Typography
                           noWrap
-                          sx={{
-                            fontSize: '0.7rem',
-                            color: '#2563eb',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.025em',
-                          }}
+                          sx={{ fontSize: '0.75rem', color: '#6b7280' }}
                         >
                           {job.companyName || 'N/A'}
                         </Typography>
@@ -273,40 +276,56 @@ export default function JobTable({
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#475569' }}>
-                      <LocationOnOutlinedIcon sx={{ fontSize: 16, color: '#60a5fa' }} />
-                      <Typography noWrap sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <LocationOnOutlinedIcon sx={{ fontSize: 16, color: '#9ca3af' }} />
+                      <Typography sx={{ fontSize: '0.85rem', color: '#374151' }}>
                         {job.location || 'Toàn quốc'}
                       </Typography>
                     </Box>
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#2563eb', fontWeight: 700 }}>
-                      <AttachMoneyOutlinedIcon sx={{ fontSize: 18 }} />
-                      <Typography sx={{ fontSize: '0.8rem', fontWeight: 800 }}>
-                        {job.salaryMin && job.salaryMax ? `${job.salaryMin} - ${job.salaryMax} tr` : 'Thỏa thuận'}
-                      </Typography>
-                    </Box>
+                    {(!job.salaryMin && !job.salaryMax) || job.salaryNegotiable ? (
+                      <Chip
+                        label="Thỏa thuận"
+                        size="small"
+                        sx={{
+                          bgcolor: '#f0fdf4',
+                          color: '#16a34a',
+                          border: '1px solid #86efac',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          height: 26,
+                          borderRadius: '6px',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          bgcolor: '#f0fdf4',
+                          color: '#16a34a',
+                          px: 1,
+                          py: 0.4,
+                          borderRadius: '6px',
+                          display: 'inline-block',
+                          textAlign: 'center',
+                          border: '1px solid #86efac',
+                          minWidth: '60px',
+                        }}
+                      >
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.75rem', lineHeight: 1.2 }}>
+                          {Math.round((job.salaryMin || 0) / 1_000_000)} - {Math.round((job.salaryMax || 0) / 1_000_000)}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.65rem', fontWeight: 600 }}>triệu</Typography>
+                      </Box>
+                    )}
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
                     <Tooltip title="Số lượng ứng viên đã ứng tuyển" arrow>
-                      <Box
-                        sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          bgcolor: '#eff6ff',
-                          color: '#2563eb',
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: '999px',
-                          border: '1px solid #bfdbfe',
-                        }}
-                      >
-                        <PeopleOutlinedIcon sx={{ fontSize: 16 }} />
-                        <Typography sx={{ fontSize: '0.8rem', fontWeight: 800 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <PeopleOutlinedIcon sx={{ fontSize: 16, color: '#9ca3af' }} />
+                        <Typography sx={{ fontSize: '0.85rem', color: '#374151' }}>
                           {job.numberOfApplications || 0}
                         </Typography>
                       </Box>
@@ -327,41 +346,35 @@ export default function JobTable({
                       size="small"
                       sx={{
                         bgcolor:
-                          job.status === 'REJECTED'
-                            ? '#fef2f2'
-                            : '#eff6ff',
+                          job.status === 'ACTIVE'
+                            ? '#dcfce7'
+                            : job.status === 'PENDING'
+                              ? '#fef3c7'
+                              : job.status === 'REJECTED'
+                                ? '#fee2e2'
+                                : '#f3f4f6',
                         color:
-                          job.status === 'REJECTED'
-                            ? '#ef4444'
-                            : job.status === 'CLOSED'
-                              ? '#64748b'
-                              : '#2563eb',
-                        fontWeight: 800,
-                        fontSize: '0.7rem',
-                        height: 28,
-                        borderRadius: '999px',
-                        border: '1px solid',
-                        borderColor:
-                          job.status === 'REJECTED'
-                            ? '#fecaca'
-                            : job.status === 'CLOSED'
-                              ? '#cbd5e1'
-                              : '#bfdbfe',
-                        '& .MuiChip-label': { px: 1.5 },
+                          job.status === 'ACTIVE'
+                            ? '#16a34a'
+                            : job.status === 'PENDING'
+                              ? '#d97706'
+                              : job.status === 'REJECTED'
+                                ? '#ef4444'
+                                : '#6b7280',
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        height: 24,
                       }}
                     />
                   </TableCell>
 
                   <TableCell sx={bodyCellSx}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#64748b' }}>
-                      <CalendarTodayOutlinedIcon sx={{ fontSize: 14 }} />
-                      <Typography sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                        {job.createdAt ? new Date(job.createdAt).toLocaleDateString('vi-VN') : '---'}
-                      </Typography>
-                    </Box>
+                    <Typography sx={{ fontSize: '0.85rem', color: '#374151' }}>
+                      {job.createdAt ? new Date(job.createdAt).toLocaleDateString('vi-VN') : '---'}
+                    </Typography>
                   </TableCell>
 
-                  <TableCell sx={{ ...bodyCellSx, textAlign: 'center', pr: 4 }}>
+                  <TableCell sx={{ ...bodyCellSx, textAlign: 'center' }}>
                     <JobActionMenu
                       job={job}
                       onStatusChange={onStatusChange}
@@ -379,37 +392,25 @@ export default function JobTable({
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 3,
-          bgcolor: '#f8fbff',
-          borderTop: '1px solid #dbeafe',
+          justifyContent: 'flex-end',
+          p: 2,
+          borderTop: '1px solid #f3f4f6',
         }}
       >
-        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Hiển thị {jobs.length} / {totalElements} kết quả
-        </Typography>
         <Pagination
           count={totalPages}
           page={page + 1}
           onChange={(_, val) => onPageChange?.(val - 1)}
           shape="rounded"
-          size="medium"
+          size="small"
           sx={{
             '& .MuiPaginationItem-root': {
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              borderRadius: '12px',
-              border: '1px solid #dbeafe',
-              bgcolor: '#fff',
+              fontWeight: 500,
               '&.Mui-selected': {
                 bgcolor: '#3b82f6',
                 color: '#fff',
-                borderColor: '#3b82f6',
-                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)',
                 '&:hover': { bgcolor: '#2563eb' },
               },
-              '&:hover': { bgcolor: '#f8fbff' },
             },
           }}
         />

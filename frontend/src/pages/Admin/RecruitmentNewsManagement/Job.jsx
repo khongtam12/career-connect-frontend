@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import JobStatsCards from '../../../components/admin/jobs/JobStatsCards';
 import JobSearchFilter from '../../../components/admin/jobs/JobSearchFilter';
 import JobTable from '../../../components/admin/jobs/JobTable';
 import { getJobsByAdmin, getJobStats, getJobById, adminChangeJobStatus, adminDeleteJob } from '../../../service/jobService';
-import { toast } from 'react-toastify';
 import JobDetailDialog from '../../../components/admin/jobs/JobDetailDialog';
 import { useUserStore } from '../../../stores/useUserStore';
 
@@ -30,6 +29,11 @@ const Job = () => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+  const showSnack = (message, severity = 'success') =>
+    setSnack({ open: true, message, severity });
+  const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -58,9 +62,9 @@ const Job = () => {
     } catch (error) {
       console.error('Error fetching jobs:', error);
       if (error.response?.status === 403) {
-        toast.error('Bạn không có quyền truy cập dữ liệu này');
+        showSnack('Bạn không có quyền truy cập dữ liệu này', 'error');
       } else {
-        toast.error('Không thể tải danh sách tin tuyển dụng');
+        showSnack('Không thể tải danh sách tin tuyển dụng', 'error');
       }
       setJobs([]);
     } finally {
@@ -81,19 +85,19 @@ const Job = () => {
     setStatusFilter('');
     setPage(0);
     fetchData();
-    toast.success('Đã làm mới dữ liệu');
+    showSnack('Đã làm mới dữ liệu');
   };
 
   const handleStatusChange = async (job, newStatus) => {
     try {
       const adminId = user?.adminId || user?.id || 'ADMIN001';
       await adminChangeJobStatus(job.jobId, newStatus, adminId);
-      toast.success(`Đã cập nhật trạng thái tin sang: ${newStatus}`);
+      showSnack(`Đã cập nhật trạng thái tin sang: ${newStatus}`);
       fetchData();
     } catch (error) {
       console.error('Error changing status:', error);
       const backendMessage = error.response?.data?.message || error.response?.data?.error || error.message;
-      toast.error(backendMessage || 'Không thể cập nhật trạng thái tin tuyển dụng');
+      showSnack(backendMessage || 'Không thể cập nhật trạng thái tin tuyển dụng', 'error');
     }
   };
 
@@ -105,7 +109,7 @@ const Job = () => {
       setSelectedJob(data);
     } catch (error) {
       console.error('Error fetching job detail:', error);
-      toast.error('Không thể tải thông tin chi tiết tin tuyển dụng');
+      showSnack('Không thể tải thông tin chi tiết tin tuyển dụng', 'error');
       setDetailDialogOpen(false);
     } finally {
       setDetailLoading(false);
@@ -113,7 +117,7 @@ const Job = () => {
   };
 
   const handleEdit = (job) => {
-    toast.info(`Chỉnh sửa tin: ${job.title}`);
+    showSnack(`Chỉnh sửa tin: ${job.title}`, 'info');
   };
 
   const handleDelete = async (job) => {
@@ -121,16 +125,16 @@ const Job = () => {
       const adminId = user?.adminId || user?.id || 'ADMIN001';
       await adminDeleteJob(job.jobId, adminId);
       setJobs((prev) => prev.filter((j) => j.jobId !== job.jobId));
-      toast.success('Đã xóa tin tuyển dụng');
+      showSnack('Đã xóa tin tuyển dụng');
     } catch (error) {
       console.error('Delete error:', error);
       const backendMessage = error.response?.data?.message || error.response?.data?.error || error.message;
-      toast.error(backendMessage || 'Không thể xóa tin tuyển dụng');
+      showSnack(backendMessage || 'Không thể xóa tin tuyển dụng', 'error');
     }
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 'none', mx: 0 }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       <Box
         sx={{
           display: 'flex',
@@ -138,42 +142,37 @@ const Job = () => {
           alignItems: { xs: 'flex-start', sm: 'center' },
           flexDirection: { xs: 'column', sm: 'row' },
           gap: 2,
-          mb: 4,
+          mb: 3,
         }}
       >
         <Box>
           <Typography
             sx={{
-              fontWeight: 900,
-              fontSize: '1.75rem',
-              color: '#0f172a',
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
+              fontWeight: 700,
+              fontSize: '1.5rem',
+              color: '#1f2937',
+              lineHeight: 1.3,
             }}
           >
             Quản lý tin tuyển dụng
           </Typography>
-          <Typography sx={{ color: '#475569', fontSize: '0.95rem', mt: 0.5, fontWeight: 500 }}>
+          <Typography sx={{ color: '#6b7280', fontSize: '0.9rem', mt: 0.3 }}>
             Duyệt và quản lý tin tuyển dụng trên hệ thống
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={handleRefresh}
             sx={{
-              borderColor: '#bfdbfe',
-              color: '#2563eb',
-              borderRadius: '999px',
-              px: 2.75,
-              py: 1,
-              fontSize: '0.875rem',
+              borderColor: '#d1d5db',
+              color: '#374151',
+              borderRadius: 2,
               textTransform: 'none',
-              fontWeight: 700,
-              bgcolor: '#eff6ff',
-              '&:hover': { borderColor: '#93c5fd', bgcolor: '#dbeafe' },
+              fontWeight: 600,
+              '&:hover': { borderColor: '#9ca3af', bgcolor: '#f9fafb' },
             }}
           >
             Làm mới
@@ -219,6 +218,33 @@ const Job = () => {
           setTimeout(() => setSelectedJob(null), 300);
         }}
       />
+
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={closeSnack}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={closeSnack}
+          severity={snack.severity}
+          sx={{
+            borderRadius: 2,
+            fontSize: '0.84rem',
+            fontWeight: 500,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: snack.severity === 'success' ? '#bbf7d0' : '#fecaca',
+            bgcolor: snack.severity === 'success' ? '#f0fdf4' : '#fff5f5',
+            color: snack.severity === 'success' ? '#15803d' : '#dc2626',
+            '& .MuiAlert-icon': {
+              color: snack.severity === 'success' ? '#16a34a' : '#ef4444',
+            },
+          }}
+        >
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
