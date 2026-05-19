@@ -10,7 +10,7 @@ export const getCurrentUser = async () => {
 
 // LOGOUT
 export const logoutAccount = async () => {
-    await apiClient.post(`/api/v1/user/auth/logout`);
+    await apiClient.post(`/api/v1/user/auth/logout`, {}, { skipAuthRefresh: true });
 };
 
 export const register = async (data) => {
@@ -39,5 +39,10 @@ export const forgotPassword = async (email, type) => {
 
 export const resetPassword = async (data, type) => {
     const res = await apiClient.post(`/api/v1/user/auth/reset-password?type=${type}`, data);
+    return res.data;
+};
+
+export const refreshToken = async () => {
+    const res = await apiClient.post(`/api/v1/user/auth/refresh`, {}, { skipAuthRefresh: true });
     return res.data;
 };
