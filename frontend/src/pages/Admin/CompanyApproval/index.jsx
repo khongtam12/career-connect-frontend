@@ -169,6 +169,7 @@ const CompanyApproval = () => {
                                         <TableCell sx={{ ...bodyCellSx, pl: 3 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                 <Avatar 
+                                                    src={company.logo}
                                                     variant="rounded" 
                                                     sx={{ 
                                                         bgcolor: '#eff6ff', 
