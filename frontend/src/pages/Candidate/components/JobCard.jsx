@@ -139,6 +139,25 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
                 {job.title}
               </Typography>
               <CheckCircle size={16} color="#22c55e" style={{ flexShrink: 0 }} />
+            </Stack>
+
+            {/* Company name + Badges */}
+            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: '#64748b',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  minWidth: 0,
+                }}
+              >
+                {companyName}
+              </Typography>
               {resolvedFeatured && (
                 <Chip
                   label="TOP"
@@ -183,15 +202,6 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
                 />
               )}
             </Stack>
-
-            {/* Company name */}
-            <Typography
-              variant="body2"
-              sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase' }}
-              noWrap
-            >
-              {companyName}
-            </Typography>
 
             {/* Tags row */}
             <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
@@ -287,7 +297,6 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
           >
             {/* Salary */}
             <Stack direction="row" alignItems="center" spacing={0.5}>
-              <DollarSign size={18} color="#22c55e" />
               <Typography
                 sx={{
                   fontWeight: 800,
@@ -379,7 +388,7 @@ const formatSalary = (job) => {
 
   if (!min && !max) return 'Thỏa thuận';
   if (min && max)
-    return `${formatNum(min)} - ${formatNum(max)} Triệu`;
+    return `${formatNum(min)} - ${formatNum(max)} VNĐ/tháng`;
   if (min) return `Từ ${formatNum(min)} Triệu`;
   return `Đến ${formatNum(max)} Triệu`;
 };

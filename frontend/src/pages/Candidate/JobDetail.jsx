@@ -489,7 +489,7 @@ export default function JobDetail() {
               {/* ── Company Card ── */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 shadow-lg shrink-0">
+                  <div className="w-28 h-28 rounded-xl overflow-hidden border border-gray-200 shadow-lg shrink-0">
                     <img
                       src={job.logo}
                       alt={job.company}
