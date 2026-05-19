@@ -64,14 +64,30 @@ const CompanyApproval = () => {
     const paginatedList = pendingList.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
     return (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
             {/* Header Section */}
-            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2,
+                    mb: 3,
+                }}
+            >
                 <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mb: 0.5 }}>
-                        Phê duyệt Công ty
+                    <Typography
+                        sx={{
+                            fontWeight: 700,
+                            fontSize: '1.5rem',
+                            color: '#1f2937',
+                            lineHeight: 1.3,
+                        }}
+                    >
+                        Phê duyệt công ty
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                    <Typography sx={{ color: '#6b7280', fontSize: '0.9rem', mt: 0.3 }}>
                         Quản lý và thẩm định hồ sơ pháp lý của các doanh nghiệp mới tham gia hệ thống
                     </Typography>
                 </Box>

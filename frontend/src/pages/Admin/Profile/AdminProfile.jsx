@@ -1,28 +1,72 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUserStore } from "../../../stores/useUserStore";
-import { getAdminProfile, updateAdminProfile, uploadAvatar } from "../../../service/profileService";
-import {
-    Box, Card, CardContent, Avatar, Typography, TextField, Button,
-    Divider, Stack, Chip, Alert, CircularProgress, Grid
-} from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Cancel";
+import { getAdminProfile, updateAdminProfile, uploadAvatar, changePassword } from "../../../service/profileService";
+import { CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 
+const IconUser = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+);
+const IconShield = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+);
+const IconCamera = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+    </svg>
+);
+const IconEdit = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+);
+const IconSave = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+    </svg>
+);
+const IconX = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+);
+const IconKey = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+    </svg>
+);
+const IconSettings = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+);
+
+const SvgEye = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const SvgEyeOff = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+
+const NAV_ITEMS = [
+    { id: "info", label: "Thông tin tài khoản", Icon: IconUser },
+    { id: "security", label: "Đổi mật khẩu", Icon: IconShield },
+];
+
 export default function AdminProfile() {
-    const { user } = useUserStore();
     const fetchUser = useUserStore(s => s.fetchUser);
     const [profile, setProfile] = useState(null);
+    const [activeSection, setActiveSection] = useState("info");
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({ fullName: "", phone: "", avatar: "" });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileRef = useRef();
+    const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    const [savingPw, setSavingPw] = useState(false);
 
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+    useEffect(() => { fetchProfile(); }, []);
 
     const fetchProfile = async () => {
         try {
@@ -30,13 +74,8 @@ export default function AdminProfile() {
             const res = await getAdminProfile();
             const data = res.data;
             setProfile(data);
-            setForm({
-                fullName: data.fullName || "",
-                phone: data.phone || "",
-                avatar: data.avatar || "",
-            });
-        } catch (err) {
-            console.error("Failed to fetch admin profile:", err);
+            setForm({ fullName: data.fullName || "", phone: data.phone || "", avatar: data.avatar || "" });
+        } catch {
             toast.error("Không thể tải thông tin cá nhân");
         } finally {
             setLoading(false);
@@ -51,8 +90,7 @@ export default function AdminProfile() {
             setEditing(false);
             await fetchUser();
             toast.success("Cập nhật thành công!");
-        } catch (err) {
-            console.error("Failed to update profile:", err);
+        } catch {
             toast.error("Cập nhật thất bại");
         } finally {
             setSaving(false);
@@ -60,163 +98,261 @@ export default function AdminProfile() {
     };
 
     const handleCancel = () => {
-        setForm({
-            fullName: profile.fullName || "",
-            phone: profile.phone || "",
-            avatar: profile.avatar || "",
-        });
+        setForm({ fullName: profile.fullName || "", phone: profile.phone || "", avatar: profile.avatar || "" });
         setEditing(false);
     };
 
-    if (loading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                <CircularProgress />
-            </Box>
-        );
-    }
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setUploadingAvatar(true);
+            const url = await uploadAvatar(file);
+            setForm(f => ({ ...f, avatar: url }));
+        } catch {
+            toast.error("Tải ảnh thất bại");
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
 
-    if (!profile) {
-        return (
-            <Box display="flex" justifyContent="center" mt={4}>
-                <Alert severity="error">Không tìm thấy thông tin admin</Alert>
-            </Box>
-        );
-    }
+    const handleChangePassword = async () => {
+        const { currentPassword, newPassword, confirmPassword } = pwForm;
+        if (!currentPassword || !newPassword || !confirmPassword) { toast.error("Vui lòng điền đầy đủ thông tin"); return; }
+        if (newPassword.length < 8) { toast.error("Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
+        if (newPassword !== confirmPassword) { toast.error("Mật khẩu xác nhận không khớp"); return; }
+        try {
+            setSavingPw(true);
+            await changePassword({ currentPassword, newPassword, confirmPassword });
+            toast.success("Đổi mật khẩu thành công!");
+            setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Đổi mật khẩu thất bại");
+        } finally { setSavingPw(false); }
+    };
+
+    if (loading) return (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
+            <CircularProgress sx={{ color: "#6366f1" }} />
+        </div>
+    );
+    if (!profile) return (
+        <div style={{ textAlign: "center", padding: 40, color: "#ef4444" }}>Không tìm thấy thông tin admin</div>
+    );
+
+    const getInitials = (name) => name?.split(" ").slice(-2).map(w => w[0]).join("").toUpperCase() || "A";
+    const avatarSrc = editing ? form.avatar : profile.avatar;
 
     return (
-        <Box sx={{ maxWidth: 900, mx: 'auto', p: 3, mb: 4 }}>
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mb: 0.5 }}>
-                    Hồ sơ Quản trị viên
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                    Quản lý thông tin tài khoản và hệ thống
-                </Typography>
-            </Box>
+        <div style={{ fontFamily: "'Inter','Segoe UI',sans-serif", background: "#f4f6f8", minHeight: "100vh", padding: "32px 0" }}>
+            <div style={{ maxWidth: 1020, margin: "0 auto", padding: "0 20px" }}>
+                <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
 
-            <Card sx={{ backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                <CardContent sx={{ p: 4 }}>
-                    <Stack direction="row" spacing={3} alignItems="center" mb={4}>
-                        <Avatar
-                            src={profile.avatar || ""}
-                            sx={{ width: 88, height: 88, border: '2px solid #f0f0f0' }}
-                        >
-                            {profile.fullName?.charAt(0)}
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827' }}>{profile.fullName}</Typography>
-                            <Stack direction="row" spacing={1} mt={1}>
-                                <Chip label="Admin" color="primary" size="small" variant="tonal" sx={{ fontWeight: 600, borderRadius: '8px' }} />
-                                <Chip
-                                    label={profile.status}
-                                    color={profile.status === "ACTIVE" ? "success" : "error"}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ borderRadius: '8px' }}
-                                />
-                            </Stack>
-                        </Box>
-                    </Stack>
+                    {/* Sidebar */}
+                    <div style={{ width: 248, flexShrink: 0 }}>
+                        <div style={{ background: "#fff", borderRadius: 16, padding: "28px 20px 20px", marginBottom: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.07)", textAlign: "center" }}>
+                            <div style={{ position: "relative", display: "inline-block", marginBottom: 14 }}>
+                                {avatarSrc ? (
+                                    <img src={avatarSrc} alt="avatar"
+                                        style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "3px solid #ede9fe", boxShadow: "0 2px 8px rgba(99,102,241,0.2)" }} />
+                                ) : (
+                                    <div style={{
+                                        width: 80, height: 80, borderRadius: "50%",
+                                        background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        color: "#fff", fontWeight: 700, fontSize: 28, border: "3px solid #ede9fe",
+                                        boxShadow: "0 2px 8px rgba(99,102,241,0.25)"
+                                    }}>
+                                        {getInitials(profile.fullName)}
+                                    </div>
+                                )}
+                                <span style={{
+                                    position: "absolute", bottom: 4, right: 4, width: 14, height: 14,
+                                    background: "#22c55e", borderRadius: "50%", border: "2.5px solid #fff"
+                                }} />
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: 15.5, color: "#111827", marginBottom: 3 }}>{profile.fullName}</div>
+                            <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 10 }}>{profile.email}</div>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 14px", borderRadius: 20, background: "linear-gradient(135deg,#ede9fe,#ddd6fe)", color: "#6d28d9", fontSize: 12, fontWeight: 700 }}>
+                                <IconSettings />
+                                Quản trị viên
+                            </span>
+                        </div>
 
-                    <Divider sx={{ mb: 4, borderColor: '#f3f4f6' }} />
+                        <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}>
+                            {NAV_ITEMS.map((item, idx) => {
+                                const active = activeSection === item.id;
+                                return (
+                                    <button key={item.id} onClick={() => { setActiveSection(item.id); setEditing(false); }}
+                                        style={{
+                                            display: "flex", alignItems: "center", gap: 11, width: "100%",
+                                            padding: "14px 18px", border: "none",
+                                            borderBottom: idx < NAV_ITEMS.length - 1 ? "1px solid #f3f4f6" : "none",
+                                            cursor: "pointer", textAlign: "left",
+                                            background: active ? "#f5f3ff" : "transparent",
+                                            color: active ? "#6366f1" : "#4b5563",
+                                            fontWeight: active ? 600 : 400,
+                                            fontSize: 13.5,
+                                            borderLeft: active ? "3px solid #6366f1" : "3px solid transparent",
+                                            transition: "all .15s"
+                                        }}>
+                                        <item.Icon />
+                                        {item.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-                    {editing ? (
-                        <Stack spacing={3}>
-                            <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                    <TextField
-                                        label="Họ và tên"
-                                        value={form.fullName}
-                                        onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                                        fullWidth
-                                        size="small"
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                    <TextField
-                                        label="Số điện thoại"
-                                        value={form.phone}
-                                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                        fullWidth
-                                        size="small"
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                                    />
-                                </Grid>
-                            </Grid>
-                            <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1 }}>
-                                <Button variant="outlined" component="label" disabled={uploadingAvatar} sx={{ borderRadius: '10px', textTransform: 'none' }}>
-                                    {uploadingAvatar ? "Đang tải ảnh..." : "Chọn ảnh đại diện (Tải lên)"}
-                                    <input type="file" hidden accept="image/*" onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            try {
-                                                setUploadingAvatar(true);
-                                                const url = await uploadAvatar(file);
-                                                setForm({ ...form, avatar: url });
-                                            } catch (err) {
-                                                toast.error("Tải ảnh thất bại");
-                                            } finally {
-                                                setUploadingAvatar(false);
-                                            }
-                                        }
-                                    }} />
-                                </Button>
-                                {form.avatar && <Avatar src={form.avatar} sx={{ width: 48, height: 48 }} />}
-                            </Stack>
-                            <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<SaveIcon />}
-                                    onClick={handleSave}
-                                    disabled={saving}
-                                    sx={{ borderRadius: '10px', textTransform: 'none', px: 4 }}
-                                >
-                                    {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<CancelIcon />}
-                                    onClick={handleCancel}
-                                    sx={{ borderRadius: '10px', textTransform: 'none', color: '#6b7280', borderColor: '#e5e7eb', '&:hover': { backgroundColor: '#f9fafb', borderColor: '#d1d5db' } }}
-                                >
-                                    Hủy
-                                </Button>
-                            </Stack>
-                        </Stack>
-                    ) : (
-                        <>
-                            <Grid container spacing={4}>
-                                {[
-                                    { label: "Email", value: profile.email },
-                                    { label: "Họ và tên", value: profile.fullName },
-                                    { label: "Số điện thoại", value: profile.phone || "Chưa cập nhật" },
-                                ].map((item) => (
-                                    <Grid size={{ xs: 12, sm: 6 }} key={item.label}>
-                                        <Box sx={{ p: 2, backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px solid #f3f4f6' }}>
-                                            <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                                {item.label}
-                                            </Typography>
-                                            <Typography variant="body1" sx={{ color: '#111827', fontWeight: 500, mt: 0.5 }}>{item.value}</Typography>
-                                        </Box>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                            <Box mt={4}>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<EditIcon />}
-                                    onClick={() => setEditing(true)}
-                                    sx={{ borderRadius: '10px', textTransform: 'none', px: 3 }}
-                                >
-                                    Chỉnh sửa hồ sơ
-                                </Button>
-                            </Box>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
-        </Box>
+                    {/* Main */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        {activeSection === "info" && (
+                            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.07)", overflow: "hidden" }}>
+                                <div style={{ padding: "22px 30px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 12 }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#6366f1" }}>
+                                        <IconUser />
+                                    </div>
+                                    <div>
+                                        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#111827" }}>Thông tin tài khoản</h2>
+                                        <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#6b7280" }}>Cập nhật thông tin hồ sơ quản trị viên</p>
+                                    </div>
+                                </div>
+                                <div style={{ padding: "28px 30px" }}>
+                                    {/* Avatar row */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28, padding: "16px 20px", background: "linear-gradient(135deg,#f5f3ff,#f9fafb)", borderRadius: 12, border: "1px solid #ede9fe" }}>
+                                        {avatarSrc ? (
+                                            <img src={avatarSrc} alt="avatar" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid #ddd6fe" }} />
+                                        ) : (
+                                            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22 }}>
+                                                {getInitials(profile.fullName)}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 15, color: "#111827", marginBottom: 2 }}>{profile.fullName}</div>
+                                            <div style={{ fontSize: 12.5, color: "#6b7280" }}>{profile.email}</div>
+                                        </div>
+                                        {editing && (
+                                            <div style={{ marginLeft: "auto" }}>
+                                                <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
+                                                <button onClick={() => fileRef.current?.click()} disabled={uploadingAvatar}
+                                                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer", fontSize: 13, color: "#374151", fontWeight: 500 }}>
+                                                    <IconCamera /> {uploadingAvatar ? "Đang tải..." : "Đổi ảnh"}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 24px" }}>
+                                        <FieldBlock label="Họ và tên *"
+                                            value={editing ? form.fullName : profile.fullName}
+                                            editing={editing} placeholder="Nhập họ và tên"
+                                            onChange={v => setForm(f => ({ ...f, fullName: v }))} accent="#6366f1" />
+                                        <FieldBlock label="Email" value={profile.email} editing={false} accent="#6366f1" />
+                                        <FieldBlock label="Số điện thoại"
+                                            value={editing ? form.phone : (profile.phone || "Chưa cập nhật")}
+                                            editing={editing} placeholder="Nhập số điện thoại"
+                                            onChange={v => setForm(f => ({ ...f, phone: v }))} accent="#6366f1" />
+                                        <FieldBlock label="Vai trò" value="Quản trị viên" editing={false} accent="#6366f1" />
+                                        <FieldBlock label="Trạng thái"
+                                            value={profile.status === "ACTIVE" ? "Đang hoạt động" : profile.status}
+                                            editing={false}
+                                            valueColor={profile.status === "ACTIVE" ? "#16a34a" : "#ef4444"} accent="#6366f1" />
+                                        <FieldBlock label="Ngày tạo" value={profile.createdAt || "—"} editing={false} accent="#6366f1" />
+                                    </div>
+
+                                    <div style={{ marginTop: 28, paddingTop: 20, borderTop: "1px solid #f3f4f6", display: "flex", gap: 10 }}>
+                                        {editing ? (
+                                            <>
+                                                <button onClick={handleSave} disabled={saving}
+                                                    style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 24px", borderRadius: 9, border: "none", background: saving ? "#9ca3af" : "#6366f1", color: "#fff", fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer" }}>
+                                                    <IconSave /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                                                </button>
+                                                <button onClick={handleCancel}
+                                                    style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 20px", borderRadius: 9, border: "1.5px solid #e5e7eb", background: "#fff", color: "#6b7280", fontWeight: 500, fontSize: 14, cursor: "pointer" }}>
+                                                    <IconX /> Hủy
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button onClick={() => setEditing(true)}
+                                                style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 22px", borderRadius: 9, border: "1.5px solid #6366f1", background: "#fff", color: "#6366f1", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                                                <IconEdit /> Chỉnh sửa thông tin
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeSection === "security" && (
+                            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 8px rgba(0,0,0,0.07)", overflow: "hidden" }}>
+                                <div style={{ padding: "22px 30px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 12 }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706" }}>
+                                        <IconShield />
+                                    </div>
+                                    <div>
+                                        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#111827" }}>Đổi mật khẩu</h2>
+                                        <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#6b7280" }}>Bảo vệ tài khoản bằng mật khẩu mạnh</p>
+                                    </div>
+                                </div>
+                                <div style={{ padding: "28px 30px" }}>
+                                    <div style={{ display: "grid", gap: 20, maxWidth: 480 }}>
+                                        <PwField label="Mật khẩu hiện tại *" value={pwForm.currentPassword} placeholder="Nhập mật khẩu hiện tại" accent="#6366f1" onChange={v => setPwForm(f => ({ ...f, currentPassword: v }))} />
+                                        <PwField label="Mật khẩu mới *" value={pwForm.newPassword} placeholder="Tối thiểu 8 ký tự" accent="#6366f1" onChange={v => setPwForm(f => ({ ...f, newPassword: v }))} />
+                                        <PwField label="Xác nhận mật khẩu mới *" value={pwForm.confirmPassword} placeholder="Nhập lại mật khẩu mới" accent="#6366f1" onChange={v => setPwForm(f => ({ ...f, confirmPassword: v }))} />
+                                    </div>
+                                    <div style={{ marginTop: 24 }}>
+                                        <button onClick={handleChangePassword} disabled={savingPw}
+                                            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 9, border: "none", background: savingPw ? "#9ca3af" : "#6366f1", color: "#fff", fontWeight: 600, fontSize: 14, cursor: savingPw ? "default" : "pointer" }}>
+                                            <IconKey /> {savingPw ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function PwField({ label, value, onChange, placeholder, accent = "#6366f1" }) {
+    const [show, setShow] = useState(false);
+    return (
+        <div>
+            <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</label>
+            <div style={{ position: "relative" }}>
+                <input type={show ? "text" : "password"} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+                    style={{ width: "100%", padding: "10px 44px 10px 13px", borderRadius: 9, border: "1.5px solid #e5e7eb", fontSize: 14, color: "#111827", outline: "none", boxSizing: "border-box", fontFamily: "inherit", transition: "border-color .15s, box-shadow .15s", background: "#fff" }}
+                    onFocus={e => { e.target.style.borderColor = accent; e.target.style.boxShadow = `0 0 0 3px ${accent}22`; }}
+                    onBlur={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }} />
+                <button type="button" onClick={() => setShow(s => !s)}
+                    style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex", alignItems: "center", padding: 0 }}>
+                    {show ? <SvgEyeOff /> : <SvgEye />}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function FieldBlock({ label, value, editing, onChange, placeholder, type = "text", valueColor, accent = "#6366f1" }) {
+    return (
+        <div>
+            <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                {label}
+            </label>
+            {editing ? (
+                <input type={type} value={value} onChange={e => onChange?.(e.target.value)}
+                    placeholder={placeholder}
+                    style={{ width: "100%", padding: "10px 13px", borderRadius: 9, border: "1.5px solid #e5e7eb", fontSize: 14, color: "#111827", outline: "none", boxSizing: "border-box", fontFamily: "inherit", transition: "border-color .15s, box-shadow .15s" }}
+                    onFocus={e => { e.target.style.borderColor = accent; e.target.style.boxShadow = `0 0 0 3px ${accent}22`; }}
+                    onBlur={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }}
+                />
+            ) : (
+                <div style={{ padding: "10px 13px", borderRadius: 9, background: "#f9fafb", border: "1.5px solid #f3f4f6", fontSize: 14, color: valueColor || "#1f2937", fontWeight: valueColor ? 600 : 400, minHeight: 40 }}>
+                    {value || "—"}
+                </div>
+            )}
+        </div>
     );
 }

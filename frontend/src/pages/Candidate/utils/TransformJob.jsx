@@ -5,7 +5,7 @@ export function TransformJob(data) {
     companyId: data.company?.companyId || data.company?.id || data.companyId,
     industryId: data.industryDTO?.industryId || data.industryDTO?.id || data.industry?.id || data.industry?.industryId || data.industryId,
     logo: data.logo || data.company?.logo || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeplpRN1hSAQoBqsMoIHnQwfn4zC8yFJldEjYoL8Mi8g&s=10",
-    salary: `${data.salaryMin} - ${data.salaryMax} VND`,
+    salary: `${new Intl.NumberFormat('vi-VN').format(data.salaryMin || 0)} - ${new Intl.NumberFormat('vi-VN').format(data.salaryMax || 0)} VND`,
     location: data.location,
     experience: data.experience,
     deadline: formatVietnamDate(data.deadline),
