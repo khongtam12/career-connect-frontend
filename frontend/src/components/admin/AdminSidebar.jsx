@@ -27,14 +27,13 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Gói dịch vụ', subtitle: 'Quản lý gói & giá', icon: <FiPackage />, path: '/admin/services' },
     { name: 'Bài viết', subtitle: 'Quản lý nội dung', icon: <FiFileText />, path: '/admin/posts' },
   ];
-
   const isActive = (path) => location.pathname === path;
 
   const filteredItems = menuItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
+  //
   return (
     <>
       {isOpen && (
