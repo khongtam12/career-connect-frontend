@@ -28,11 +28,12 @@ import {
   Tooltip,
   IconButton,
   Skeleton,
-  Alert
+  Alert,
+  Snackbar
 } from '@mui/material';
-import { FiEdit2, FiRefreshCcw } from 'react-icons/fi';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
-import { toast } from 'react-toastify';
 import { getPackage, updatePackage } from '../../../service/paymentService';
 
 const categoryOptions = [
@@ -65,22 +66,20 @@ const boxTypeOptions = [
 ];
 
 const headCellSx = {
-  fontWeight: 500,
-  fontSize: '0.72rem',
-  color: '#6b7280',
+  fontWeight: 600,
+  fontSize: '0.8rem',
+  color: '#374151',
   whiteSpace: 'nowrap',
-  py: 2,
-  borderBottom: '2px solid #f3f4f6',
+  py: 1.5,
+  borderBottom: '2px solid #e5e7eb',
   bgcolor: '#f9fafb',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em'
 };
 
 const bodyCellSx = {
   fontSize: '0.85rem',
   color: '#374151',
-  py: 2,
-  borderBottom: '1px solid #f3f4f6'
+  py: 1.8,
+  borderBottom: '1px solid #f3f4f6',
 };
 
 const formatCurrency = (value) => {
@@ -102,13 +101,18 @@ const ServiceManagement = () => {
   const [saving, setSaving] = useState(false);
   const [formValues, setFormValues] = useState({});
 
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+  const showSnack = (message, severity = 'success') =>
+    setSnack({ open: true, message, severity });
+  const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
+
   const fetchPackages = async (showToast) => {
     try {
       setError('');
       const data = await getPackage();
       setPackages(Array.isArray(data) ? data : []);
       if (showToast) {
-        toast.success('Đã cập nhật danh sách gói dịch vụ');
+        showSnack('Đã cập nhật danh sách gói dịch vụ');
       }
     } catch (err) {
       console.error('Failed to load packages:', err);
@@ -223,11 +227,11 @@ const ServiceManagement = () => {
       setPackages((prev) =>
         prev.map((item) => (item.packageId === selectedPackage.packageId ? updated : item))
       );
-      toast.success('Đã cập nhật gói dịch vụ');
+      showSnack('Đã cập nhật gói dịch vụ');
       handleClose();
     } catch (err) {
       console.error('Failed to update package:', err);
-      toast.error('Không thể cập nhật gói dịch vụ');
+      showSnack('Không thể cập nhật gói dịch vụ', 'error');
     } finally {
       setSaving(false);
     }
@@ -241,222 +245,180 @@ const ServiceManagement = () => {
 
   return (
     <>
-      <Box
-        sx={{
-          maxWidth: 1400,
-          mx: 'auto',
-          p: { xs: 2, md: 4 },
-          position: 'relative'
-        }}
-      >
+      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+
         <Box
           sx={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 3,
-            background:
-              'linear-gradient(135deg, rgba(226, 232, 240, 0.6), rgba(248, 250, 252, 0.1)), radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.12), transparent 55%), radial-gradient(circle at 85% 0%, rgba(14, 116, 144, 0.12), transparent 60%)',
-            pointerEvents: 'none'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            mb: 3,
           }}
-        />
+        >
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '1.5rem',
+                color: '#1f2937',
+                lineHeight: 1.3,
+              }}
+            >
+              Quản lý gói dịch vụ
+            </Typography>
+            <Typography sx={{ color: '#6b7280', fontSize: '0.9rem', mt: 0.3 }}>
+              Chỉ cho phép chỉnh sửa thông tin gói đăng ký tuyển dụng
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1.5 }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+              disabled={refreshing}
+              sx={{
+                borderColor: '#d1d5db',
+                color: '#374151',
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                '&:hover': { borderColor: '#9ca3af', bgcolor: '#f9fafb' },
+              }}
+            >
+              {refreshing ? 'Đang làm mới...' : 'Làm mới'}
+            </Button>
+          </Box>
+        </Box>
 
-        <Box sx={{ position: 'relative' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 2,
-              mb: 3
-            }}
-          >
-            <Box>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          {[
+            { label: 'Tổng gói', value: stats.total, color: '#2563eb' },
+            { label: 'Giá trung bình', value: formatCurrency(stats.avgPrice), color: '#16a34a' },
+            { label: 'Danh mục phổ biến', value: Object.keys(stats.byCategory)[0] || '-', color: '#9333ea' },
+          ].map((item) => (
+            <Paper
+              key={item.label}
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                textAlign: 'center',
+                borderRadius: 2,
+                borderColor: '#e5e7eb',
+                bgcolor: '#fff',
+                transition: 'box-shadow 0.2s',
+                '&:hover': { boxShadow: 2 },
+              }}
+            >
               <Typography
                 sx={{
-                  fontWeight: 900,
-                  fontSize: '1.75rem',
-                  color: '#0f172a',
-                  lineHeight: 1.2,
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                Quản lý gói dịch vụ
-              </Typography>
-              <Typography sx={{ color: '#64748b', fontSize: '0.95rem', mt: 0.5, fontWeight: 500 }}>
-                Chỉ cho phép chỉnh sửa thông tin gói đăng ký tuyển dụng
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="outlined"
-                startIcon={<FiRefreshCcw />}
-                onClick={handleRefresh}
-                disabled={refreshing}
-                sx={{
-                  borderColor: '#e2e8f0',
-                  color: '#475569',
-                  borderRadius: '14px',
-                  px: 2.5,
-                  py: 1,
-                  fontSize: '0.875rem',
-                  textTransform: 'none',
+                  fontSize: '2rem',
                   fontWeight: 700,
-                  bgcolor: '#fff',
-                  '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f1f5f9' }
+                  color: item.color,
+                  lineHeight: 1.2,
                 }}
               >
-                {refreshing ? 'Đang làm mới...' : 'Làm mới'}
-              </Button>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-              gap: 2,
-              mb: 3
-            }}
-          >
-            {[
-              {
-                title: 'Tổng gói',
-                value: stats.total,
-                tone: '#0f172a'
-              },
-              {
-                title: 'Giá trung bình',
-                value: formatCurrency(stats.avgPrice),
-                tone: '#0f172a'
-              },
-              {
-                title: 'Danh mục phổ biến',
-                value: Object.keys(stats.byCategory)[0] || '- ',
-                tone: '#0f172a'
-              }
-            ].map((item) => (
-              <Paper
-                key={item.title}
-                variant="outlined"
+                {item.value}
+              </Typography>
+              <Typography
                 sx={{
-                  borderRadius: '18px',
-                  borderColor: 'rgba(226, 232, 240, 0.9)',
-                  p: 2.5,
-                  bgcolor: '#fff',
-                  boxShadow: '0 16px 32px rgba(15, 23, 42, 0.08)'
+                  fontSize: '0.85rem',
+                  color: '#6b7280',
+                  mt: 0.5,
+                  fontWeight: 500,
                 }}
               >
-                <Typography
-                  sx={{
-                    color: '#6b7280',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em'
-                  }}
-                >
-                  {item.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: { xs: '1.4rem', md: '1.7rem' },
-                    fontWeight: 700,
-                    mt: 1,
-                    color: item.tone
-                  }}
-                >
-                  {item.value}
-                </Typography>
-              </Paper>
-            ))}
-          </Box>
+                {item.label}
+              </Typography>
+            </Paper>
+          ))}
+        </Box>
 
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: '18px',
-              borderColor: 'rgba(226, 232, 240, 0.9)',
-              p: 2,
-              mb: 2,
-              bgcolor: '#fff',
-              boxShadow: '0 14px 28px rgba(15, 23, 42, 0.06)'
-            }}
-          >
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              spacing={1.5}
-              alignItems={{ xs: 'stretch', md: 'center' }}
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: 2,
+            borderColor: '#e5e7eb',
+            p: 2,
+            mb: 0,
+            bgcolor: '#fff',
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+            <TextField
+              size="small"
+              placeholder="Tìm theo tên hoặc mô tả..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  bgcolor: '#fff',
+                  '& fieldset': { borderColor: '#e5e7eb' },
+                  '&:hover fieldset': { borderColor: '#d1d5db' },
+                  '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+                },
+                '& .MuiOutlinedInput-input': { fontSize: '0.85rem', py: 1.1 },
+                '& .MuiOutlinedInput-input::placeholder': {
+                  fontSize: '0.85rem',
+                  color: '#9ca3af',
+                  opacity: 1,
+                },
+              }}
+            />
+            <FormControl
+              size="small"
+              sx={{ width: { xs: '100%', sm: 220 }, alignSelf: 'flex-start' }}
             >
-              <TextField
-                size="small"
-                placeholder="Tìm theo tên hoặc mô tả..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
-                    </InputAdornment>
-                  )
-                }}
+              <Select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                displayEmpty
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    bgcolor: '#fff',
-                    '& fieldset': { borderColor: '#e5e7eb' },
-                    '&:hover fieldset': { borderColor: '#d1d5db' },
-                    '&.Mui-focused fieldset': { borderColor: '#3b82f6' }
-                  },
-                  '& .MuiOutlinedInput-input': { fontSize: '0.85rem', py: 1.1 },
-                  '& .MuiOutlinedInput-input::placeholder': {
-                    fontSize: '0.85rem',
-                    color: '#9ca3af',
-                    opacity: 1
-                  }
+                  borderRadius: 2,
+                  bgcolor: '#fff',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
+                  '& .MuiSelect-select': { fontSize: '0.85rem', py: 1.1 },
+                  '& .MuiSvgIcon-root': { fontSize: 18 },
                 }}
-              />
-              <FormControl size="small" sx={{ width: { xs: '100%', sm: 240 } }}>
-                <Select
-                  value={categoryFilter}
-                  onChange={(event) => setCategoryFilter(event.target.value)}
-                  displayEmpty
-                  sx={{
-                    borderRadius: 2,
-                    bgcolor: '#fff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
-                    '& .MuiSelect-select': { fontSize: '0.85rem', py: 1.1 },
-                    '& .MuiSvgIcon-root': { fontSize: 18 }
-                  }}
-                >
-                  <MenuItem value="" sx={{ fontSize: '0.85rem' }}>
-                    Tất cả danh mục
+              >
+                <MenuItem value="" sx={{ fontSize: '0.85rem' }}>Tất cả danh mục</MenuItem>
+                {categoryOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.85rem' }}>
+                    {option.label}
                   </MenuItem>
-                  {categoryOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.85rem' }}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-          </Paper>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Paper>
 
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: '24px',
-              border: '1px solid #f1f5f9',
-              overflowX: 'auto',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.01), 0 1px 2px 0 rgba(0, 0, 0, 0.006)'
-            }}
-          >
-            <Table size="small" stickyHeader sx={{ minWidth: 980 }}>
+        <Paper
+          variant="outlined"
+          sx={{ borderRadius: 2, borderColor: '#e5e7eb', overflow: 'hidden' }}
+        >
+          <TableContainer>
+            <Table sx={{ minWidth: 900 }}>
               <TableHead>
                 <TableRow>
                   {[
@@ -508,12 +470,12 @@ const ServiceManagement = () => {
                       key={pkg.packageId}
                       hover
                       sx={{
-                        '&:hover': { bgcolor: '#f8fafc' },
-                        transition: 'background-color 0.2s'
+                        '&:hover': { bgcolor: '#fafafa' },
+                        transition: 'background-color 0.15s',
                       }}
                     >
                       <TableCell sx={{ ...bodyCellSx, minWidth: 220 }}>
-                        <Typography sx={{ fontWeight: 500, color: '#0f172a' }}>{pkg.name}</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#1f2937' }}>{pkg.name}</Typography>
                         {pkg.badge && (
                           <Chip
                             label={pkg.badge}
@@ -573,30 +535,21 @@ const ServiceManagement = () => {
                           label={(pkg.active ?? pkg.isActive) ? 'Hoạt động' : 'Tạm dừng'}
                           size="small"
                           sx={{
-                            bgcolor: (pkg.active ?? pkg.isActive) ? '#f0fdf4' : '#fef2f2',
+                            bgcolor: (pkg.active ?? pkg.isActive) ? '#dcfce7' : '#fee2e2',
                             color: (pkg.active ?? pkg.isActive) ? '#16a34a' : '#ef4444',
-                            fontWeight: 500,
-                            fontSize: '0.7rem',
-                            height: 28,
-                            borderRadius: '10px',
-                            border: '1px solid',
-                            borderColor: (pkg.active ?? pkg.isActive) ? '#dcfce7' : '#fee2e2',
-                            '& .MuiChip-label': { px: 1.4 }
+                            fontWeight: 600,
+                            fontSize: '0.75rem',
+                            height: 24,
                           }}
                         />
                       </TableCell>
-                      <TableCell sx={{ ...bodyCellSx, textAlign: 'center', minWidth: 120 }}>
+                      <TableCell sx={{ ...bodyCellSx, textAlign: 'center', minWidth: 60 }}>
                         <Tooltip title="Chỉnh sửa">
                           <IconButton
                             onClick={() => openEditDialog(pkg)}
-                            sx={{
-                              bgcolor: '#0ea5e9',
-                              color: '#fff',
-                              boxShadow: '0 10px 18px rgba(14, 116, 144, 0.2)',
-                              '&:hover': { bgcolor: '#0284c7' }
-                            }}
+                            size="small"
                           >
-                            <FiEdit2 size={16} />
+                            <EditOutlinedIcon fontSize="small" sx={{ color: '#6b7280' }} />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
@@ -605,7 +558,20 @@ const ServiceManagement = () => {
               </TableBody>
             </Table>
           </TableContainer>
-        </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              p: 2,
+              borderTop: '1px solid #f3f4f6',
+            }}
+          >
+            <Typography sx={{ fontSize: '0.85rem', color: '#6b7280' }}>
+              Hiển thị {filteredPackages.length} / {packages.length} gói
+            </Typography>
+          </Box>
+        </Paper>
       </Box>
 
       <Dialog
@@ -615,9 +581,9 @@ const ServiceManagement = () => {
         maxWidth="md"
         PaperProps={{
           sx: {
-            borderRadius: '18px',
-            overflow: 'hidden'
-          }
+            borderRadius: 2,
+            overflow: 'hidden',
+          },
         }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>Chỉnh sửa gói dịch vụ</DialogTitle>
@@ -800,15 +766,41 @@ const ServiceManagement = () => {
             disabled={saving}
             sx={{
               textTransform: 'none',
-              borderRadius: '12px',
+              borderRadius: 2,
               px: 3,
-              background: 'linear-gradient(120deg, #1d4ed8, #0ea5e9)'
             }}
           >
             {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={closeSnack}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={closeSnack}
+          severity={snack.severity}
+          sx={{
+            borderRadius: 2,
+            fontSize: '0.84rem',
+            fontWeight: 500,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: snack.severity === 'success' ? '#bbf7d0' : '#fecaca',
+            bgcolor: snack.severity === 'success' ? '#f0fdf4' : '#fff5f5',
+            color: snack.severity === 'success' ? '#15803d' : '#dc2626',
+            '& .MuiAlert-icon': {
+              color: snack.severity === 'success' ? '#16a34a' : '#ef4444',
+            },
+          }}
+        >
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
