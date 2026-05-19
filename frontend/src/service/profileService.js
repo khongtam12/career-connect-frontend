@@ -44,6 +44,13 @@ export const updateCompanyProfile = async (companyId, payload) => {
     return res.data;
 };
 
+// ========== CHANGE PASSWORD ==========
+export const changePassword = async (payload) => {
+    // payload: { currentPassword, newPassword, confirmPassword }
+    const res = await apiClient.post("/api/v1/user/auth/change-password", payload);
+    return res.data;
+};
+
 // ========== COMMON STORAGE ==========
 export const uploadAvatar = async (file) => {
     const key = `avatars/${Date.now()}_${file.name}`;

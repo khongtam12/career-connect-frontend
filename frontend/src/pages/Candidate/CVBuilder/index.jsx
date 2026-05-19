@@ -43,7 +43,8 @@ export default function EditorPage() {
   const isPrintMode = searchParams.get('print') === '1'
 
   // States
-  const [templateId, setTemplateId] = useState(1)
+  const templateParam = parseInt(searchParams.get('template') || '1', 10)
+  const [templateId, setTemplateId] = useState(templateParam)
   const [cvData, setCvData] = useState(EMPTY_CV)
   const [cvName, setCvName] = useState('CV của tôi')
   const [saved, setSaved] = useState(false)
