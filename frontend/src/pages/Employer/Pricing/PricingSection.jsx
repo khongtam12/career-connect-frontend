@@ -40,7 +40,7 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 const PricingSection = () => {
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [selectedTab, setSelectedTab] = useState(0);
+    const [selectedTab, setSelectedTab] = useState('JOB_POSTING');
     const [rawPackages, setRawPackages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDurations, setSelectedDurations] = useState({});
@@ -68,6 +68,14 @@ const PricingSection = () => {
         { icon: <CampaignIcon />, label: 'Quảng bá thương hiệu' },
     ];
 
+    const categoryConfig = {
+        JOB_POSTING: { icon: <DescriptionIcon />, label: 'Tin Ä‘Äƒng tuyá»ƒn dá»¥ng' },
+        HIGHLIGHT: { icon: <AssessmentIcon />, label: 'Gia tÄƒng Ä‘á»™ hiá»ƒn thá»‹' },
+        EFFECT: { icon: <AutoAwesomeIcon />, label: 'Hiá»‡u á»©ng ná»•i báº­t tin' },
+        POINTS: { icon: <MilitaryTechIcon />, label: 'Äiá»ƒm dá»‹ch vá»¥' },
+        BRANDING: { icon: <CampaignIcon />, label: 'Quáº£ng bÃ¡ thÆ°Æ¡ng hiá»‡u' },
+    };
+
     useEffect(() => {
         const fetchPackages = async () => {
             try {
@@ -88,6 +96,14 @@ const PricingSection = () => {
         'EFFECT': 'Hiệu ứng nổi bật tin',
         'POINTS': 'Điểm dịch vụ',
         'BRANDING': 'Quảng bá thương hiệu'
+    };
+
+    const categoryIcons = {
+        JOB_POSTING: <DescriptionIcon />,
+        HIGHLIGHT: <AssessmentIcon />,
+        EFFECT: <AutoAwesomeIcon />,
+        POINTS: <MilitaryTechIcon />,
+        BRANDING: <CampaignIcon />,
     };
 
     const badgeColorMap = {
@@ -152,6 +168,7 @@ const PricingSection = () => {
     };
 
     const pricingData = Object.entries(categoryLabels).map(([key, label]) => ({
+        key,
         section: label,
         items: rawPackages.filter(p => p.category === key).map(p => ({
             ...p,
@@ -162,7 +179,20 @@ const PricingSection = () => {
             badgeColor: badgeColorMap[p.badgeColor] || 'bg-gray-500',
             cardBorder: p.type === 'TRENDING_POST' ? 'border-yellow-400' : (p.type === 'INDUSTRY_PRIORITY' ? 'border-orange-600' : ''),
         }))
+    })).filter((section) => section.items.length > 0);
+
+    const visibleCategories = pricingData.map((section) => ({
+        key: section.key,
+        icon: categoryIcons[section.key],
+        label: section.section,
     }));
+
+    useEffect(() => {
+        if (visibleCategories.length === 0) return;
+        if (!visibleCategories.some((category) => category.key === selectedTab)) {
+            setSelectedTab(visibleCategories[0].key);
+        }
+    }, [visibleCategories, selectedTab]);
 
     const PricingCard = ({ item }) => {
         const selectedDuration = selectedDurations[item.id] || '1 Tuần';
@@ -276,29 +306,29 @@ const PricingSection = () => {
                 </div>
 
                 <Grid container spacing={2} mb={8} justifyContent="center">
-                    {categories.map((cat, i) => (
-                        <Grid item xs={6} md={2.4} key={i}>
+                    {visibleCategories.map((cat) => (
+                        <Grid item xs={6} md={2.4} key={cat.key}>
                             <div
                                 onClick={() => {
-                                    setSelectedTab(i);
-                                    const element = document.getElementById(`section-${i}`);
+                                    setSelectedTab(cat.key);
+                                    const element = document.getElementById(`section-${cat.key}`);
                                     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }}
-                                className={`cursor-pointer h-full transition-all duration-300 transform ${selectedTab === i ? 'scale-105' : 'hover:scale-102'}`}
+                                className={`cursor-pointer h-full transition-all duration-300 transform ${selectedTab === cat.key ? 'scale-105' : 'hover:scale-102'}`}
                             >
-                                <div className={`h-full p-5 text-center rounded-[20px] bg-white shadow-sm border-2 ${selectedTab === i ? 'border-purple-600 shadow-xl shadow-purple-50' : 'border-transparent hover:border-gray-100'}`}>
-                                    <div className={`mb-2 flex justify-center ${selectedTab === i ? 'text-purple-600' : 'text-gray-400'}`}>
+                                <div className={`h-full p-5 text-center rounded-[20px] bg-white shadow-sm border-2 ${selectedTab === cat.key ? 'border-purple-600 shadow-xl shadow-purple-50' : 'border-transparent hover:border-gray-100'}`}>
+                                    <div className={`mb-2 flex justify-center ${selectedTab === cat.key ? 'text-purple-600' : 'text-gray-400'}`}>
                                         {React.cloneElement(cat.icon, { sx: { fontSize: 28 } })}
                                     </div>
-                                    <Typography className={`text-xs font-bold ${selectedTab === i ? 'text-gray-900' : 'text-gray-500'}`}>{cat.label}</Typography>
+                                    <Typography className={`text-xs font-bold ${selectedTab === cat.key ? 'text-gray-900' : 'text-gray-500'}`}>{cat.label}</Typography>
                                 </div>
                             </div>
                         </Grid>
                     ))}
                 </Grid>
 
-                {pricingData.map((section, sIndex) => (
-                    <div key={sIndex} id={`section-${sIndex}`} className="mb-14 scroll-mt-10">
+                {pricingData.map((section) => (
+                    <div key={section.key} id={`section-${section.key}`} className="mb-14 scroll-mt-10">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-1.5 h-8 bg-purple-600 rounded-full"></div>
                             <Typography variant="h5" className="font-black text-gray-800 uppercase tracking-tight text-xl">{section.section}</Typography>

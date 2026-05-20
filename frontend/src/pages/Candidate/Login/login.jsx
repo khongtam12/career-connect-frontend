@@ -8,10 +8,17 @@ import {
   Button,
   Divider,
 } from "@mui/material";
+import { useGoogleLogin } from "@react-oauth/google";
+import { toast } from "react-toastify";
+
 import { login, outboundAuthenticate } from "../../../service/authService";
 import { useUserStore } from "../../../stores/useUserStore";
-import { toast } from "react-toastify";
-import { useGoogleLogin } from "@react-oauth/google";
+import {
+  AUTH_SESSION_INIT_MESSAGE,
+  getGoogleLoginErrorMessage,
+  getLoginErrorMessage,
+  isAuthFailure,
+} from "../../../utils/authMessages";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,12 +35,23 @@ export default function Login() {
   const hydrated = useUserStore.persist.hasHydrated();
 
   useEffect(() => {
-    if (!hydrated) return;
-    if (!isAuthenticated || !user) return;
+    if (!hydrated || !isAuthenticated || !user) return;
     if (user.role === "CANDIDATE") {
       navigate("/");
     }
-  }, [isAuthenticated, user, navigate, hydrated]);
+  }, [hydrated, isAuthenticated, navigate, user]);
+
+  const finishLoginSession = async () => {
+    try {
+      await handleLoginSuccess();
+      toast.success("Đăng nhập thành công!");
+      return true;
+    } catch (err) {
+      console.error(err);
+      setError(AUTH_SESSION_INIT_MESSAGE);
+      return false;
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -42,36 +60,39 @@ export default function Login() {
 
     try {
       await login({ username: email, password, type: "CANDIDATE" });
-      await handleLoginSuccess();
-      toast.success("Đăng nhập thành công!");
     } catch (err) {
-      if (!err.response || err.response.status >= 500) {
+      if (!isAuthFailure(err)) {
         console.error(err);
       }
-      const msg = err.response?.data?.message || "Email hoặc mật khẩu không chính xác!";
-      setError(msg);
-      toast.error(msg);
-    } finally {
+      setError(getLoginErrorMessage("CANDIDATE"));
       setLoading(false);
+      return;
     }
+
+    await finishLoginSession();
+    setLoading(false);
   };
 
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (response) => {
+      setError("");
       setLoading(true);
       try {
         await outboundAuthenticate(response.code, "CANDIDATE");
-        await handleLoginSuccess();
-        toast.success("Đăng nhập bằng Google thành công!");
+        await finishLoginSession();
       } catch (err) {
         console.error(err);
-        toast.error("Đăng nhập bằng Google thất bại!");
+        setError(
+          isAuthFailure(err)
+            ? getGoogleLoginErrorMessage()
+            : AUTH_SESSION_INIT_MESSAGE
+        );
       } finally {
         setLoading(false);
       }
     },
     onError: () => {
-      toast.error("Đăng nhập bằng Google thất bại!");
+      setError(getGoogleLoginErrorMessage());
     },
     flow: "auth-code",
   });
@@ -149,10 +170,20 @@ export default function Login() {
             </div>
 
             <div className="flex justify-end">
-              <Link to="/forgot-password?type=CANDIDATE" size="small" className="text-sm text-[#00b14f] hover:underline font-medium">
+              <Link
+                to="/forgot-password?type=CANDIDATE"
+                className="text-sm text-[#00b14f] hover:underline font-medium"
+              >
                 Quên mật khẩu?
               </Link>
             </div>
+
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium border border-red-100 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                {error}
+              </div>
+            )}
 
             <Button
               type="submit"
@@ -179,11 +210,16 @@ export default function Login() {
             </Divider>
 
             <div className="grid grid-cols-3 gap-3">
-              <button 
+              <button
                 onClick={() => handleGoogleLogin()}
                 disabled={loading}
-                className="flex items-center justify-center gap-2 border border-gray-200 rounded-md py-2.5 hover:bg-red-50 text-red-600 font-semibold transition disabled:opacity-50">
-                <img src="https://www.svgrepo.com/show/355037/google.svg" className="w-5 h-5" alt="Google" />
+                className="flex items-center justify-center gap-2 border border-gray-200 rounded-md py-2.5 hover:bg-red-50 text-red-600 font-semibold transition disabled:opacity-50"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/355037/google.svg"
+                  className="w-5 h-5"
+                  alt="Google"
+                />
                 <span className="hidden md:inline">Google</span>
               </button>
               <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-md py-2.5 hover:bg-blue-50 text-[#1877f2] font-semibold transition">
@@ -211,7 +247,9 @@ export default function Login() {
 
             <div className="text-gray-500 text-[13px] space-y-1">
               <p className="font-semibold text-gray-700">Bạn gặp khó khăn khi tạo tài khoản?</p>
-              <p>Vui lòng gọi tới số <span className="text-[#00b14f] font-bold">1900 068 889 | Nhánh 2</span> (giờ hành chính).</p>
+              <p>
+                Vui lòng gọi tới số <span className="text-[#00b14f] font-bold">1900 068 889 | Nhánh 2</span> (giờ hành chính).
+              </p>
             </div>
 
             <p className="text-[11px] text-gray-400 mt-10">
@@ -223,7 +261,7 @@ export default function Login() {
 
       <div className="hidden lg:flex w-2/5 md:bg-gradient-to-br from-[#172b22] to-[#0a1a15] relative overflow-hidden items-center justify-center text-white px-12">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent opacity-20"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent opacity-20" />
         </div>
 
         <div className="relative z-10 text-center">
@@ -241,10 +279,12 @@ export default function Login() {
           </p>
         </div>
 
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-pulse-slow"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-white/5 rounded-full animate-pulse-slow delay-700"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-pulse-slow" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-white/5 rounded-full animate-pulse-slow delay-700" />
 
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           @keyframes pulse-slow {
             0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.1; }
             50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.2; }
@@ -252,9 +292,11 @@ export default function Login() {
           .animate-pulse-slow {
             animation: pulse-slow 10s infinite ease-in-out;
           }
-        ` }} />
+        `,
+          }}
+        />
 
-        <div className="absolute bottom-[-100px] right-[-100px] w-80 h-80 bg-[#00b14f] opacity-20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-100px] right-[-100px] w-80 h-80 bg-[#00b14f] opacity-20 rounded-full blur-3xl" />
       </div>
     </div>
   );

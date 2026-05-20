@@ -109,7 +109,7 @@ const ServiceManagement = () => {
   const fetchPackages = async (showToast) => {
     try {
       setError('');
-      const data = await getPackage();
+      const data = await getPackage({ includeInactive: true });
       setPackages(Array.isArray(data) ? data : []);
       if (showToast) {
         showSnack('Đã cập nhật danh sách gói dịch vụ');
