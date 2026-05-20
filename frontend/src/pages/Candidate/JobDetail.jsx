@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getJobById } from "../../service/jobService";
 import { TransformJob } from './utils/TransformJob';
@@ -27,27 +27,28 @@ import ApplyJobModal from './components/ApplyJobModal';
 import { isJobSaved, toggleSavedJob } from './utils/jobTracker';
 import { useUserStore } from '../../stores/useUserStore';
 
-/* ── Reusable info‑row for sidebar ── */
-function InfoRow({ icon: Icon, label, value, iconColor = 'text-emerald-600' }) {
-  return (
-    <div className="flex items-start gap-3 py-2.5">
-      <div className={`w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 ${iconColor}`}>
-        <Icon size={18} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-sm font-semibold text-gray-800">{value}</p>
-      </div>
-    </div>
-  );
-}
-
 /* ── Tag badge ── */
 function Tag({ children, color = 'bg-emerald-100 text-emerald-700' }) {
   return (
     <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold ${color} transition-transform hover:scale-105`}>
       {children}
     </span>
+  );
+}
+
+/* ── Reusable info‑row for sidebar ── */
+function InfoRow({ icon, label, value, iconColor = 'text-emerald-600' }) {
+  const iconEl = icon ? React.createElement(icon, { size: 18 }) : null;
+  return (
+    <div className="flex items-start gap-3 py-2.5">
+      <div className={`w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 ${iconColor}`}>
+        {iconEl}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-sm font-semibold text-gray-800">{value}</p>
+      </div>
+    </div>
   );
 }
 
@@ -70,47 +71,72 @@ function formatJobType(jobType) {
   return map[jobType] || jobType;
 }
 
+function parseDeadlineToDate(deadline) {
+  if (!deadline) return null;
+  if (typeof deadline === 'string' && deadline.includes('/')) {
+    const parts = deadline.split('/');
+    if (parts.length >= 3) {
+      const parsed = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+  }
+  const parsed = new Date(deadline);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getDaysLeft(deadline) {
+  const date = parseDeadlineToDate(deadline);
+  if (!date) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date < today) return -1;
+  return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+}
+
 /* ─────────────────────────────────────────────
    Job Detail Page
    ───────────────────────────────────────────── */
 export default function JobDetail() {
   const { id } = useParams();
-  const [isSaved, setIsSaved] = useState(false);
-  const [applyOpen, setApplyOpen] = useState(false);
+  const [manualApplyOpen, setManualApplyOpen] = useState(false);
+  const [, setSavedVersion] = useState(0);
 
   const [job, setJob] = useState(null);
   const { isAuthenticated, openAuthDialog } = useUserStore();
   const location = useLocation();
+  const navigate = useNavigate();
   const applyTriggered = React.useRef(false);
+  const isApplyRequest = Boolean(
+    location.search.includes('apply=true') || location.state?.openApply
+  );
+  const savedJobId = job?.id || job?.jobId;
+  const isSaved = savedJobId ? isJobSaved(savedJobId) : false;
+  const applyOpen = manualApplyOpen || (isAuthenticated && isApplyRequest);
+  const MotionDiv = motion.div;
 
   useEffect(() => {
-    if (job && (location.search.includes('apply=true') || location.state?.openApply)) {
-      if (!applyTriggered.current) {
-        applyTriggered.current = true;
-        if (!isAuthenticated) {
-          openAuthDialog({
-            closable: true,
-            onSuccess: () => setApplyOpen(true),
-          });
-        } else {
-          setApplyOpen(true);
-        }
-      }
-    } else {
+    if (!isApplyRequest) {
       applyTriggered.current = false;
+      return;
     }
-  }, [job, location.search, location.state, isAuthenticated, openAuthDialog]);
+    if (applyTriggered.current || isAuthenticated) return;
+    applyTriggered.current = true;
+    openAuthDialog({
+      closable: true,
+      onSuccess: () => setManualApplyOpen(true),
+    });
+  }, [isApplyRequest, isAuthenticated, openAuthDialog]);
 
   // ── Handler ứng tuyển ──
   const handleApply = () => {
     if (!isAuthenticated) {
       openAuthDialog({
         closable: true,
-        onSuccess: () => setApplyOpen(true), // tự động mở modal apply sau khi login
+        onSuccess: () => setManualApplyOpen(true), // tự động mở modal apply sau khi login
       });
       return;
     }
-    setApplyOpen(true);
+    setManualApplyOpen(true);
   };
 
   // ── Handler lưu tin ──
@@ -119,7 +145,24 @@ export default function JobDetail() {
       openAuthDialog({ closable: true });
       return;
     }
-    setIsSaved(toggleSavedJob(job));
+    toggleSavedJob(job);
+    setSavedVersion((prev) => prev + 1);
+  };
+
+  const handleCloseApply = () => {
+    setManualApplyOpen(false);
+    if (isApplyRequest) {
+      const params = new URLSearchParams(location.search);
+      params.delete('apply');
+      const search = params.toString();
+      navigate(
+        {
+          pathname: location.pathname,
+          search: search ? `?${search}` : '',
+        },
+        { replace: true, state: {} }
+      );
+    }
   };
 
   const lastFetchedId = React.useRef(null);
@@ -141,11 +184,6 @@ export default function JobDetail() {
 
     fetchJob();
   }, [id]);
-
-  useEffect(() => {
-    if (!job) return;
-    setIsSaved(isJobSaved(job.id || job.jobId));
-  }, [job]);
 
   if (!job) {
     return (
@@ -176,6 +214,8 @@ export default function JobDetail() {
   const salaryIsHtml = salaryHtml && isHtmlString(salaryHtml);
   const benefitsIsHtml = benefitsHtml && isHtmlString(benefitsHtml);
   const workScheduleIsHtml = workScheduleHtml && isHtmlString(workScheduleHtml);
+  const deadlineExpired = job.deadlineExpired === true;
+  const daysLeft = deadlineExpired ? null : getDaysLeft(job.deadline);
 
   return (
     <>
@@ -197,7 +237,7 @@ export default function JobDetail() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* ═══════ LEFT COLUMN ═══════ */}
-            <motion.div
+            <MotionDiv
               className="lg:col-span-2 space-y-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -206,7 +246,7 @@ export default function JobDetail() {
               {/* ── Job Header Card ── */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 {/* Top gradient bar */}
-                <div className={`h-1.5 bg-gradient-to-r ${gradientColor}`} />
+                <div className={`h-1.5 bg-linear-to-r ${gradientColor}`} />
 
                 <div className="p-6 sm:p-8">
                   {/* Title */}
@@ -253,11 +293,15 @@ export default function JobDetail() {
                   </div>
 
                   {/* Deadline */}
-                  <div className="flex items-center gap-2 mb-6 text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-                    <CalendarDays size={16} className="text-amber-500" />
+                  <div className={`flex items-center gap-2 mb-6 text-sm rounded-xl px-4 py-2.5 ${deadlineExpired ? 'text-rose-600 bg-rose-50 border border-rose-200' : 'text-gray-600 bg-amber-50 border border-amber-200'}`}>
+                    <CalendarDays size={16} className={deadlineExpired ? 'text-rose-500' : 'text-amber-500'} />
                     <span>Hạn nộp hồ sơ: <b className="text-gray-800">{job.deadline}</b></span>
-                    {job.daysLeft && (
-                      <span className="text-amber-600 font-semibold ml-1">(Còn {job.daysLeft} ngày)</span>
+                    {deadlineExpired ? (
+                      <span className="text-rose-600 font-semibold ml-1">(Đã hết hạn)</span>
+                    ) : (
+                      daysLeft !== null && (
+                        <span className="text-amber-600 font-semibold ml-1">(Còn {daysLeft} ngày)</span>
+                      )
                     )}
                   </div>
 
@@ -265,7 +309,7 @@ export default function JobDetail() {
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handleApply}
-                      className="flex-1 min-w-[200px] flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-base hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
+                      className="flex-1 min-w-50 flex items-center justify-center gap-2 py-3.5 px-6 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-base hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
                     >
                       <Send size={18} />
                       Ứng tuyển ngay
@@ -455,11 +499,14 @@ export default function JobDetail() {
                   </p>
                   <p className="text-sm text-gray-500 mb-5">
                     Hạn nộp hồ sơ: <b className="text-gray-800">{job.deadline}</b>
+                    {deadlineExpired && (
+                      <span className="text-rose-600 font-semibold ml-2">(Đã hết hạn)</span>
+                    )}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handleApply}
-                      className="flex items-center gap-2 py-3 px-8 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
+                      className="flex items-center gap-2 py-3 px-8 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
                     >
                       <Send size={16} />
                       Ứng tuyển ngay
@@ -477,7 +524,7 @@ export default function JobDetail() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </MotionDiv>
 
             {/* ═══════ RIGHT SIDEBAR ═══════ */}
             <motion.div
@@ -580,7 +627,7 @@ export default function JobDetail() {
       {/* ── Apply Modal ── */}
       <ApplyJobModal
         open={applyOpen}
-        onClose={() => setApplyOpen(false)}
+        onClose={handleCloseApply}
         job={job}
       />
     </>

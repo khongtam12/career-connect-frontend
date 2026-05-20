@@ -42,7 +42,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
   const companyLogo = job.logo || job.companyLogoUrl || job.company?.logo || '';
 
   const salaryLabel = formatSalary(job);
-  const daysLeft = getDaysLeft(job.deadline);
+  const daysLeft = getDaysLeft(job.deadline, job.deadlineExpired);
 
   const handleToggleSave = () => {
     if (!isAuthenticated) {
@@ -398,17 +398,19 @@ const formatNum = (v) => {
   return v.toLocaleString('vi-VN');
 };
 
-const getDaysLeft = (deadline) => {
+const getDaysLeft = (deadline, deadlineExpired) => {
+  if (deadlineExpired === true) return -1;
   if (!deadline) return null;
   let date;
-  if (deadline.includes('/')) {
+  if (typeof deadline === 'string' && deadline.includes('/')) {
     const parts = deadline.split('/');
     date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
   } else {
     date = new Date(deadline);
   }
+  if (Number.isNaN(date.getTime())) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   if (date < today) return -1;
-  return Math.ceil(Math.abs(date - today) / (1000 * 60 * 60 * 24));
+  return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 };

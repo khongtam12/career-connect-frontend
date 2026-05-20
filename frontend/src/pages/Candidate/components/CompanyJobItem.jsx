@@ -9,16 +9,24 @@ const CompanyJobItem = ({ job, company }) => {
   const companyLogo = job?.companyLogoUrl || job?.logo || company?.logo || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeplpRN1hSAQoBqsMoIHnQwfn4zC8yFJldEjYoL8Mi8g&s=10";
 
   // Calculate days left
-  const calculateDaysLeft = (deadline) => {
+  const calculateDaysLeft = (deadline, deadlineExpired) => {
+    if (deadlineExpired === true) return -1;
     if (!deadline) return 30;
-    const deadlineDate = new Date(deadline);
+    let deadlineDate;
+    if (typeof deadline === 'string' && deadline.includes('/')) {
+      const parts = deadline.split('/');
+      deadlineDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    } else {
+      deadlineDate = new Date(deadline);
+    }
+    if (Number.isNaN(deadlineDate.getTime())) return 30;
     const today = new Date();
     const diffTime = deadlineDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
 
-  const daysLeft = calculateDaysLeft(job?.deadline);
+  const daysLeft = calculateDaysLeft(job?.deadline, job?.deadlineExpired);
 
   const formatSalary = (min, max, negotiable) => {
     if (negotiable) return "Thoả thuận";
@@ -80,8 +88,8 @@ const CompanyJobItem = ({ job, company }) => {
             <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-xs sm:text-sm rounded-md font-medium">
               {job?.location || "Địa điểm"}
             </span>
-            <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-xs sm:text-sm rounded-md font-medium">
-              Còn {daysLeft} ngày để ứng tuyển
+            <span className={`inline-flex items-center px-3 py-1 text-xs sm:text-sm rounded-md font-medium ${daysLeft < 0 ? 'bg-rose-50 text-rose-600' : 'bg-gray-100 text-gray-700'}`}>
+              {daysLeft < 0 ? 'Đã hết hạn' : `Còn ${daysLeft} ngày để ứng tuyển`}
             </span>
           </div>
 

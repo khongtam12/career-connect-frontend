@@ -22,6 +22,19 @@ export default function ApplyJobModal({ open, onClose, job }) {
 
   const { user } = useUserStore();
 
+  const parseDeadlineToDate = (deadline) => {
+    if (!deadline) return null;
+    if (typeof deadline === 'string' && deadline.includes('/')) {
+      const parts = deadline.split('/');
+      if (parts.length >= 3) {
+        const parsed = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+    }
+    const parsed = new Date(deadline);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
   // Load CVs from API
   useEffect(() => {
     if (open && user) {
@@ -48,10 +61,21 @@ export default function ApplyJobModal({ open, onClose, job }) {
   }, [open, user]);
 
   const handleSubmit = async () => {
-    const deadlineDate = job?.deadline ? new Date(job.deadline) : null;
-    if (deadlineDate && deadlineDate.setHours(0,0,0,0) < new Date().setHours(0,0,0,0)) {
-      setError(`Công việc này đã hết hạn ứng tuyển vào ngày ${deadlineDate.toLocaleDateString('vi-VN')}.`);
+    if (job?.deadlineExpired) {
+      setError(`Công việc này đã hết hạn ứng tuyển${job?.deadline ? ` vào ngày ${job.deadline}` : ''}.`);
       return;
+    }
+
+    const deadlineDate = parseDeadlineToDate(job?.deadline);
+    if (deadlineDate) {
+      const deadlineStart = new Date(deadlineDate);
+      deadlineStart.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (deadlineStart < today) {
+        setError(`Công việc này đã hết hạn ứng tuyển vào ngày ${deadlineDate.toLocaleDateString('vi-VN')}.`);
+        return;
+      }
     }
 
     if (uploadMode === 'library' && !selectedCvId) {
