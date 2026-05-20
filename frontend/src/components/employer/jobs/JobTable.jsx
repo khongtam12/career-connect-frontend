@@ -446,7 +446,9 @@ export default function JobTable({
                   {/* Hạn nộp */}
                   <TableCell sx={bodyCellSx}>
                     {(() => {
-                      const expired = isDeadlineExpired(job.deadline);
+                      const expired = typeof job.deadlineExpired === 'boolean'
+                        ? job.deadlineExpired
+                        : isDeadlineExpired(job.deadline);
                       const color = expired ? 'red' : '#6b7280';
 
                       return (

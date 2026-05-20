@@ -30,11 +30,13 @@ function SectionLabel({ children }) {
   )
 }
 
-function Field({ label, children, className }) {
+function Field({ label, children, className, error, warning }) {
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       {label && <SectionLabel>{label}</SectionLabel>}
       {children}
+      {error && <span className="text-[10px] text-red-500 font-semibold mt-0.5 flex items-center gap-1">❌ {error}</span>}
+      {!error && warning && <span className="text-[10px] text-amber-500 font-semibold mt-0.5 flex items-center gap-1">⚠️ {warning}</span>}
     </div>
   )
 }
@@ -118,6 +120,25 @@ export default function CVForm({ data, onChange }) {
   }
 
   const p = data.personal || {}
+
+  // Instant real-time validation errors
+  const errors = {
+    email: p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email) ? 'Email không đúng định dạng (Ví dụ hợp lệ: nguyenvana@gmail.com)' : '',
+    phone: p.phone && !/^(0[3|5|7|8|9])[0-9]{8}$/.test(p.phone) ? 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 03,05,07,08,09 (Ví dụ hợp lệ: 0912345678)' : '',
+    linkedin: p.linkedin && !/^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/.test(p.linkedin) ? 'Đường dẫn LinkedIn không đúng định dạng (Ví dụ hợp lệ: https://linkedin.com/in/nguyenvana)' : '',
+    dob: p.dob && new Date(p.dob) > new Date() ? 'Ngày sinh phải ở quá khứ (Ví dụ hợp lệ: 20/10/2000)' : ''
+  }
+
+  const warnings = {
+    fullName: !p.fullName ? 'Chưa nhập họ và tên' : '',
+    dob: !p.dob ? 'Chưa nhập ngày sinh' : '',
+    email: !p.email ? 'Chưa nhập email liên hệ' : '',
+    phone: !p.phone ? 'Chưa nhập số điện thoại' : '',
+    address: !p.address ? 'Chưa nhập địa chỉ liên hệ' : '',
+    jobTitle: !p.jobTitle ? 'Chưa nhập vị trí / chức danh công việc' : '',
+    linkedin: !p.linkedin ? 'Chưa nhập đường dẫn LinkedIn / Portfolio' : '',
+    summary: !p.summary ? 'Chưa nhập mục tiêu nghề nghiệp' : ''
+  }
 
   return (
     <div className="space-y-2 pb-24">
@@ -230,28 +251,28 @@ export default function CVForm({ data, onChange }) {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                          <Field label="Họ và tên" className="col-span-2">
+                          <Field label="Họ và tên" className="col-span-2" warning={warnings.fullName}>
                             <Input value={p.fullName || ''} onChange={e => updateP('fullName', e.target.value)} placeholder="Nguyễn Văn A" />
                           </Field>
-                          <Field label="Ngày sinh">
-                            <Input type="date" value={p.dob || ''} onChange={e => updateP('dob', e.target.value)} className="w-full h-9 text-xs px-2" />
+                          <Field label="Ngày sinh" error={errors.dob} warning={warnings.dob}>
+                            <Input type="date" value={p.dob || ''} onChange={e => updateP('dob', e.target.value)} className={cn("w-full h-9 text-xs px-2", errors.dob && 'border-red-500 focus-visible:ring-red-500')} />
                           </Field>
-                          <Field label="Email">
-                            <Input type="email" value={p.email || ''} onChange={e => updateP('email', e.target.value)} placeholder="name@example.com" />
+                          <Field label="Email" error={errors.email} warning={warnings.email}>
+                            <Input type="email" value={p.email || ''} onChange={e => updateP('email', e.target.value)} placeholder="name@example.com" className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''} />
                           </Field>
-                          <Field label="Số điện thoại">
-                            <Input value={p.phone || ''} onChange={e => updateP('phone', e.target.value)} placeholder="09xx xxx xxx" />
+                          <Field label="Số điện thoại" error={errors.phone} warning={warnings.phone}>
+                            <Input value={p.phone || ''} onChange={e => updateP('phone', e.target.value)} placeholder="09xx xxx xxx" className={errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''} />
                           </Field>
-                          <Field label="Địa chỉ">
+                          <Field label="Địa chỉ" warning={warnings.address}>
                             <Input value={p.address || ''} onChange={e => updateP('address', e.target.value)} placeholder="TP. Hồ Chí Minh" />
                           </Field>
-                          <Field label="Vị trí / Chức danh" className="col-span-2">
+                          <Field label="Vị trí / Chức danh" className="col-span-2" warning={warnings.jobTitle}>
                             <Input value={p.jobTitle || ''} onChange={e => updateP('jobTitle', e.target.value)} placeholder="Senior Frontend Engineer" />
                           </Field>
-                          <Field label="LinkedIn / Portfolio URL" className="col-span-2">
-                            <Input value={p.linkedin || ''} onChange={e => updateP('linkedin', e.target.value)} placeholder="https://linkedin.com/in/..." />
+                          <Field label="LinkedIn / Portfolio URL" className="col-span-2" error={errors.linkedin} warning={warnings.linkedin}>
+                            <Input value={p.linkedin || ''} onChange={e => updateP('linkedin', e.target.value)} placeholder="https://linkedin.com/in/..." className={errors.linkedin ? 'border-red-500 focus-visible:ring-red-500' : ''} />
                           </Field>
-                          <Field label="Mục tiêu nghề nghiệp" className="col-span-2">
+                          <Field label="Mục tiêu nghề nghiệp" className="col-span-2" warning={warnings.summary}>
                             <Textarea
                               rows={4}
                               value={p.summary || ''}
@@ -266,54 +287,59 @@ export default function CVForm({ data, onChange }) {
                     {/* ── Skills ── */}
                     {sec.id === 'skills' && (
                       <div className="space-y-3">
-                        {(data.skills || []).map((sk, i) => (
-                          <ItemCard
-                            key={i}
-                            label={`Kỹ năng ${i + 1}`}
-                            icon={Wrench}
-                            onRemove={() => removeArr('skills', i)}
-                          >
-                            <div className="grid grid-cols-2 gap-4">
-                              <Field label="Tên kỹ năng" className="col-span-2">
-                                <Input
-                                  value={sk.name || ''}
-                                  onChange={e => updateArr('skills', i, 'name', e.target.value)}
-                                  placeholder="React, Node.js, Figma..."
-                                />
-                              </Field>
-                              <Field label={`Thành thạo — ${sk.level || 50}%`} className="col-span-2">
-                                <div className="flex items-center gap-3">
-                                  <div className="relative h-2 flex-1 bg-zinc-200 rounded-full overflow-hidden">
-                                    <div
-                                      className="absolute inset-y-0 left-0 bg-zinc-900 rounded-full transition-all duration-300"
-                                      style={{ width: `${sk.level || 50}%` }}
+                        {(data.skills || []).map((sk, i) => {
+                          const skWarning = {
+                            name: !sk.name ? 'Chưa nhập tên kỹ năng' : ''
+                          }
+                          return (
+                            <ItemCard
+                              key={i}
+                              label={`Kỹ năng ${i + 1}`}
+                              icon={Wrench}
+                              onRemove={() => removeArr('skills', i)}
+                            >
+                              <div className="grid grid-cols-2 gap-4">
+                                <Field label="Tên kỹ năng" className="col-span-2" warning={skWarning.name}>
+                                  <Input
+                                    value={sk.name || ''}
+                                    onChange={e => updateArr('skills', i, 'name', e.target.value)}
+                                    placeholder="React, Node.js, Figma..."
+                                  />
+                                </Field>
+                                <Field label={`Thành thạo — ${sk.level || 50}%`} className="col-span-2">
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative h-2 flex-1 bg-zinc-200 rounded-full overflow-hidden">
+                                      <div
+                                        className="absolute inset-y-0 left-0 bg-zinc-900 rounded-full transition-all duration-300"
+                                        style={{ width: `${sk.level || 50}%` }}
+                                      />
+                                    </div>
+                                    <input
+                                      type="range" min="0" max="100" step="5"
+                                      value={sk.level || 50}
+                                      onChange={e => updateArr('skills', i, 'level', parseInt(e.target.value))}
+                                      className="sr-only"
+                                      aria-label="Skill level"
+                                    />
+                                    <input
+                                      type="range" min="0" max="100" step="5"
+                                      value={sk.level || 50}
+                                      onChange={e => updateArr('skills', i, 'level', parseInt(e.target.value))}
+                                      className="w-full h-2 cursor-pointer accent-zinc-900"
+                                      style={{ position: 'absolute', opacity: 0, width: 'calc(100% - 80px)' }}
                                     />
                                   </div>
                                   <input
                                     type="range" min="0" max="100" step="5"
                                     value={sk.level || 50}
                                     onChange={e => updateArr('skills', i, 'level', parseInt(e.target.value))}
-                                    className="sr-only"
-                                    aria-label="Skill level"
+                                    className="w-full cursor-pointer accent-zinc-900 mt-1"
                                   />
-                                  <input
-                                    type="range" min="0" max="100" step="5"
-                                    value={sk.level || 50}
-                                    onChange={e => updateArr('skills', i, 'level', parseInt(e.target.value))}
-                                    className="w-full h-2 cursor-pointer accent-zinc-900"
-                                    style={{ position: 'absolute', opacity: 0, width: 'calc(100% - 80px)' }}
-                                  />
-                                </div>
-                                <input
-                                  type="range" min="0" max="100" step="5"
-                                  value={sk.level || 50}
-                                  onChange={e => updateArr('skills', i, 'level', parseInt(e.target.value))}
-                                  className="w-full cursor-pointer accent-zinc-900 mt-1"
-                                />
-                              </Field>
-                            </div>
-                          </ItemCard>
-                        ))}
+                                </Field>
+                              </div>
+                            </ItemCard>
+                          )
+                        })}
                         <AddButton onClick={() => addArr('skills', { name: '', level: 50 })}>
                           Thêm kỹ năng
                         </AddButton>
@@ -323,34 +349,46 @@ export default function CVForm({ data, onChange }) {
                     {/* ── Experience ── */}
                     {sec.id === 'experience' && (
                       <div className="space-y-3">
-                        {(data.experience || []).map((exp, i) => (
-                          <ItemCard
-                            key={i}
-                            label={`Vị trí ${i + 1}`}
-                            icon={BriefcaseBusiness}
-                            onRemove={() => removeArr('experience', i)}
-                          >
-                            <div className="grid grid-cols-2 gap-4">
-                              <Field label="Tên công ty" className="col-span-2">
-                                <Input value={exp.company || ''} onChange={e => updateArr('experience', i, 'company', e.target.value)} placeholder="Acme Corp, Google..." />
-                              </Field>
-                              <Field label="Vị trí công việc" className="col-span-2">
-                                <Input value={exp.role || ''} onChange={e => updateArr('experience', i, 'role', e.target.value)} placeholder="Frontend Engineer" />
-                              </Field>
-                              <div className="grid grid-cols-2 gap-3 col-span-2">
-                                <Field label="Bắt đầu">
-                                  <Input type="month" value={exp.start || ''} onChange={e => updateArr('experience', i, 'start', e.target.value)} className="w-full h-9 text-xs px-2" />
+                        {(data.experience || []).map((exp, i) => {
+                          const expError = {
+                            start: exp.start && exp.end && exp.start > exp.end ? 'Bắt đầu không thể sau kết thúc (Ví dụ hợp lệ: Bắt đầu 09/2022 - Kết thúc 12/2023)' : '',
+                            end: exp.start && exp.end && exp.start > exp.end ? 'Kết thúc không thể trước bắt đầu (Ví dụ hợp lệ: Bắt đầu 09/2022 - Kết thúc 12/2023)' : ''
+                          }
+                          const expWarning = {
+                            company: !exp.company ? 'Chưa nhập tên công ty' : '',
+                            role: !exp.role ? 'Chưa nhập vị trí công việc' : '',
+                            start: !exp.start ? 'Chưa chọn thời gian bắt đầu' : '',
+                            end: !exp.end ? 'Chưa chọn thời gian kết thúc' : ''
+                          }
+                          return (
+                            <ItemCard
+                              key={i}
+                              label={`Vị trí ${i + 1}`}
+                              icon={BriefcaseBusiness}
+                              onRemove={() => removeArr('experience', i)}
+                            >
+                              <div className="grid grid-cols-2 gap-4">
+                                <Field label="Tên công ty" className="col-span-2" warning={expWarning.company}>
+                                  <Input value={exp.company || ''} onChange={e => updateArr('experience', i, 'company', e.target.value)} placeholder="Acme Corp, Google..." />
                                 </Field>
-                                <Field label="Kết thúc">
-                                  <Input type="month" value={exp.end || ''} onChange={e => updateArr('experience', i, 'end', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                <Field label="Vị trí công việc" className="col-span-2" warning={expWarning.role}>
+                                  <Input value={exp.role || ''} onChange={e => updateArr('experience', i, 'role', e.target.value)} placeholder="Frontend Engineer" />
+                                </Field>
+                                <div className="grid grid-cols-2 gap-3 col-span-2">
+                                  <Field label="Bắt đầu" error={expError.start} warning={expWarning.start}>
+                                    <Input type="month" value={exp.start || ''} onChange={e => updateArr('experience', i, 'start', e.target.value)} className={cn("w-full h-9 text-xs px-2", expError.start && 'border-red-500 focus-visible:ring-red-500')} />
+                                  </Field>
+                                  <Field label="Kết thúc" error={expError.end} warning={expWarning.end}>
+                                    <Input type="month" value={exp.end || ''} onChange={e => updateArr('experience', i, 'end', e.target.value)} className={cn("w-full h-9 text-xs px-2", expError.end && 'border-red-500 focus-visible:ring-red-500')} />
+                                  </Field>
+                                </div>
+                                <Field label="Mô tả công việc" className="col-span-2">
+                                  <Textarea rows={4} value={exp.desc || ''} onChange={e => updateArr('experience', i, 'desc', e.target.value)} placeholder="— Xây dựng tính năng X giúp tăng conversion Y%&#10;— Tech stack: React, TypeScript..." />
                                 </Field>
                               </div>
-                              <Field label="Mô tả công việc" className="col-span-2">
-                                <Textarea rows={4} value={exp.desc || ''} onChange={e => updateArr('experience', i, 'desc', e.target.value)} placeholder="— Xây dựng tính năng X giúp tăng conversion Y%&#10;— Tech stack: React, TypeScript..." />
-                              </Field>
-                            </div>
-                          </ItemCard>
-                        ))}
+                            </ItemCard>
+                          )
+                        })}
                         <AddButton onClick={() => addArr('experience', { company: '', role: '', start: '', end: '', desc: '' })}>
                           Thêm kinh nghiệm
                         </AddButton>
@@ -360,34 +398,46 @@ export default function CVForm({ data, onChange }) {
                     {/* ── Education ── */}
                     {sec.id === 'education' && (
                       <div className="space-y-3">
-                        {(data.education || []).map((edu, i) => (
-                          <ItemCard
-                            key={i}
-                            label={`Trường ${i + 1}`}
-                            icon={GraduationCap}
-                            onRemove={() => removeArr('education', i)}
-                          >
-                            <div className="grid grid-cols-2 gap-4">
-                              <Field label="Trường / Cơ sở đào tạo" className="col-span-2">
-                                <Input value={edu.school || ''} onChange={e => updateArr('education', i, 'school', e.target.value)} placeholder="Đại học Bách Khoa TP.HCM" />
-                              </Field>
-                              <Field label="Ngành học" className="col-span-2">
-                                <Input value={edu.major || ''} onChange={e => updateArr('education', i, 'major', e.target.value)} placeholder="Kỹ thuật phần mềm" />
-                              </Field>
-                              <div className="grid grid-cols-2 gap-3 col-span-2">
-                                <Field label="Bắt đầu">
-                                  <Input type="month" value={edu.start || ''} onChange={e => updateArr('education', i, 'start', e.target.value)} className="w-full h-9 text-xs px-2" />
+                        {(data.education || []).map((edu, i) => {
+                          const eduError = {
+                            start: edu.start && edu.end && edu.start > edu.end ? 'Bắt đầu không thể sau kết thúc (Ví dụ hợp lệ: Bắt đầu 09/2023 - Kết thúc 05/2024)' : '',
+                            end: edu.start && edu.end && edu.start > edu.end ? 'Kết thúc không thể trước bắt đầu (Ví dụ hợp lệ: Bắt đầu 09/2023 - Kết thúc 05/2024)' : ''
+                          }
+                          const eduWarning = {
+                            school: !edu.school ? 'Chưa nhập tên trường / cơ sở đào tạo' : '',
+                            major: !edu.major ? 'Chưa nhập ngành học' : '',
+                            start: !edu.start ? 'Chưa chọn thời gian bắt đầu' : '',
+                            end: !edu.end ? 'Chưa chọn thời gian kết thúc' : ''
+                          }
+                          return (
+                            <ItemCard
+                              key={i}
+                              label={`Trường ${i + 1}`}
+                              icon={GraduationCap}
+                              onRemove={() => removeArr('education', i)}
+                            >
+                              <div className="grid grid-cols-2 gap-4">
+                                <Field label="Trường / Cơ sở đào tạo" className="col-span-2" warning={eduWarning.school}>
+                                  <Input value={edu.school || ''} onChange={e => updateArr('education', i, 'school', e.target.value)} placeholder="Đại học Bách Khoa TP.HCM" />
                                 </Field>
-                                <Field label="Kết thúc">
-                                  <Input type="month" value={edu.end || ''} onChange={e => updateArr('education', i, 'end', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                <Field label="Ngành học" className="col-span-2" warning={eduWarning.major}>
+                                  <Input value={edu.major || ''} onChange={e => updateArr('education', i, 'major', e.target.value)} placeholder="Kỹ thuật phần mềm" />
+                                </Field>
+                                <div className="grid grid-cols-2 gap-3 col-span-2">
+                                  <Field label="Bắt đầu" error={eduError.start} warning={eduWarning.start}>
+                                    <Input type="month" value={edu.start || ''} onChange={e => updateArr('education', i, 'start', e.target.value)} className={cn("w-full h-9 text-xs px-2", eduError.start && 'border-red-500 focus-visible:ring-red-500')} />
+                                  </Field>
+                                  <Field label="Kết thúc" error={eduError.end} warning={eduWarning.end}>
+                                    <Input type="month" value={edu.end || ''} onChange={e => updateArr('education', i, 'end', e.target.value)} className={cn("w-full h-9 text-xs px-2", eduError.end && 'border-red-500 focus-visible:ring-red-500')} />
+                                  </Field>
+                                </div>
+                                <Field label="GPA / Chi tiết" className="col-span-2">
+                                  <Textarea rows={2} value={edu.desc || ''} onChange={e => updateArr('education', i, 'desc', e.target.value)} placeholder="GPA: 3.7/4.0 — Tốt nghiệp loại Giỏi" />
                                 </Field>
                               </div>
-                              <Field label="GPA / Chi tiết" className="col-span-2">
-                                <Textarea rows={2} value={edu.desc || ''} onChange={e => updateArr('education', i, 'desc', e.target.value)} placeholder="GPA: 3.7/4.0 — Tốt nghiệp loại Giỏi" />
-                              </Field>
-                            </div>
-                          </ItemCard>
-                        ))}
+                            </ItemCard>
+                          )
+                        })}
                         <AddButton onClick={() => addArr('education', { school: '', major: '', start: '', end: '', desc: '' })}>
                           Thêm học vấn
                         </AddButton>
@@ -397,34 +447,45 @@ export default function CVForm({ data, onChange }) {
                     {/* ── Projects ── */}
                     {sec.id === 'projects' && (
                       <div className="space-y-3">
-                        {(data.projects || []).map((prj, i) => (
-                          <ItemCard
-                            key={i}
-                            label={`Dự án ${i + 1}`}
-                            icon={Rocket}
-                            onRemove={() => removeArr('projects', i)}
-                          >
-                            <div className="grid grid-cols-2 gap-4">
-                              <Field label="Tên dự án" className="col-span-2">
-                                <Input value={prj.name || ''} onChange={e => updateArr('projects', i, 'name', e.target.value)} placeholder="E-commerce Platform" />
-                              </Field>
-                              <div className="grid grid-cols-2 gap-3 col-span-2">
-                                <Field label="Bắt đầu">
-                                  <Input type="month" value={prj.start || ''} onChange={e => updateArr('projects', i, 'start', e.target.value)} className="w-full h-9 text-xs px-2" />
+                        {(data.projects || []).map((prj, i) => {
+                          const prjError = {
+                            start: prj.start && prj.end && prj.start > prj.end ? 'Bắt đầu không thể sau kết thúc (Ví dụ hợp lệ: Bắt đầu 01/2024 - Kết thúc 04/2024)' : '',
+                            end: prj.start && prj.end && prj.start > prj.end ? 'Kết thúc không thể trước bắt đầu (Ví dụ hợp lệ: Bắt đầu 01/2024 - Kết thúc 04/2024)' : ''
+                          }
+                          const prjWarning = {
+                            name: !prj.name ? 'Chưa nhập tên dự án' : '',
+                            start: !prj.start ? 'Chưa chọn thời gian bắt đầu' : '',
+                            end: !prj.end ? 'Chưa chọn thời gian kết thúc' : ''
+                          }
+                          return (
+                            <ItemCard
+                              key={i}
+                              label={`Dự án ${i + 1}`}
+                              icon={Rocket}
+                              onRemove={() => removeArr('projects', i)}
+                            >
+                              <div className="grid grid-cols-2 gap-4">
+                                <Field label="Tên dự án" className="col-span-2" warning={prjWarning.name}>
+                                  <Input value={prj.name || ''} onChange={e => updateArr('projects', i, 'name', e.target.value)} placeholder="E-commerce Platform" />
                                 </Field>
-                                <Field label="Kết thúc">
-                                  <Input type="month" value={prj.end || ''} onChange={e => updateArr('projects', i, 'end', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                <div className="grid grid-cols-2 gap-3 col-span-2">
+                                  <Field label="Bắt đầu" error={prjError.start} warning={prjWarning.start}>
+                                    <Input type="month" value={prj.start || ''} onChange={e => updateArr('projects', i, 'start', e.target.value)} className={cn("w-full h-9 text-xs px-2", prjError.start && 'border-red-500 focus-visible:ring-red-500')} />
+                                  </Field>
+                                  <Field label="Kết thúc" error={prjError.end} warning={prjWarning.end}>
+                                    <Input type="month" value={prj.end || ''} onChange={e => updateArr('projects', i, 'end', e.target.value)} className={cn("w-full h-9 text-xs px-2", prjError.end && 'border-red-500 focus-visible:ring-red-500')} />
+                                  </Field>
+                                </div>
+                                <Field label="Link dự án / Source" className="col-span-2">
+                                  <Input value={prj.link || ''} onChange={e => updateArr('projects', i, 'link', e.target.value)} placeholder="https://github.com/..." />
+                                </Field>
+                                <Field label="Mô tả" className="col-span-2">
+                                  <Textarea rows={4} value={prj.desc || ''} onChange={e => updateArr('projects', i, 'desc', e.target.value)} placeholder="— Stack: Next.js, Prisma&#10;— Vai trò: Lead Developer&#10;— Kết quả: 10k MAU" />
                                 </Field>
                               </div>
-                              <Field label="Link dự án / Source" className="col-span-2">
-                                <Input value={prj.link || ''} onChange={e => updateArr('projects', i, 'link', e.target.value)} placeholder="https://github.com/..." />
-                              </Field>
-                              <Field label="Mô tả" className="col-span-2">
-                                <Textarea rows={4} value={prj.desc || ''} onChange={e => updateArr('projects', i, 'desc', e.target.value)} placeholder="— Stack: Next.js, Prisma&#10;— Vai trò: Lead Developer&#10;— Kết quả: 10k MAU" />
-                              </Field>
-                            </div>
-                          </ItemCard>
-                        ))}
+                            </ItemCard>
+                          )
+                        })}
                         <AddButton onClick={() => addArr('projects', { name: '', start: '', end: '', link: '', desc: '' })}>
                           Thêm dự án mới
                         </AddButton>
@@ -434,26 +495,33 @@ export default function CVForm({ data, onChange }) {
                     {/* ── Certificates ── */}
                     {sec.id === 'certificates' && (
                       <div className="space-y-3">
-                        {(data.certificates || []).map((cert, i) => (
-                          <ItemCard
-                            key={i}
-                            label={`Chứng chỉ ${i + 1}`}
-                            icon={Award}
-                            onRemove={() => removeArr('certificates', i)}
-                          >
-                            <div className="grid grid-cols-2 gap-4">
-                              <Field label="Tên chứng chỉ" className="col-span-2">
-                                <Input value={cert.name || ''} onChange={e => updateArr('certificates', i, 'name', e.target.value)} placeholder="AWS Solutions Architect" />
-                              </Field>
-                              <Field label="Tháng/Năm đạt được">
-                                <Input type="month" value={cert.date || ''} onChange={e => updateArr('certificates', i, 'date', e.target.value)} className="w-full h-9 text-xs px-2" />
-                              </Field>
-                              <Field label="Tổ chức cấp">
-                                <Input value={cert.org || ''} onChange={e => updateArr('certificates', i, 'org', e.target.value)} placeholder="Amazon Web Services" />
-                              </Field>
-                            </div>
-                          </ItemCard>
-                        ))}
+                        {(data.certificates || []).map((cert, i) => {
+                          const certWarning = {
+                            name: !cert.name ? 'Chưa nhập tên chứng chỉ / giải thưởng' : '',
+                            org: !cert.org ? 'Chưa nhập tổ chức cấp' : '',
+                            date: !cert.date ? 'Chưa chọn thời gian đạt được' : ''
+                          }
+                          return (
+                            <ItemCard
+                              key={i}
+                              label={`Chứng chỉ ${i + 1}`}
+                              icon={Award}
+                              onRemove={() => removeArr('certificates', i)}
+                            >
+                              <div className="grid grid-cols-2 gap-4">
+                                <Field label="Tên chứng chỉ" className="col-span-2" warning={certWarning.name}>
+                                  <Input value={cert.name || ''} onChange={e => updateArr('certificates', i, 'name', e.target.value)} placeholder="AWS Solutions Architect" />
+                                </Field>
+                                <Field label="Tháng/Năm đạt được" warning={certWarning.date}>
+                                  <Input type="month" value={cert.date || ''} onChange={e => updateArr('certificates', i, 'date', e.target.value)} className="w-full h-9 text-xs px-2" />
+                                </Field>
+                                <Field label="Tổ chức cấp" warning={certWarning.org}>
+                                  <Input value={cert.org || ''} onChange={e => updateArr('certificates', i, 'org', e.target.value)} placeholder="Amazon Web Services" />
+                                </Field>
+                              </div>
+                            </ItemCard>
+                          )
+                        })}
                         <AddButton onClick={() => addArr('certificates', { name: '', date: '', org: '' })}>
                           Thêm chứng chỉ
                         </AddButton>

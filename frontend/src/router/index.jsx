@@ -22,7 +22,7 @@ import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
 import EmployerChat from "../pages/Employer/EmployerChat.jsx";
 import EmployerProfile from "../pages/Employer/Profile/EmployerProfile.jsx";
-import Dashboard from "../pages/Admin/Dashboard";
+import Dashboard from "../pages/Admin/Dashboard/index.jsx";
 import Job from "../pages/Admin/RecruitmentNewsManagement/Job.jsx";
 import EmployerList from "../pages/Admin/EmployerManagement/EmployerList";
 import CandidateManagement from "../pages/Admin/CandidateManagement";

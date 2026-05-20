@@ -41,7 +41,7 @@ export default function CVCard({ cv, index = 0, onDelete }) {
   const [hovered, setHovered] = useState(false)
 
   const gradient = TEMPLATE_GRADIENTS[cv.templateId] || TEMPLATE_GRADIENTS[1]
-  const p = cv.data?.personal || {}
+  const p = cv.data?.personal || cv || {}
 
   const handleEdit = () => navigate(`/cv-builder?id=${cv.id}`)
   const handlePDF  = () => {

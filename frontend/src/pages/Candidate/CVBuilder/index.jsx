@@ -172,13 +172,12 @@ export default function EditorPage() {
     }
   }, [user, editId])
 
-  const handleSave = async () => {
+  const saveCVData = async () => {
     if (!user) {
       toast.error('Vui lòng đăng nhập để lưu CV')
-      return
+      return null
     }
 
-    setSaved(true)
     try {
       const payload = {
         ...cvData.personal,
@@ -224,6 +223,33 @@ export default function EditorPage() {
         console.log('✨ [CV Flow] Tạo mới CV thành công:', result);
       }
 
+      // Cập nhật URL động không load lại trang để lưu trữ đúng ID thực tế
+      if (!payload.id && result && result.id) {
+        const newUrl = `${window.location.pathname}?id=${result.id}&template=${templateId}`;
+        window.history.replaceState(null, '', newUrl);
+      }
+
+      return result
+    } catch (err) {
+      console.error('❌ [CV Flow] Lỗi khi lưu dữ liệu:', err)
+      throw err
+    }
+  }
+
+  const handleSave = async () => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để lưu CV')
+      return
+    }
+
+    setSaved(true)
+    try {
+      const result = await saveCVData()
+      if (!result) {
+        setSaved(false)
+        return
+      }
+
       toast.success('Đã lưu thông tin CV. Đang đồng bộ bản PDF...')
 
       // --- Bước 2: Tự động chụp bản Preview thành PDF và lưu lên S3 ---
@@ -250,7 +276,6 @@ export default function EditorPage() {
         }
       } catch (pdfErr) {
         console.error('⚠️ [CV Flow] Lỗi khi tạo/upload PDF:', pdfErr);
-        // Không chặn luồng lưu chính nếu chỉ lỗi PDF
       }
 
       setTimeout(() => {
@@ -259,20 +284,31 @@ export default function EditorPage() {
       }, 1500)
 
     } catch (err) {
-      console.error('❌ [CV Flow] Lỗi khi lưu:', err)
       toast.error('Không thể lưu CV. Vui lòng thử lại.')
       setSaved(false)
     }
   }
 
   const handleExportPDF = async () => {
-    if (!editId || editId.startsWith('cv_')) {
-      toast.error('Vui lòng lưu CV trước khi xuất PDF chuyên nghiệp')
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để thực hiện xuất PDF')
       return
     }
 
     setSaved(true)
     try {
+      toast.info('Đang tự động lưu CV trước khi xuất PDF...')
+      const result = await saveCVData()
+      if (!result) {
+        setSaved(false)
+        return
+      }
+
+      toast.success('Đã lưu dữ liệu! Đang chuẩn bị tải xuống PDF...')
+
+      // Đợi 300ms để đảm bảo DOM được đồng bộ
+      await new Promise(resolve => setTimeout(resolve, 300))
+
       const element = document.getElementById('cv-preview-root');
       if (element && window.html2pdf) {
         const opt = {
@@ -286,18 +322,28 @@ export default function EditorPage() {
         // Chuyển component thành PDF và tải về máy người dùng
         await window.html2pdf().set(opt).from(element).save();
         
+        // Đồng thời tải bản PDF mới lên S3 luôn để cập nhật đồng bộ
+        try {
+          const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
+          const formData = new FormData();
+          formData.append('file', pdfBlob, `CV_${result.id}.pdf`);
+          await cvService.uploadCVFile(result.id, formData);
+          console.log('✅ [CV Flow] Đã cập nhật bản PDF lên S3 thành công');
+        } catch (pdfErr) {
+          console.error('⚠️ [CV Flow] Lỗi khi upload PDF lên S3:', pdfErr);
+        }
+
         toast.success('Xuất PDF thành công! Đang quay về trang quản lý...')
         
-        // Chờ tải xong rồi mới quay về dashboard
         setTimeout(() => {
           setSaved(false)
           navigate('/cv-dashboard')
-        }, 2000)
+        }, 1500)
       } else {
         throw new Error('Công cụ xuất PDF chưa sẵn sàng')
       }
     } catch (err) {
-      console.error('❌ [CV Flow] Lỗi khi xuất PDF:', err)
+      console.error('❌ [CV Flow] Lỗi khi tự động lưu và xuất PDF:', err)
       toast.error('Không thể xuất PDF. Vui lòng thử lại.')
       setSaved(false)
     }
@@ -449,19 +495,22 @@ export default function EditorPage() {
          </div>
 
          {/* PHẢI: XEM TRƯỚC BẢN IN LƠ LỬNG */}
-         <div className="flex-1 h-full rounded-2xl bg-zinc-200/50 border border-zinc-200/50 shadow-inner overflow-auto p-10 flex justify-center items-start custom-scrollbar relative items-center">
+         <div className="flex-1 h-full rounded-2xl bg-zinc-200/50 border border-zinc-200/50 shadow-inner overflow-auto p-10 flex justify-center items-start custom-scrollbar relative">
             
             <div
-               id="cv-preview-root"
-               className="transition-all duration-300 origin-top bg-white print-area-shadow"
+               className="transition-all duration-300 origin-top bg-white print-area-shadow flex-none"
                style={{ 
-                  width: `${zoom}%`,
-                  minWidth: '700px',
-                  maxWidth: '1200px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.02)'
+                  transform: `scale(${zoom / 100})`,
+                  transformOrigin: 'top center',
+                  width: '210mm',
+                  minHeight: '297mm',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.02)',
+                  margin: '0 auto'
                }}
             >
-               <CVPreview data={cvData} templateId={templateId} />
+               <div id="cv-preview-root" style={{ width: '210mm', minHeight: '297mm', background: 'white' }}>
+                  <CVPreview data={cvData} templateId={templateId} />
+               </div>
             </div>
 
          </div>
