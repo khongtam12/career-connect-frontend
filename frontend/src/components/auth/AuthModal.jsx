@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+
 import { PasswordBox } from "../Login/PasswordBox";
 import { login } from "../../service/authService";
 import { useUserStore } from "../../stores/useUserStore";
+import {
+  AUTH_SESSION_INIT_MESSAGE,
+  getLoginErrorMessage,
+  isAuthFailure,
+} from "../../utils/authMessages";
 
 export default function AuthModal() {
   const isOpen = useUserStore((s) => s.isAuthDialogOpen);
@@ -30,15 +36,27 @@ export default function AuthModal() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
       await login({ username, password, type: "CANDIDATE" });
+    } catch (err) {
+      if (!isAuthFailure(err)) {
+        console.error(err);
+      }
+      setError(getLoginErrorMessage("CANDIDATE"));
+      setLoading(false);
+      return;
+    }
+
+    try {
       const userData = await handleLoginSuccess();
       if (authDialogCallback) {
         authDialogCallback(userData);
       }
       closeAuthDialog();
-    } catch {
-      setError("Email hoặc mật khẩu không hợp lệ");
+    } catch (err) {
+      console.error(err);
+      setError(AUTH_SESSION_INIT_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -94,17 +112,13 @@ export default function AuthModal() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className={`w-full py-2.5 rounded-lg font-semibold text-white transition ${
-              loading
-                ? "bg-red-400 cursor-not-allowed"
-                : "bg-red-600 hover:bg-red-700"
+              loading ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
             }`}
           >
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}

@@ -16,13 +16,13 @@ import {getCandidateInfo} from "../../../service/userService"
 import { useNavigate } from 'react-router-dom';
 const mapStatus = (status) => {
     switch (status) {
-        case 'APPLIED': return 'Cho xu ly';
-        case 'REVIEWING': return 'Dang danh gia';
-        case 'INTERVIEW': return 'Dang phong van';
-        case 'REJECTED': return 'Da tu choi';
-        case 'ACCEPTED': return 'Da chap nhan';
-        case 'CANCELLED': return 'Da huy';
-        default: return 'Khong xac dinh';
+        case 'APPLIED': return 'Chờ xử lý';
+        case 'REVIEWING': return 'Đang đánh giá';
+        case 'INTERVIEW': return 'Đang phỏng vấn';
+        case 'REJECTED': return 'Đã từ chối';
+        case 'ACCEPTED': return 'Đã chấp nhận';
+        case 'CANCELLED': return 'Đã hủy';
+        default: return 'Không xác định';
     }
 };
 
@@ -79,11 +79,11 @@ const normalizeInsightItems = (items) => {
 
 const statusTone = (status) => {
     switch (status) {
-        case 'Cho xu ly': return 'bg-amber-100 text-amber-700';
-        case 'Dang phong van': return 'bg-blue-100 text-blue-700';
-        case 'Da tu choi': return 'bg-red-100 text-red-700';
-        case 'Da chap nhan': return 'bg-green-100 text-green-700';
-        case 'Da huy': return 'bg-orange-100 text-orange-700';
+        case 'Chờ xử lý': return 'bg-amber-100 text-amber-700';
+        case 'Đang phỏng vấn': return 'bg-blue-100 text-blue-700';
+        case 'Đã từ chối': return 'bg-red-100 text-red-700';
+        case 'Đã chấp nhận': return 'bg-green-100 text-green-700';
+        case 'Đã hủy': return 'bg-orange-100 text-orange-700';
         default: return 'bg-gray-100 text-gray-700';
     }
 };
@@ -97,6 +97,7 @@ const CVManagement = () => {
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all_status');
@@ -109,10 +110,12 @@ const CVManagement = () => {
     const notifications = useNotificationStore((state) => state.notifications);
     const navigate = useNavigate();
 
-    const fetchCandidates = async () => {
+    const fetchCandidates = async ({ includeAi = false, forceAiRefresh = false } = {}) => {
         try {
             const res = await getCandidatesForEmployer({
                 jobId: jobFilter === 'all_jobs' ? undefined : jobFilter,
+                includeAi,
+                forceAiRefresh,
             });
             const data = res.data;
 
@@ -169,11 +172,12 @@ const CVManagement = () => {
             console.error('Fetch candidates error:', err);
         } finally {
             setLoading(false);
+            setAiLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchCandidates();
+        fetchCandidates({ includeAi: false });
 
         const unreadNotifications = notifications.filter((notification) => !notification.read);
         if (unreadNotifications.length > 0) {
@@ -187,10 +191,20 @@ const CVManagement = () => {
 
     useEffect(() => {
         if (hasNewCandidate) {
-            fetchCandidates();
+            fetchCandidates({ includeAi: false });
             setHasNewCandidate(false);
         }
     }, [hasNewCandidate]);
+
+    const handleRunAiMatching = async () => {
+        setAiLoading(true);
+        await fetchCandidates({ includeAi: true });
+    };
+
+    const handleRefreshAiMatching = async () => {
+        setAiLoading(true);
+        await fetchCandidates({ includeAi: true, forceAiRefresh: true });
+    };
 
     const filteredCandidates = useMemo(() => {
         let result = [...candidates];
@@ -285,7 +299,7 @@ const CVManagement = () => {
 
     const handleDownloadCV = (candidate) => {
         if (!candidate.cvUrl) {
-            alert('Khong co CV de tai xuong');
+            alert('Không có CV để tải xuống');
             return;
         }
 
@@ -307,11 +321,11 @@ const CVManagement = () => {
         setActionLoading(true);
         try {
             await cancelInterview(selectedCandidate.id);
-            toast.success(`Da huy phong van cua ${selectedCandidate.name} va gui thong bao qua email!`);
-            await fetchCandidates();
+            toast.success(`Đã hủy phỏng vấn của ${selectedCandidate.name} và gửi thông báo qua email!`);
+            await fetchCandidates({ includeAi: false });
         } catch (err) {
             console.error('Cancel interview error:', err);
-            toast.error(err?.response?.data?.message || 'Loi khi huy phong van');
+            toast.error(err?.response?.data?.message || 'Lỗi khi hủy phỏng vấn');
         } finally {
             setActionLoading(false);
         }
@@ -326,18 +340,18 @@ const CVManagement = () => {
         setActionLoading(true);
         try {
             await updateApplicationStatus(selectedCandidate.id, { status: 'ACCEPTED' });
-            toast.success(`Da chap nhan ung vien ${selectedCandidate.name} va gui email thong bao!`);
-            await fetchCandidates();
+            toast.success(`Đã chấp nhận ứng viên ${selectedCandidate.name} và gửi email thông báo!`);
+            await fetchCandidates({ includeAi: false });
         } catch (err) {
             console.error('Accept candidate error:', err);
-            toast.error(err?.response?.data?.message || 'Loi khi chap nhan ung vien');
+            toast.error(err?.response?.data?.message || 'Lỗi khi chấp nhận ứng viên');
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleActionSuccess = () => {
-        fetchCandidates();
+        fetchCandidates({ includeAi: false });
     };
 
     if (loading) return <LoadingSpinner message="Đang tải danh sách ứng viên..." />;
@@ -365,7 +379,7 @@ const CVManagement = () => {
                     value={jobFilter}
                     onChange={(e) => setJobFilter(e.target.value)}
                 >
-                    <option value="all_jobs">Tat ca tin tuyen dung</option>
+                    <option value="all_jobs">Tất cả tin tuyển dụng</option>
                     {jobOptions.map((job) => (
                         <option key={job.id} value={job.id}>{job.title}</option>
                     ))}
@@ -376,13 +390,13 @@ const CVManagement = () => {
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                    <option value="all_status">Tat ca trang thai</option>
-                    <option value="pending">Cho xu ly</option>
-                    <option value="reviewing">Dang danh gia</option>
-                    <option value="interviewing">Dang phong van</option>
-                    <option value="accepted">Da chap nhan</option>
-                    <option value="rejected">Da tu choi</option>
-                    <option value="cancelled">Da huy</option>
+                    <option value="all_status">Tất cả trạng thái</option>
+                    <option value="pending">Chờ xử lý</option>
+                    <option value="reviewing">Đang đánh giá</option>
+                    <option value="interviewing">Đang phỏng vấn</option>
+                    <option value="accepted">Đã chấp nhận</option>
+                    <option value="rejected">Đã từ chối</option>
+                    <option value="cancelled">Đã hủy</option>
                 </select>
 
                 <select
@@ -390,10 +404,10 @@ const CVManagement = () => {
                     value={timeFilter}
                     onChange={(e) => setTimeFilter(e.target.value)}
                 >
-                    <option value="all_time">Moi luc</option>
-                    <option value="today">Hom nay</option>
-                    <option value="this_week">Tuan nay</option>
-                    <option value="this_month">Thang nay</option>
+                    <option value="all_time">Mọi lúc</option>
+                    <option value="today">Hôm nay</option>
+                    <option value="this_week">Tuần này</option>
+                    <option value="this_month">Tháng này</option>
                 </select>
 
                 {(searchQuery || statusFilter !== 'all_status' || timeFilter !== 'all_time') && (
@@ -401,17 +415,31 @@ const CVManagement = () => {
                         onClick={() => { setSearchQuery(''); setStatusFilter('all_status'); setTimeFilter('all_time'); }}
                         className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg px-4 py-2 text-sm font-bold transition-colors"
                     >
-                        <FiXCircle className="text-xs" /> Xoa loc
+                        <FiXCircle className="text-xs" /> Xóa lọc
                     </button>
                 )}
                 <button
                     onClick={() => {
                         setLoading(true);
-                        fetchCandidates();
+                        fetchCandidates({ includeAi: false });
                     }}
                     className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg px-4 py-2 text-sm font-bold transition-colors ml-auto"
                 >
-                    <FiRefreshCw className="text-xs" /> Lam moi
+                    <FiRefreshCw className="text-xs" /> Làm mới
+                </button>
+                <button
+                    onClick={handleRunAiMatching}
+                    disabled={aiLoading}
+                    className="flex items-center gap-2 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-60"
+                >
+                    <FiFilter className="text-xs" /> {aiLoading ? 'Đang phân tích AI...' : 'Phân tích AI'}
+                </button>
+                <button
+                    onClick={handleRefreshAiMatching}
+                    disabled={aiLoading}
+                    className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-60"
+                >
+                    <FiRefreshCw className="text-xs" /> {aiLoading ? 'Đang phân tích lại...' : 'Phân tích lại'}
                 </button>
             </div>
 
@@ -419,7 +447,7 @@ const CVManagement = () => {
                 <div className="w-[320px] border-r border-gray-100 bg-white overflow-y-auto flex flex-col shrink-0">
                     <div className="p-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 sticky top-0 z-10 shrink-0">
                         <h3 className="text-gray-600 font-bold text-xs uppercase tracking-wide">
-                            Danh sach ung tuyen ({filteredCandidates.length}/{candidates.length})
+                            Danh sách ứng tuyển ({filteredCandidates.length}/{candidates.length})
                         </h3>
                     </div>
 
@@ -427,7 +455,7 @@ const CVManagement = () => {
                         {filteredCandidates.length === 0 ? (
                             <div className="p-6 text-center text-gray-400 text-sm">
                                 <FiSearch className="mx-auto mb-2 text-2xl" />
-                                Khong tim thay ung vien phu hop
+                                Không tìm thấy ứng viên phù hợp
                             </div>
                         ) : filteredCandidates.map((candidate) => (
                             <div
@@ -514,7 +542,7 @@ const CVManagement = () => {
                                 onClick={() => handleDownloadCV(selectedCandidate)}
                                 className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50 py-1.5 text-xs transition-colors"
                             >
-                                <FiDownload /> Tai CV xuong
+                                <FiDownload /> Tải CV xuống
                             </button>
                             <div className="flex gap-4">
                                 {selectedCandidate.rawStatus === 'INTERVIEW' ? (
@@ -562,7 +590,7 @@ const CVManagement = () => {
                     {selectedCandidate.rawStatus === 'INTERVIEW' && selectedCandidate.interviewDate && (
                         <div className="p-4 rounded-xl shadow-sm border border-blue-100 bg-blue-50/60 shrink-0">
                             <h3 className="font-bold text-blue-800 text-sm flex items-center gap-2 mb-3">
-                                <FiCalendar className="text-blue-600" /> Thong tin phong van
+                                <FiCalendar className="text-blue-600" /> Thông tin phỏng vấn
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                                 <div>
@@ -585,7 +613,7 @@ const CVManagement = () => {
                     {selectedCandidate.rawStatus === 'REJECTED' && selectedCandidate.rejectionReason && (
                         <div className="p-4 rounded-xl shadow-sm border border-red-100 bg-red-50/60 shrink-0">
                             <h3 className="font-bold text-red-800 text-sm flex items-center gap-2 mb-2">
-                                <FiXCircle className="text-red-600" /> Ly do tu choi
+                                <FiXCircle className="text-red-600" /> Lý do từ chối
                             </h3>
                             <p className="text-gray-700 text-sm">{selectedCandidate.rejectionReason}</p>
                         </div>
@@ -715,6 +743,33 @@ const CVManagement = () => {
                         </div>
                     )}
 
+                    {!selectedCandidate.matchInsight && (
+                        <div className="p-4 rounded-xl shadow-sm border border-violet-100 bg-violet-50/40 shrink-0">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 className="font-bold text-violet-800 text-sm">AI CV-Job Matching</h3>
+                                    <p className="text-xs text-violet-700 mt-1">
+                                        AI không tự động chạy khi mở trang để tránh tốn token và làm chậm hệ thống.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleRunAiMatching}
+                                    disabled={aiLoading}
+                                    className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-lg px-3 py-2 text-xs transition-colors disabled:opacity-60"
+                                >
+                                    <FiFilter /> {aiLoading ? 'Đang chạy...' : 'Chạy AI'}
+                                </button>
+                                <button
+                                    onClick={handleRefreshAiMatching}
+                                    disabled={aiLoading}
+                                    className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg px-3 py-2 text-xs transition-colors disabled:opacity-60"
+                                >
+                                    <FiRefreshCw /> {aiLoading ? 'Đang làm mới...' : 'Phân tích lại'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="mt-4 rounded-xl shadow-sm border border-gray-100 bg-white overflow-hidden flex flex-col min-h-[1000px]">
                         <div className="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center shrink-0">
                             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
@@ -736,12 +791,12 @@ const CVManagement = () => {
                             >
                                 <div className="flex items-center justify-center h-full flex-col gap-2 text-gray-500 bg-white">
                                     <FiDownload size={32} className="text-gray-400" />
-                                    <p className="text-sm">Khong the hien thi PDF truc tiep. Vui long tai xuong.</p>
+                                    <p className="text-sm">Không thể hiển thị PDF trực tiếp. Vui lòng tải xuống.</p>
                                     <button
                                         onClick={() => handleDownloadCV(selectedCandidate)}
                                         className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
                                     >
-                                        <FiDownload /> Tai CV
+                                        <FiDownload /> Tải CV
                                     </button>
                                 </div>
                             </object>

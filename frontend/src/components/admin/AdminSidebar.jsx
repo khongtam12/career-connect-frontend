@@ -23,9 +23,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Phê duyệt công ty', subtitle: 'Xét duyệt hồ sơ', icon: <FiCheckSquare />, path: '/admin/company-approvals' },
     { name: 'Người dùng', subtitle: 'Quản lý tài khoản', icon: <FiUsers />, path: '/admin/candidates' },
     { name: 'Tin tuyển dụng', subtitle: 'Quản lý tin đăng', icon: <FiBriefcase />, path: '/admin/jobs' },
-    { name: 'Ngành nghề', subtitle: 'Quản lý danh mục', icon: <FiLayers />, path: '/admin/categories' },
     { name: 'Gói dịch vụ', subtitle: 'Quản lý gói & giá', icon: <FiPackage />, path: '/admin/services' },
-    { name: 'Bài viết', subtitle: 'Quản lý nội dung', icon: <FiFileText />, path: '/admin/posts' },
   ];
   const isActive = (path) => location.pathname === path;
 

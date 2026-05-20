@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Shield, Lock, User, Eye, EyeOff, LayoutDashboard } from "lucide-react";
-import { 
-  TextField, 
-  InputAdornment, 
-  IconButton, 
-  Button, 
+import { Shield, Lock, User, Eye, EyeOff } from "lucide-react";
+import {
+  TextField,
+  InputAdornment,
+  IconButton,
+  Button,
   Paper,
-  Box,
-  Typography
 } from "@mui/material";
+import { toast } from "react-toastify";
+
 import { login } from "../../../service/authService";
 import { useUserStore } from "../../../stores/useUserStore";
-import { toast } from "react-toastify";
+import {
+  AUTH_SESSION_INIT_MESSAGE,
+  getLoginErrorMessage,
+  isAuthFailure,
+} from "../../../utils/authMessages";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,12 +32,11 @@ export default function Login() {
   const hydrated = useUserStore.persist.hasHydrated();
 
   useEffect(() => {
-    if (!hydrated) return;
-    if (!isAuthenticated || !user) return;
+    if (!hydrated || !isAuthenticated || !user) return;
     if (user.role === "ADMIN") {
       navigate("/admin");
     }
-  }, [isAuthenticated, user, navigate, hydrated]);
+  }, [hydrated, isAuthenticated, navigate, user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -42,12 +45,21 @@ export default function Login() {
 
     try {
       await login({ username, password, type: "ADMIN" });
+    } catch (err) {
+      if (!isAuthFailure(err)) {
+        console.error(err);
+      }
+      setError(getLoginErrorMessage("ADMIN"));
+      setLoading(false);
+      return;
+    }
+
+    try {
       await handleLoginSuccess();
       toast.success("Chào mừng Admin quay trở lại!");
     } catch (err) {
-      const msg = "Tên đăng nhập hoặc mật khẩu không chính xác!";
-      setError(msg);
-      toast.error(msg);
+      console.error(err);
+      setError(AUTH_SESSION_INIT_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -55,7 +67,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-[#f8fafc] font-sans">
-      {/* Cột trái: Giao diện Login */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
@@ -96,8 +107,8 @@ export default function Login() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center ml-1">
                   <label className="text-sm font-semibold text-gray-700">Mật khẩu</label>
-                  <Link 
-                    to="/forgot-password?type=ADMIN" 
+                  <Link
+                    to="/forgot-password?type=ADMIN"
                     className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition"
                   >
                     Quên mật khẩu?
@@ -119,11 +130,7 @@ export default function Login() {
                     ),
                     endAdornment: (
                       <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          size="small"
-                        >
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
                           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </IconButton>
                       </InputAdornment>
@@ -140,7 +147,7 @@ export default function Login() {
 
               {error && (
                 <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium border border-red-100 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
                   {error}
                 </div>
               )}
@@ -166,9 +173,11 @@ export default function Login() {
             </form>
 
             <div className="mt-8 pt-6 border-t border-gray-50">
-                <div className="flex items-center justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition cursor-not-allowed">
-                     <span className="text-xs text-gray-400 font-medium tracking-widest uppercase">Secured by Enterprise Shield</span>
-                </div>
+              <div className="flex items-center justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition cursor-not-allowed">
+                <span className="text-xs text-gray-400 font-medium tracking-widest uppercase">
+                  Secured by Enterprise Shield
+                </span>
+              </div>
             </div>
           </Paper>
 
@@ -178,21 +187,19 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Cột phải: Visual/Branding */}
       <div className="hidden lg:flex w-1/2 bg-[#022c22] relative overflow-hidden items-center justify-center text-white">
-        {/* Background Patterns */}
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_2px_2px,_rgba(255,255,255,0.05)_1px,_transparent_0)] bg-[length:32px_32px]"></div>
-          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-600/20 blur-[120px] rounded-full"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/10 blur-[120px] rounded-full"></div>
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_2px_2px,_rgba(255,255,255,0.05)_1px,_transparent_0)] bg-[length:32px_32px]" />
+          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-600/20 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/10 blur-[120px] rounded-full" />
         </div>
 
         <div className="relative z-10 p-12 text-center max-w-lg">
           <div className="mb-8 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-sm font-medium text-emerald-200">Admin Control Panel v2.0</span>
           </div>
-          
+
           <h2 className="text-4xl font-bold mb-6 leading-tight">
             Nơi quản lý <span className="text-emerald-500 italic">sức mạnh</span> của hệ thống
           </h2>
@@ -205,7 +212,7 @@ export default function Login() {
               { label: "Bảo mật", desc: "Xác thực 2 lớp Admin", color: "text-emerald-500" },
               { label: "Dữ liệu", desc: "Báo cáo thời gian thực", color: "text-emerald-500" },
               { label: "Quyền hạn", desc: "Phân quyền linh hoạt", color: "text-emerald-500" },
-              { label: "Hỗ trợ", desc: "Support 24/7", color: "text-emerald-500" }
+              { label: "Hỗ trợ", desc: "Support 24/7", color: "text-emerald-500" },
             ].map((item, idx) => (
               <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition cursor-default">
                 <p className={`${item.color} font-bold text-sm mb-1`}>{item.label}</p>
