@@ -127,7 +127,7 @@ function EmptyState({ onCreateClick }) {
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>Bạn chưa có CV nào</Typography>
                 <Typography variant="body2" sx={{ color: '#6b7280', mb: 3 }}>Chọn một mẫu bên dưới để bắt đầu tạo CV chuyên nghiệp</Typography>
-                <Button variant="contained" onClick={onCreateClick} startIcon={<PlusIcon />}
+                <Button variant="contained" onClick={() => onCreateClick(1)} startIcon={<PlusIcon />}
                     sx={{ backgroundColor: '#111827', color: '#fff', borderRadius: '10px', textTransform: 'none', px: 3, py: 1.2, fontWeight: 600, '&:hover': { backgroundColor: '#1f2937' } }}>
                     Tạo CV ngay
                 </Button>
@@ -137,7 +137,7 @@ function EmptyState({ onCreateClick }) {
                 <Grid container spacing={2}>
                     {TEMPLATES.map(tpl => (
                         <Grid item xs={6} sm={4} md={3} key={tpl.id}>
-                            <TemplateCard tpl={tpl} onClick={onCreateClick} />
+                            <TemplateCard tpl={tpl} onClick={() => onCreateClick(tpl.id)} />
                         </Grid>
                     ))}
                 </Grid>
@@ -174,11 +174,47 @@ export default function CVDashboard() {
         fetchCVs();
     }, [user]);
 
+const generateUUIDv7 = () => {
+    // 48-bit timestamp
+    const timestamp = Date.now();
+    
+    // 10 random bytes
+    const randomBytes = new Uint8Array(10);
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(randomBytes);
+    } else {
+        for (let i = 0; i < 10; i++) {
+            randomBytes[i] = Math.floor(Math.random() * 256);
+        }
+    }
+    
+    // Convert timestamp to 12-char hex (48 bits)
+    let hex = timestamp.toString(16).padStart(12, '0');
+    
+    // Version '7'
+    hex += '7';
+    
+    // Next 12 bits (from random bytes)
+    const randPart1 = ((randomBytes[0] << 8) | randomBytes[1]) & 0x0FFF;
+    hex += randPart1.toString(16).padStart(3, '0');
+    
+    // Variant bits (8, 9, a, or b) - set 2 most significant bits to 10
+    const variant = (randomBytes[2] & 0x3F) | 0x80;
+    hex += variant.toString(16).padStart(2, '0');
+    
+    // Remaining 56 bits of randomness
+    const randPart2 = Array.from(randomBytes.slice(3))
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+    hex += randPart2;
+    
+    // Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+
     const handleCreate = (templateId = 1) => {
         try {
-            const uuid = typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            const uuid = generateUUIDv7();
             const newId = `cv_${uuid}`;
 
             const draft = {
@@ -253,7 +289,7 @@ export default function CVDashboard() {
                     {!isEmpty && (
                         <Button 
                             variant="contained" 
-                            onClick={handleCreate} 
+                            onClick={() => handleCreate(1)} 
                             startIcon={<PlusIcon />}
                             sx={{ backgroundColor: '#111827', color: '#fff', borderRadius: '10px', textTransform: 'none', px: 3, '&:hover': { backgroundColor: '#1f2937' }, boxShadow: 'none' }}
                         >
@@ -294,7 +330,7 @@ export default function CVDashboard() {
                                 </Grid>
                             ))}
                             <Grid item xs={12} sm={6} md={4} lg={3}>
-                                <NewCVCard onClick={handleCreate} />
+                                <NewCVCard onClick={() => handleCreate(1)} />
                             </Grid>
                         </Grid>
 
@@ -311,7 +347,7 @@ export default function CVDashboard() {
                             <Grid container spacing={2}>
                                 {TEMPLATES.map(tpl => (
                                     <Grid item xs={6} sm={4} md={3} key={tpl.id}>
-                                        <TemplateCard tpl={tpl} onClick={handleCreate} />
+                                        <TemplateCard tpl={tpl} onClick={() => handleCreate(tpl.id)} />
                                     </Grid>
                                 ))}
                             </Grid>
