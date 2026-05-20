@@ -79,6 +79,7 @@ function mapJobFromApi(job) {
     applicants: job.applicants || 0,
     views: job.views || 0,
     deadline: job.deadline || 'Chưa cập nhật',
+    deadlineExpired: job.deadlineExpired ?? false,
     status: job.status || 'active',
     // Extended fields
     experience: job.experience || '',

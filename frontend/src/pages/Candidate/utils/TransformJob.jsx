@@ -9,6 +9,7 @@ export function TransformJob(data) {
     location: data.location,
     experience: data.experience,
     deadline: formatVietnamDate(data.deadline),
+    deadlineExpired: data.deadlineExpired ?? false,
     salaryNegotiable:data.salaryNegotiable,
     requirements: safeParse(data.requirementTags),
     benefits: safeParse(data.benefitTags),
