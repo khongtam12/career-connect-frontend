@@ -14,6 +14,8 @@ export const validateJobForm = (formData, { requireSubscription }) => {
 
   const titleValue = String(formData.title || '').trim();
   const addressValue = String(formData.address || '').trim();
+  const wardValue = String(formData.ward || '').trim();
+  const addressDetailValue = String(formData.addressDetail || '').trim();
   const experienceValue = String(formData.experience || '').trim();
   const ageRangeValue = String(formData.ageRange || '').trim();
 
@@ -34,7 +36,9 @@ export const validateJobForm = (formData, { requireSubscription }) => {
 
   requireText('title', 'tiêu đề vị trí');
   requireText('industry', 'ngành nghề');
-  requireText('address', 'địa chỉ làm việc');
+  requireText('address', 'tỉnh/thành làm việc');
+  requireText('ward', 'phường/xã làm việc');
+  requireText('addressDetail', 'địa chỉ cụ thể');
   requireText('jobType', 'loại hình công việc');
   requireText('experience', 'kinh nghiệm yêu cầu');
   requireText('rank', 'cấp bậc');
@@ -50,10 +54,26 @@ export const validateJobForm = (formData, { requireSubscription }) => {
   }
 
   if (addressValue) {
-    if (addressValue.length < 6 || addressValue.length > 200) {
-      errors.address = 'Địa chỉ cần từ 6-200 ký tự.';
+    if (addressValue.length < 2 || addressValue.length > 120) {
+      errors.address = 'Tỉnh/thành cần từ 2-120 ký tự.';
     } else if (!hasLetter.test(addressValue) || !addressRegex.test(addressValue)) {
-      errors.address = 'Địa chỉ chỉ gồm chữ, số và ký tự cơ bản.';
+      errors.address = 'Tỉnh/thành chỉ gồm chữ, số và ký tự cơ bản.';
+    }
+  }
+
+  if (wardValue) {
+    if (wardValue.length < 2 || wardValue.length > 120) {
+      errors.ward = 'Phường/xã cần từ 2-120 ký tự.';
+    } else if (!hasLetter.test(wardValue) || !addressRegex.test(wardValue)) {
+      errors.ward = 'Phường/xã chỉ gồm chữ, số và ký tự cơ bản.';
+    }
+  }
+
+  if (addressDetailValue) {
+    if (addressDetailValue.length < 3 || addressDetailValue.length > 200) {
+      errors.addressDetail = 'Địa chỉ cụ thể cần từ 3-200 ký tự.';
+    } else if (!addressRegex.test(addressDetailValue)) {
+      errors.addressDetail = 'Địa chỉ cụ thể chỉ gồm chữ, số và ký tự cơ bản.';
     }
   }
 
