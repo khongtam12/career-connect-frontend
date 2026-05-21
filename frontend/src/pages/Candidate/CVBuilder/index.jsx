@@ -15,6 +15,7 @@ import {
   User as UserIcon,
   Loader2
 } from 'lucide-react'
+import html2pdf from 'html2pdf.js'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -126,7 +127,7 @@ export default function EditorPage() {
       const exportPdf = async () => {
         try {
           const element = document.getElementById('cv-preview-root');
-          if (element && window.html2pdf) {
+          if (element) {
             const opt = {
               margin: 0,
               filename: `${cvName || 'CV'}.pdf`,
@@ -135,7 +136,7 @@ export default function EditorPage() {
               jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             toast.info('Đang chuẩn bị tải xuống PDF...');
-            await window.html2pdf().set(opt).from(element).save();
+            await html2pdf().set(opt).from(element).save();
             toast.success('Tải PDF thành công!');
             setTimeout(() => {
               navigate('/cv-dashboard');
@@ -255,7 +256,7 @@ export default function EditorPage() {
       // --- Bước 2: Tự động chụp bản Preview thành PDF và lưu lên S3 ---
       try {
         const element = document.getElementById('cv-preview-root');
-        if (element && window.html2pdf) {
+        if (element) {
           const opt = {
             margin: 0,
             filename: `CV_${result.id}.pdf`,
@@ -265,7 +266,7 @@ export default function EditorPage() {
           };
 
           // Chuyển component thành Blob PDF
-          const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
+          const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
           
           // Gửi file lên server để lưu vào S3
           const formData = new FormData();
@@ -310,7 +311,7 @@ export default function EditorPage() {
       await new Promise(resolve => setTimeout(resolve, 300))
 
       const element = document.getElementById('cv-preview-root');
-      if (element && window.html2pdf) {
+      if (element) {
         const opt = {
           margin: 0,
           filename: `${cvName || 'CV'}.pdf`,
@@ -320,11 +321,11 @@ export default function EditorPage() {
         };
 
         // Chuyển component thành PDF và tải về máy người dùng
-        await window.html2pdf().set(opt).from(element).save();
+        await html2pdf().set(opt).from(element).save();
         
         // Đồng thời tải bản PDF mới lên S3 luôn để cập nhật đồng bộ
         try {
-          const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
+          const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
           const formData = new FormData();
           formData.append('file', pdfBlob, `CV_${result.id}.pdf`);
           await cvService.uploadCVFile(result.id, formData);

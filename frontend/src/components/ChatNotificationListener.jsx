@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useUserStore } from '../stores/useUserStore';
 import { useNotificationStore } from '../stores/useNotificationStore';
 import { fetchCandidateChatRooms, fetchCompanyChatRooms, connectChatWebSocket } from '../service/notificationService';
+import { isServiceUnavailableError } from '../service/apiClient';
 
 const ChatNotificationListener = () => {
   const { user, isAuthenticated } = useUserStore();
@@ -24,6 +25,10 @@ const ChatNotificationListener = () => {
           setUnreadChatCount(total);
         }
       } catch (err) {
+        if (isServiceUnavailableError(err)) {
+          setUnreadChatCount(0);
+          return;
+        }
         console.error("Failed to fetch initial chat unread count", err);
       }
     };
