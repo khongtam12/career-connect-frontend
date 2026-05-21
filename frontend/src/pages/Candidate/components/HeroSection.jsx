@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FileX, Search, MapPin, ChevronLeft, ChevronRight, Sparkles, Zap } from 'lucide-react';
+import { Search, MapPin, ChevronLeft, ChevronRight, Sparkles, Zap, Flame } from 'lucide-react';
 import { categoriesData } from '../../../data/categoriesData';
 
 export default function HeroSection({
@@ -199,7 +199,7 @@ export default function HeroSection({
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/50 via-black/10 to-transparent"></div>
                     <div className="absolute top-6 left-6 text-white">
-                      <h2 className="text-xl sm:text-2xl font-bold mb-2">Tiếp lợi thế,\n nối thành công</h2>
+                      <h2 className="text-xl sm:text-2xl font-bold mb-2">Tiếp lợi thế - Nối thành công</h2>
                       <p className="text-sm text-emerald-100">CareerConnect - Hệ sinh thái nhân sự\n tiên phong ứng dụng công nghệ</p>
                     </div>
                     <span className="absolute bottom-4 right-4 text-white text-sm font-semibold backdrop-blur-md bg-black/30 px-4 py-2 rounded-full border border-white/20">
@@ -260,25 +260,25 @@ export default function HeroSection({
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             <button
               type="button"
-              onClick={() => onQuickTag?.('Việc đi làm ngay')}
-              className="inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm sm:text-base font-bold text-orange-600 shadow-sm border border-orange-100 hover:border-orange-200 transition-colors"
+              onClick={() => onQuickTag?.('TRENDING_POST')}
+              className="inline-flex items-center gap-3 rounded-full border border-orange-200 bg-white/95 px-6 py-3 text-sm sm:text-base font-bold text-orange-700 shadow-[0_14px_40px_rgba(249,115,22,0.18)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-[0_18px_50px_rgba(249,115,22,0.22)]"
             >
-              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-orange-50 text-orange-600">
-                <Zap size={18} />
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                <Flame size={18} />
               </span>
-              Việc đi làm ngay
+              Việc làm tuyển gấp
               <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">Mới</span>
             </button>
 
             <button
               type="button"
-              onClick={() => onQuickTag?.('Không cần CV')}
-              className="inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm sm:text-base font-bold text-blue-600 shadow-sm border border-blue-100 hover:border-blue-200 transition-colors"
+              onClick={() => onQuickTag?.('URGENT_JOB_POST')}
+              className="inline-flex items-center gap-3 rounded-full border border-emerald-200 bg-white/95 px-6 py-3 text-sm sm:text-base font-bold text-emerald-700 shadow-[0_14px_40px_rgba(16,185,129,0.16)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-[0_18px_50px_rgba(16,185,129,0.2)]"
             >
-              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600">
-                <FileX size={18} />
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <Zap size={18} />
               </span>
-              Việc không cần CV
+              Việc đi làm ngay
               <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">Mới</span>
             </button>
           </div>

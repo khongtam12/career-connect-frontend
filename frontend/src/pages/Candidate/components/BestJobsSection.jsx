@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import JobCard from './JobCard';
-import { Briefcase, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Briefcase, ChevronDown } from 'lucide-react';
 
 const filterOptionsList = [
   { value: 'location', label: 'Địa điểm' },
@@ -112,16 +112,8 @@ export default function BestJobsSection({
               onClick={onViewAll}
               className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
             >
-              Xem tất cả {total ? `(${total})` : ''}
+              Xem tất cả việc làm {total ? `(${total})` : ''}
             </button>
-            <div className="flex items-center gap-2">
-              <button className="w-9 h-9 rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50">
-                <ChevronLeft size={16} />
-              </button>
-              <button className="w-9 h-9 rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50">
-                <ChevronRight size={16} />
-              </button>
-            </div>
           </div>
         </div>
 

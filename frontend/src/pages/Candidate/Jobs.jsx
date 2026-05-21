@@ -9,6 +9,8 @@ const initialFilters = {
   industryId: '',
   fieldId: '',
   jobType: '',
+  marketingPackageCategory: '',
+  marketingPackageType: '',
   experienceMin: '',
   experienceMax: '',
   salaryMin: '',
@@ -85,6 +87,8 @@ export default function Jobs() {
     if (data.industryId) params.set('industryId', data.industryId);
     if (data.fieldId) params.set('fieldId', data.fieldId);
     if (data.jobType) params.set('jobType', data.jobType);
+    if (data.marketingPackageCategory) params.set('marketingPackageCategory', data.marketingPackageCategory);
+    if (data.marketingPackageType) params.set('marketingPackageType', data.marketingPackageType);
     if (data.experienceMin) params.set('experienceMin', data.experienceMin);
     if (data.experienceMax) params.set('experienceMax', data.experienceMax);
     if (data.salaryMin) params.set('salaryMin', data.salaryMin);
@@ -94,10 +98,10 @@ export default function Jobs() {
     return params;
   };
 
-  const handleSearch = () => {
-    const params = buildParams(filters);
+  const handleSearch = (overrideFilters = filters) => {
+    const params = buildParams(overrideFilters);
     navigate(`/jobs?${params.toString()}`);
-    applyFilters(0, filters);
+    applyFilters(0, overrideFilters);
   };
 
   const handlePageChange = (nextPage) => {
@@ -135,6 +139,8 @@ export default function Jobs() {
       industryId: searchParams.get('industryId') || '',
       fieldId: searchParams.get('fieldId') || '',
       jobType: searchParams.get('jobType') || '',
+      marketingPackageCategory: searchParams.get('marketingPackageCategory') || '',
+      marketingPackageType: searchParams.get('marketingPackageType') || '',
       experienceMin: searchParams.get('experienceMin') || '',
       experienceMax: searchParams.get('experienceMax') || '',
       salaryMin: searchParams.get('salaryMin') || '',
@@ -148,42 +154,7 @@ export default function Jobs() {
   }, [paramsKey, applyFilters, searchParams]);
 
   return (
-    <div className="bg-slate-50 min-h-screen">
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tìm việc làm</h1>
-          <p className="text-sm text-gray-500 mt-1">Kết quả tìm kiếm phù hợp cho bạn</p>
-
-          <div className="mt-4 flex flex-col md:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Vị trí tuyển dụng, tên công ty"
-              value={filters.keyword}
-              onChange={(e) => handleFilterChange({ keyword: e.target.value })}
-              className="flex-1 rounded-full border border-gray-200 px-4 py-3 text-sm"
-            />
-            <select
-              value={filters.location}
-              onChange={(e) => handleFilterChange({ location: e.target.value })}
-              className="md:w-56 rounded-full border border-gray-200 px-4 py-3 text-sm"
-            >
-              <option value="">Địa điểm</option>
-              {filterOptions.locations.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={handleSearch}
-              className="rounded-full bg-emerald-600 text-white px-6 py-3 text-sm font-bold hover:bg-emerald-700"
-            >
-              Tìm kiếm
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-slate-50">
       <JobSection
         jobs={jobs}
         totalElements={totalElements}
@@ -197,7 +168,7 @@ export default function Jobs() {
         loading={loading}
         selectedJob={selectedJob}
         onSelectJob={setSelectedJob}
-        showDetailPanel={true}
+        showDetailPanel={false}
       />
     </div>
   );
