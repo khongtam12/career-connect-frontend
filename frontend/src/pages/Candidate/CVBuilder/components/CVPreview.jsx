@@ -222,7 +222,7 @@ export default function CVPreview({ data, templateId }) {
                           )}
                           {proj.link && (
                             <a href={proj.link} target="_blank" rel="noreferrer" style={{ color: colors.primary, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                              <LinkIcon size={9} /> Xem dự án
+                              <LinkIcon size={9} /> {proj.link}
                             </a>
                           )}
                         </div>
@@ -337,7 +337,7 @@ export default function CVPreview({ data, templateId }) {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2, fontSize: 9 }}>
                           <span style={{ color: '#64748b', fontWeight: 600 }}>{fmt(proj.start)} – {fmt(proj.end)}</span>
                           {proj.link && (
-                            <a href={proj.link} target="_blank" rel="noreferrer" style={{ color: colors.primary, textDecoration: 'none', fontWeight: 600 }}>Xem dự án</a>
+                            <a href={proj.link} target="_blank" rel="noreferrer" style={{ color: colors.primary, textDecoration: 'none', fontWeight: 600 }}>{proj.link}</a>
                           )}
                         </div>
                         {proj.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4, lineHeight: 1.5, margin: '4px 0 0 0' }}>{proj.desc}</p>}
@@ -536,7 +536,7 @@ export default function CVPreview({ data, templateId }) {
                       <span style={{ fontSize: 9.5, color: '#64748b', fontWeight: 600 }}>{fmt(proj.start)} – {fmt(proj.end)}</span>
                     )}
                     {proj.link && (
-                      <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9.5, color: colors.primary, textDecoration: 'none', fontWeight: 600 }}>Xem dự án</a>
+                      <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9.5, color: colors.primary, textDecoration: 'none', fontWeight: 600 }}>{proj.link}</a>
                     )}
                   </div>
                   {proj.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4, lineHeight: 1.5, margin: '4px 0 0 0' }}>{proj.desc}</p>}
