@@ -1,10 +1,15 @@
 import apiClient from './apiClient';
+
+const userRequestConfig = (overrides = {}) => ({
+    serviceName: 'user-service',
+    ...overrides,
+});
 export const login = async (data) => {
     const res = await apiClient.post(`/api/v1/user/auth/login`, data);
     return res.data;
 };
 export const getCurrentUser = async () => {
-    const res = await apiClient.get(`/api/v1/user/auth/me`);
+    const res = await apiClient.get(`/api/v1/user/auth/me`, userRequestConfig({ quietOn503: true }));
     return res.data;
 };
 

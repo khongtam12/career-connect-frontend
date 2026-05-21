@@ -33,6 +33,7 @@ export default function BestJobsSection({
   onViewAll,
   savedJobs = [],
   appliedJobs = [],
+  emptyText = 'Chua tim thay viec lam phu hop',
 }) {
   const [activeFilterType, setActiveFilterType] = useState('location');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
