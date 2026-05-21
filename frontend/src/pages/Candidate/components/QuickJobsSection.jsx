@@ -37,7 +37,7 @@ export default function QuickJobsSection({
             onClick={onViewAll}
             className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-2"
           >
-            Xem them {total ? `(${total})` : ''}
+            Xem thêm {total ? `(${total})` : ''}
             <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -49,7 +49,7 @@ export default function QuickJobsSection({
               onChange={(event) => onLocationChange?.(event.target.value)}
               className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm"
             >
-              <option value="">Loc theo: Dia diem</option>
+              <option value="">Lọc theo: Địa điểm</option>
               {locationOptions.map((item) => (
                 <option key={item} value={item}>
                   {item}

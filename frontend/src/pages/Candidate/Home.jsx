@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeroSection from './components/HeroSection';
 import BestJobsSection from './components/BestJobsSection';
@@ -9,24 +9,27 @@ import HowItWorks from './components/HowItWorks';
 import { getJobFilters, getJobStats, searchJobs } from '../../service/jobService';
 import { categoriesData } from '../../data/categoriesData';
 import { getAppliedJobs, getSavedJobs } from './utils/jobTracker';
-import { isImmediateJob, isUrgentJob } from './utils/jobBadges';
 import { Flame, Zap } from 'lucide-react';
+
+const initialFilters = {
+  keyword: '',
+  location: '',
+  industryId: '',
+  fieldId: '',
+  jobType: '',
+  marketingPackageCategory: '',
+  marketingPackageType: '',
+  experienceMin: '',
+  experienceMax: '',
+  salaryMin: '',
+  salaryMax: '',
+  sortBy: 'createdAt',
+  sortDir: 'desc',
+};
 
 export default function Home() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({
-    keyword: '',
-    location: '',
-    industryId: '',
-    fieldId: '',
-    jobType: '',
-    experienceMin: '',
-    experienceMax: '',
-    salaryMin: '',
-    salaryMax: '',
-    sortBy: 'createdAt',
-    sortDir: 'desc',
-  });
+  const [filters, setFilters] = useState(initialFilters);
   const [jobs, setJobs] = useState([]);
   const [stats, setStats] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
@@ -35,14 +38,13 @@ export default function Home() {
     locations: [],
     industries: [],
   });
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [savedJobs, setSavedJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [urgentJobs, setUrgentJobs] = useState([]);
   const [immediateJobs, setImmediateJobs] = useState([]);
+  const [urgentTotal, setUrgentTotal] = useState(0);
+  const [immediateTotal, setImmediateTotal] = useState(0);
   const [urgentLoading, setUrgentLoading] = useState(false);
   const [immediateLoading, setImmediateLoading] = useState(false);
   const [urgentLocation, setUrgentLocation] = useState('');
@@ -60,29 +62,24 @@ export default function Home() {
     }));
   }, [filterOptions.industries]);
 
-  const applyFilters = async (nextPage = 0, overrideFilters = filters) => {
-    setLoading(true);
+  const applyFilters = useCallback(async (nextPage = 0, overrideFilters) => {
+    const targetFilters = overrideFilters || initialFilters;
     try {
       const response = await searchJobs({
-        ...overrideFilters,
-        experienceMin: overrideFilters.experienceMin ? Number(overrideFilters.experienceMin) : undefined,
-        experienceMax: overrideFilters.experienceMax ? Number(overrideFilters.experienceMax) : undefined,
-        salaryMin: overrideFilters.salaryMin ? Number(overrideFilters.salaryMin) * 1000000 : undefined,
-        salaryMax: overrideFilters.salaryMax ? Number(overrideFilters.salaryMax) * 1000000 : undefined,
+        ...targetFilters,
+        experienceMin: targetFilters.experienceMin ? Number(targetFilters.experienceMin) : undefined,
+        experienceMax: targetFilters.experienceMax ? Number(targetFilters.experienceMax) : undefined,
+        salaryMin: targetFilters.salaryMin ? Number(targetFilters.salaryMin) * 1000000 : undefined,
+        salaryMax: targetFilters.salaryMax ? Number(targetFilters.salaryMax) * 1000000 : undefined,
         page: nextPage,
         size: 8,
       });
       setJobs(response.content || []);
-      setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
-      const responsePage = typeof response.page === 'number' ? response.page : 1;
-      setPage(Math.max(responsePage - 1, 0));
     } catch (error) {
       console.error('Failed to fetch jobs', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   const handleFilterChange = (next) => {
     setFilters((prev) => ({ ...prev, ...next }));
@@ -107,25 +104,8 @@ export default function Home() {
 
   const handleQuickTag = (keyword) => {
     const params = new URLSearchParams();
-    params.set('keyword', keyword);
+    params.set('marketingPackageType', keyword);
     navigate(`/jobs?${params.toString()}`);
-  };
-
-  const handlePageChange = (nextPage) => {
-    if (nextPage < 0 || nextPage >= totalPages) return;
-    applyFilters(nextPage, filters);
-  };
-
-  const normalizeText = (value) =>
-    (value || '')
-      .normalize('NFD')
-      .replace(/\p{M}+/gu, '')
-      .toLowerCase();
-
-  const filterByLocation = (items, location) => {
-    if (!location) return items;
-    const target = normalizeText(location);
-    return items.filter((job) => normalizeText(job?.location).includes(target));
   };
 
   const urgentJobsDisplay = useMemo(
@@ -139,6 +119,25 @@ export default function Home() {
   );
 
   useEffect(() => {
+    const loadQuickJobs = async (marketingPackageType, setJobsState, setTotalState, setLoadingState) => {
+      setLoadingState(true);
+      try {
+        const response = await searchJobs({
+          page: 0,
+          size: 6,
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+          marketingPackageType,
+        });
+        setJobsState(response.content || []);
+        setTotalState(response.totalElements || 0);
+      } catch (error) {
+        console.error('Failed to load quick job section', error);
+      } finally {
+        setLoadingState(false);
+      }
+    };
+
     const loadInit = async () => {
       try {
         const [options, statsResponse] = await Promise.all([
@@ -157,31 +156,11 @@ export default function Home() {
       }
     };
 
-    const loadQuickSections = async () => {
-      setUrgentLoading(true);
-      setImmediateLoading(true);
-      try {
-        const response = await searchJobs({
-          page: 0,
-          size: 30,
-          sortBy: 'createdAt',
-          sortDir: 'desc',
-        });
-        const items = response.content || [];
-        setUrgentJobs(items.filter(isUrgentJob));
-        setImmediateJobs(items.filter(isImmediateJob));
-      } catch (error) {
-        console.error('Failed to load quick job sections', error);
-      } finally {
-        setUrgentLoading(false);
-        setImmediateLoading(false);
-      }
-    };
-
     loadInit();
-    applyFilters(0, filters);
-    loadQuickSections();
-  }, []);
+    applyFilters(0, initialFilters);
+    loadQuickJobs('TRENDING_POST', setUrgentJobs, setUrgentTotal, setUrgentLoading);
+    loadQuickJobs('URGENT_JOB_POST', setImmediateJobs, setImmediateTotal, setImmediateLoading);
+  }, [applyFilters]);
 
   useEffect(() => {
     const syncManagedJobs = () => {
@@ -193,8 +172,6 @@ export default function Home() {
     window.addEventListener('jobTrackerUpdated', syncManagedJobs);
     return () => window.removeEventListener('jobTrackerUpdated', syncManagedJobs);
   }, []);
-
-  console.log("jobs",jobs);
 
   return (
     <div className="bg-white">
@@ -225,11 +202,11 @@ export default function Home() {
         subtitle="Cơ hội nổi bật cần tuyển ngay"
         icon={<Flame size={18} className="text-orange-500" />}
         jobs={urgentJobsDisplay}
-        total={urgentJobs.length}
+        total={urgentTotal}
         locations={filterOptions.locations}
         locationFilter={urgentLocation}
         onLocationChange={setUrgentLocation}
-        onViewAll={() => navigate(urgentLocation ? `/jobs?location=${encodeURIComponent(urgentLocation)}` : '/jobs')}
+        onViewAll={() => navigate(urgentLocation ? `/jobs?marketingPackageType=TRENDING_POST&location=${encodeURIComponent(urgentLocation)}` : '/jobs?marketingPackageType=TRENDING_POST')}
         backgroundClassName="bg-slate-50"
         accentClassName="text-rose-600"
         emptyText="Chưa tìm thấy việc làm tuyển gấp"
@@ -241,11 +218,11 @@ export default function Home() {
         subtitle="Nhanh tay ứng tuyển trong hôm nay"
         icon={<Zap size={18} className="text-orange-500" />}
         jobs={immediateJobsDisplay}
-        total={immediateJobs.length}
+        total={immediateTotal}
         locations={filterOptions.locations}
         locationFilter={immediateLocation}
         onLocationChange={setImmediateLocation}
-        onViewAll={() => navigate(immediateLocation ? `/jobs?location=${encodeURIComponent(immediateLocation)}` : '/jobs')}
+        onViewAll={() => navigate(immediateLocation ? `/jobs?marketingPackageType=URGENT_JOB_POST&location=${encodeURIComponent(immediateLocation)}` : '/jobs?marketingPackageType=URGENT_JOB_POST')}
         backgroundClassName="bg-orange-50/70"
         accentClassName="text-orange-600"
         emptyText="Chưa tìm thấy việc đi làm ngay"
@@ -263,3 +240,15 @@ export default function Home() {
     </div>
   );
 }
+
+const normalizeText = (value) =>
+  (value || '')
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .toLowerCase();
+
+const filterByLocation = (items, location) => {
+  if (!location) return items;
+  const target = normalizeText(location);
+  return items.filter((job) => normalizeText(job?.location).includes(target));
+};
