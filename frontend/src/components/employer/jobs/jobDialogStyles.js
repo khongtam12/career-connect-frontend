@@ -38,3 +38,16 @@ export const quillBoxSx = {
   '& .ql-container': { borderRadius: '0 0 8px 8px', borderColor: '#e5e7eb', minHeight: 120, fontSize: '0.85rem' },
   '& .ql-editor': { minHeight: 120 },
 };
+
+export const autocompleteSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 2,
+    '& fieldset': { borderColor: '#e5e7eb' },
+    '&:hover fieldset': { borderColor: '#d1d5db' },
+    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+  },
+  '& .MuiOutlinedInput-input': { fontSize: '0.82rem', py: 0.85 },
+  '& .MuiAutocomplete-popupIndicator': { color: '#6b7280' },
+  '& .MuiAutocomplete-clearIndicator': { display: 'none' },
+  '& .MuiInputBase-root': { backgroundColor: '#fff' },
+};
