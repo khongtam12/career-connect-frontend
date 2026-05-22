@@ -2,9 +2,8 @@ import axios from 'axios';
 import { useUserStore } from '../stores/useUserStore';
 
 const normalizeBaseURL = (value = '') => value.replace(/\/+$/, '');
-const localFallbackBaseURL = 'http://localhost:8080';
 const configuredBaseURL = normalizeBaseURL(import.meta.env.VITE_BACKEND_URL || '');
-let activeBaseURL = configuredBaseURL || localFallbackBaseURL;
+let activeBaseURL = configuredBaseURL;
 
 const apiClient = axios.create({
   baseURL: activeBaseURL,
@@ -48,39 +47,12 @@ export const isServiceUnavailableError = (error) => error?.response?.status === 
 const isGatewayTimeoutError = (error) => error?.response?.status === 504;
 const isNetworkError = (error) => !error?.response && !!error?.request;
 
-const canFallbackToLocal = (requestConfig = {}) => (
-  configuredBaseURL &&
-  configuredBaseURL !== localFallbackBaseURL &&
-  !requestConfig._localFallbackTried
-);
-
-const switchToBaseURL = (nextBaseURL) => {
-  activeBaseURL = normalizeBaseURL(nextBaseURL);
-  apiClient.defaults.baseURL = activeBaseURL;
-};
-
 export const getApiBaseURL = () => activeBaseURL;
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    if (
-      originalRequest &&
-      canFallbackToLocal(originalRequest) &&
-      (isNetworkError(error) || isServiceUnavailableError(error) || isGatewayTimeoutError(error))
-    ) {
-      originalRequest._localFallbackTried = true;
-      switchToBaseURL(localFallbackBaseURL);
-      originalRequest.baseURL = localFallbackBaseURL;
-
-      console.warn(
-        `[API Fallback] Khong goi duoc backend deploy (${configuredBaseURL}). Chuyen sang local ${localFallbackBaseURL}.`
-      );
-
-      return apiClient(originalRequest);
-    }
 
     if (
       error.response?.status === 401 &&
@@ -125,6 +97,12 @@ apiClient.interceptors.response.use(
           'color: white; background: #e74c3c; padding: 4px; border-radius: 4px; font-weight: bold;'
         );
       }
+    }
+
+    if (configuredBaseURL && (isNetworkError(error) || isGatewayTimeoutError(error))) {
+      console.error(
+        `[API Error] Khong the ket noi toi backend ${configuredBaseURL}. Kiem tra lai domain/SSL/backend.`
+      );
     }
 
     return Promise.reject(error);
