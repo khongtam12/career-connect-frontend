@@ -1,16 +1,15 @@
-import apiClient from "./apiClient";
+import apiClient, { getApiBaseURL } from "./apiClient";
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
-const BASE_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
-const WS_URL = `${BASE_URL}/api/v1/notifications/ws`;
 const notificationRequestConfig = (overrides = {}) => ({
   serviceName: 'notification-service',
   ...overrides,
 });
 
 const createStompClient = () => {
-  const stompClient = Stomp.over(() => new SockJS(WS_URL));
+  const wsURL = `${getApiBaseURL().replace(/\/$/, '')}/api/v1/notifications/ws`;
+  const stompClient = Stomp.over(() => new SockJS(wsURL));
   stompClient.debug = () => {};
   stompClient.reconnect_delay = 5000;
   return stompClient;

@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { useUserStore } from '../stores/useUserStore';
 
-const rawBaseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-const baseURL = rawBaseURL.replace(/\/+$/, '');
+const normalizeBaseURL = (value = '') => value.replace(/\/+$/, '');
+const localFallbackBaseURL = 'http://localhost:8080';
+const configuredBaseURL = normalizeBaseURL(import.meta.env.VITE_BACKEND_URL || '');
+let activeBaseURL = configuredBaseURL || localFallbackBaseURL;
 
 const apiClient = axios.create({
-  baseURL,
+  baseURL: activeBaseURL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -43,11 +45,42 @@ const shouldLogServiceError = (serviceName) => {
 };
 
 export const isServiceUnavailableError = (error) => error?.response?.status === 503;
+const isGatewayTimeoutError = (error) => error?.response?.status === 504;
+const isNetworkError = (error) => !error?.response && !!error?.request;
+
+const canFallbackToLocal = (requestConfig = {}) => (
+  configuredBaseURL &&
+  configuredBaseURL !== localFallbackBaseURL &&
+  !requestConfig._localFallbackTried
+);
+
+const switchToBaseURL = (nextBaseURL) => {
+  activeBaseURL = normalizeBaseURL(nextBaseURL);
+  apiClient.defaults.baseURL = activeBaseURL;
+};
+
+export const getApiBaseURL = () => activeBaseURL;
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    if (
+      originalRequest &&
+      canFallbackToLocal(originalRequest) &&
+      (isNetworkError(error) || isServiceUnavailableError(error) || isGatewayTimeoutError(error))
+    ) {
+      originalRequest._localFallbackTried = true;
+      switchToBaseURL(localFallbackBaseURL);
+      originalRequest.baseURL = localFallbackBaseURL;
+
+      console.warn(
+        `[API Fallback] Khong goi duoc backend deploy (${configuredBaseURL}). Chuyen sang local ${localFallbackBaseURL}.`
+      );
+
+      return apiClient(originalRequest);
+    }
 
     if (
       error.response?.status === 401 &&
@@ -67,7 +100,7 @@ apiClient.interceptors.response.use(
         }
 
         const res = await axios.post(
-          `${baseURL}/api/v1/user/auth/refresh`,
+          `${getApiBaseURL()}/api/v1/user/auth/refresh`,
           {},
           { withCredentials: true }
         );

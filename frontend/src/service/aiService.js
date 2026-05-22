@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import apiClient, { getApiBaseURL } from "./apiClient";
 
 /**
  * Tạo một kết nối SSE (Server-Sent Events) tới AI Chat Stream.
@@ -8,7 +8,7 @@ import apiClient from "./apiClient";
  */
 export const createChatStream = (requestMessage, chatId, userId) => {
   // Lấy chính xác baseURL từ apiClient và loại bỏ dấu / ở cuối nếu có để tránh tạo ra double slash (//)
-  const rawBaseURL = apiClient.defaults.baseURL || "http://localhost:8080";
+  const rawBaseURL = getApiBaseURL() || apiClient.defaults.baseURL || import.meta.env.VITE_BACKEND_URL || "";
   const baseURL = rawBaseURL.endsWith("/") ? rawBaseURL.slice(0, -1) : rawBaseURL;
 
   let url = `${baseURL}/api/v1/job/chat/stream?request=${encodeURIComponent(
