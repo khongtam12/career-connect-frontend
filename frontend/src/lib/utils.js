@@ -73,3 +73,64 @@ export function calcCVScore(data) {
 export function uid() {
   return `cv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 }
+
+const PROVINCE_LABELS = {
+  hanoi: 'Thành phố Hà Nội',
+  caobang: 'Tỉnh Cao Bằng',
+  tuyenquang: 'Tỉnh Tuyên Quang',
+  dienbien: 'Tỉnh Điện Biên',
+  laichau: 'Tỉnh Lai Châu',
+  sonla: 'Tỉnh Sơn La',
+  laocai: 'Tỉnh Lào Cai',
+  thainguyen: 'Tỉnh Thái Nguyên',
+  langson: 'Tỉnh Lạng Sơn',
+  quangninh: 'Tỉnh Quảng Ninh',
+  bacninh: 'Tỉnh Bắc Ninh',
+  phutho: 'Tỉnh Phú Thọ',
+  haiphong: 'Thành phố Hải Phòng',
+  hungyen: 'Tỉnh Hưng Yên',
+  ninhbinh: 'Tỉnh Ninh Bình',
+  thanhhoa: 'Tỉnh Thanh Hóa',
+  nghean: 'Tỉnh Nghệ An',
+  hatinh: 'Tỉnh Hà Tĩnh',
+  quangtri: 'Tỉnh Quảng Trị',
+  hue: 'Thành phố Huế',
+  danang: 'Thành phố Đà Nẵng',
+  quangngai: 'Tỉnh Quảng Ngãi',
+  gialai: 'Tỉnh Gia Lai',
+  khanhhoa: 'Tỉnh Khánh Hòa',
+  daklak: 'Tỉnh Đắk Lắk',
+  lamdong: 'Tỉnh Lâm Đồng',
+  dongnai: 'Tỉnh Đồng Nai',
+  hcm: 'Thành phố Hồ Chí Minh',
+  hochiminh: 'Thành phố Hồ Chí Minh',
+  tphochiminh: 'Thành phố Hồ Chí Minh',
+  tphcm: 'Thành phố Hồ Chí Minh',
+  saigon: 'Thành phố Hồ Chí Minh',
+  tayninh: 'Tỉnh Tây Ninh',
+  dongthap: 'Tỉnh Đồng Tháp',
+  vinhlong: 'Tỉnh Vĩnh Long',
+  angiang: 'Tỉnh An Giang',
+  cantho: 'Thành phố Cần Thơ',
+  camau: 'Tỉnh Cà Mau',
+}
+
+const normalizeProvinceKey = (value) => {
+  const stripped = String(value || '')
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .toLowerCase()
+    .trim()
+    .replace(/^(tinh|thanh pho|tp\.?|thu do)\s+/, '')
+
+  return stripped.replace(/[^a-z0-9]/g, '')
+}
+
+export function formatProvinceLabel(province) {
+  if (!province) return ''
+
+  const key = normalizeProvinceKey(province)
+  if (PROVINCE_LABELS[key]) return PROVINCE_LABELS[key]
+
+  return province
+}

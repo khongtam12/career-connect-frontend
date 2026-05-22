@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import JobCard from './JobCard';
+import { formatProvinceLabel } from '../../../lib/utils';
 
 export default function QuickJobsSection({
   title,
@@ -17,7 +18,6 @@ export default function QuickJobsSection({
   loading = false,
 }) {
   const locationOptions = useMemo(() => locations.filter(Boolean), [locations]);
-  const chips = useMemo(() => locationOptions.slice(0, 7), [locationOptions]);
 
   return (
     <section className={`py-12 sm:py-14 ${backgroundClassName}`}>
@@ -52,30 +52,10 @@ export default function QuickJobsSection({
               <option value="">Lọc theo: Địa điểm</option>
               {locationOptions.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {formatProvinceLabel(item)}
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {chips.map((chip) => {
-              const isActive = chip === locationFilter;
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => onLocationChange?.(chip)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                    isActive
-                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-200 hover:text-emerald-600'
-                  }`}
-                >
-                  {chip}
-                </button>
-              );
-            })}
           </div>
         </div>
 
