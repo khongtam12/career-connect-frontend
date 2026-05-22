@@ -20,6 +20,7 @@ import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccount
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
+import EmployerServices from "../pages/Employer/Services/EmployerServices.jsx";
 import EmployerChat from "../pages/Employer/EmployerChat.jsx";
 import EmployerProfile from "../pages/Employer/Profile/EmployerProfile.jsx";
 import Dashboard from "../pages/Admin/Dashboard/index.jsx";
@@ -187,6 +188,11 @@ export const router = createBrowserRouter([
             {
                 path: "candidates",
                 element: <Candidates />
+            },
+
+            {
+                path: "services",
+                element: <EmployerServices />
             },
 
             {
