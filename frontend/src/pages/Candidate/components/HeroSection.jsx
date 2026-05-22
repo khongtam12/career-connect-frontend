@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, MapPin, ChevronLeft, ChevronRight, Sparkles, Zap, Flame } from 'lucide-react';
 import { categoriesData } from '../../../data/categoriesData';
+import { formatProvinceLabel } from '../../../lib/utils';
 
 export default function HeroSection({
   filters,
@@ -11,36 +12,73 @@ export default function HeroSection({
   categories = categoriesData,
   locations = [],
 }) {
-  const [categoryIndex, setCategoryIndex] = useState(0);
+  const pageSize = 4;
+  const [categoryPage, setCategoryPage] = useState(0);
   const [activeCategory, setActiveCategory] = useState(null);
+  const totalPages = Math.max(Math.ceil(categories.length / pageSize), 1);
   const visibleCategories = useMemo(
-    () => categories.slice(categoryIndex, categoryIndex + 5),
-    [categories, categoryIndex]
+    () => categories.slice(categoryPage * pageSize, categoryPage * pageSize + pageSize),
+    [categories, categoryPage]
   );
 
   const handleCategoryPrev = () => {
-    setCategoryIndex(Math.max(0, categoryIndex - 1));
+    setCategoryPage((prev) => Math.max(0, prev - 1));
   };
 
   const handleCategoryNext = () => {
-    setCategoryIndex(Math.min(Math.max(categories.length - 5, 0), categoryIndex + 1));
+    setCategoryPage((prev) => Math.min(totalPages - 1, prev + 1));
   };
 
   const keywordMap = useMemo(() => ({
-    'Kinh doanh - Bán hàng': ['Nhân viên kinh doanh', 'Nhân viên bán hàng', 'Nhân viên tư vấn', 'Telesales', 'Sales Admin', 'Sales Online'],
-    'Marketing/PR - Quảng cáo': ['Content Marketing', 'Digital Marketing', 'PR Executive', 'SEO Specialist', 'Performance Marketing'],
-    'Chăm sóc khách hàng (Customer...)': ['CSKH', 'Call Center', 'Customer Success', 'Support Agent'],
-    'Nhân sự - Hành chính - Pháp chế': ['HR Generalist', 'Recruiter', 'C&B', 'Hành chính văn phòng'],
-    'Công nghệ Thông tin': ['Frontend Developer', 'Backend Engineer', 'Fullstack', 'QA/QC', 'DevOps'],
-    'Tài chính - Ngân hàng - Bảo...': ['Kế toán tổng hợp', 'Chuyên viên tín dụng', 'Kiểm toán nội bộ', 'Tư vấn tài chính'],
+    'Công nghệ thông tin': ['Frontend Developer', 'Backend Engineer', 'Fullstack', 'QA/QC', 'DevOps'],
+    'Kinh doanh / Bán hàng': ['Nhân viên kinh doanh', 'Nhân viên bán hàng', 'Nhân viên tư vấn', 'Telesales', 'Sales Admin', 'Sales Online'],
+    'Marketing / Truyền thông': ['Content Marketing', 'Digital Marketing', 'PR Executive', 'SEO Specialist', 'Performance Marketing'],
+    'Kế toán / Tài chính': ['Kế toán tổng hợp', 'Chuyên viên tín dụng', 'Kiểm toán nội bộ', 'Tư vấn tài chính'],
+    'Hành chính / Nhân sự': ['HR Generalist', 'Recruiter', 'C&B', 'Hành chính văn phòng'],
+    'Kỹ thuật / Cơ khí': ['Kỹ sư cơ khí', 'Kỹ thuật viên', 'Bảo trì máy móc', 'Thiết kế kỹ thuật'],
+    'Xây dựng / Kiến trúc': ['Kiến trúc sư', 'Kỹ sư xây dựng', 'Giám sát công trình', 'Thiết kế nội thất'],
+    'Giáo dục / Đào tạo': ['Giáo viên', 'Trainer', 'Gia sư', 'Chuyên viên đào tạo'],
+    'Y tế / Dược phẩm': ['Dược sĩ', 'Điều dưỡng', 'Bác sĩ', 'Trình dược viên'],
+    'Logistics / Vận tải': ['Điều phối vận tải', 'Khai thác kho', 'Nhân viên giao nhận', 'Supply Chain'],
     'Bất động sản': ['Môi giới bất động sản', 'Sales BĐS', 'Chuyên viên tư vấn dự án'],
-    'Kế toán - Kiểm toán': ['Kế toán nội bộ', 'Kế toán thuế', 'Kiểm toán viên'],
+    'Thiết kế / Đồ họa': ['Graphic Designer', 'UI/UX Designer', 'Motion Designer', 'Brand Designer'],
+    'Điện / Điện tử / Viễn thông': ['Kỹ sư điện', 'Kỹ thuật điện tử', 'Viễn thông', 'Bảo trì hệ thống'],
+    'Dịch vụ khách hàng': ['CSKH', 'Call Center', 'Customer Success', 'Support Agent'],
+    'Khác': ['Nhân viên part-time', 'Freelancer', 'Thực tập sinh', 'Việc làm phổ thông'],
   }), []);
 
   const resolvedActiveCategory = activeCategory || visibleCategories[0] || null;
   const activeKeywords = Array.isArray(resolvedActiveCategory?.keywords)
     ? resolvedActiveCategory.keywords
     : keywordMap[resolvedActiveCategory?.title] || [];
+
+  const isFirstPage = categoryPage === 0;
+  const isLastPage = categoryPage >= totalPages - 1;
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    // update every minute to keep date/time in sync
+    const id = setInterval(tick, 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const formatDate = (date) => {
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
+  };
+
+  const formatDateTime = (date) => {
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${formatDate(date)} ${hh}:${mm}`;
+  };
+
+  useEffect(() => {
+    setActiveCategory(null);
+  }, [categoryPage]);
 
   return (
     <div className="relative bg-linear-to-br from-teal-700 via-teal-600 to-emerald-700 text-white overflow-hidden">
@@ -93,9 +131,6 @@ export default function HeroSection({
                             }`}>
                               {cat.title || cat.name}
                             </span>
-                            {cat.jobCount && (
-                              <p className="text-xs text-gray-500 mt-1">{cat.jobCount}</p>
-                            )}
                           </div>
                           <ChevronRight size={18} className={`transition-colors ${
                             isActive ? 'text-emerald-600' : 'text-gray-300 group-hover:text-emerald-600'
@@ -131,17 +166,17 @@ export default function HeroSection({
                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
                   <button
                     onClick={handleCategoryPrev}
-                    disabled={categoryIndex === 0}
+                    disabled={isFirstPage}
                     className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-110"
                   >
                     <ChevronLeft size={20} className="text-gray-600" />
                   </button>
                   <span className="text-sm text-gray-500 font-semibold">
-                    {categoryIndex + 1}/{Math.ceil(categories.length / 5 || 1)}
+                    {categoryPage + 1}/{totalPages}
                   </span>
                   <button
                     onClick={handleCategoryNext}
-                    disabled={categoryIndex >= categories.length - 5}
+                    disabled={isLastPage}
                     className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-110"
                   >
                     <ChevronRight size={20} className="text-gray-600" />
@@ -171,10 +206,10 @@ export default function HeroSection({
                       onChange={(e) => onChange({ location: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 text-gray-900 bg-transparent focus:outline-none text-sm sm:text-base cursor-pointer font-medium"
                     >
-                      <option value="">Địa điểm</option>
+                      <option value="">Tỉnh/Thành phố</option>
                       {locations.map((item) => (
                         <option key={item} value={item}>
-                          {item}
+                          {formatProvinceLabel(item)}
                         </option>
                       ))}
                     </select>
@@ -212,7 +247,7 @@ export default function HeroSection({
                   <div className="bg-emerald-900/60 rounded-2xl border border-emerald-400/20 p-5 h-full shadow-2xl">
                     <div className="flex items-center justify-between text-emerald-100 mb-3">
                       <span className="text-sm font-semibold">Thị trường việc làm hôm nay</span>
-                      <span className="text-xs font-bold">24/04/2026</span>
+                      <span className="text-xs font-bold">{formatDate(now)}</span>
                     </div>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -239,9 +274,9 @@ export default function HeroSection({
       <div className="border-t border-teal-500 border-opacity-30 bg-linear-to-r from-white/5 via-white/10 to-white/5 backdrop-blur-lg py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" style={{ boxShadow: '0 0 10px rgba(52, 211, 153, 0.5)' }}></div>
-              <span className="text-teal-100 text-sm font-medium">Thị trường việc làm hôm nay 04/04/2026</span>
+              <span className="text-teal-100 text-sm font-medium">Thị trường việc làm hôm nay {formatDate(now)}</span>
             </div>
             <div className="flex flex-col sm:flex-row gap-8">
               <div className="group cursor-pointer">

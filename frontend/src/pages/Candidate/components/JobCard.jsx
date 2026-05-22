@@ -13,16 +13,18 @@ import {
 import { Heart, MapPin, Clock, CheckCircle, DollarSign } from 'lucide-react';
 import { isJobSaved, toggleSavedJob } from '../utils/jobTracker';
 import { useUserStore } from '../../../stores/useUserStore';
+import { formatProvinceLabel } from '../../../lib/utils';
+import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
-import { isBoldJob, isFrameJob, isHighlightJob, isHotJob, isUrgentJob } from '../utils/jobBadges';
+import { isBoldJob, isFrameJob, isHighlightJob, isHotJob } from '../utils/jobBadges';
 
-export default function JobCard({ job, isFeatured = false, onDetail, isSaved, onToggleSave }) {
+export default function JobCard({ job, isFeatured = false, isSaved, onToggleSave }) {
   const jobId = job?.jobId || job?.id;
   const [localSaved, setLocalSaved] = React.useState(() => isJobSaved(jobId));
   const resolvedSaved = typeof isSaved === 'boolean' ? isSaved : localSaved;
   const { isAuthenticated, openAuthDialog } = useUserStore();
   const showHotBadge = isHotJob(job);
-  const showUrgentBadge = isUrgentJob(job);
+  const urgentBadge = getMarketingPackageBadge(job?.marketingPackageType);
   const isFrame = isFrameJob(job);
   const isBold = isBoldJob(job);
   const resolvedFeatured = isFeatured || isHighlightJob(job);
@@ -187,17 +189,12 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
                   }}
                 />
               )}
-              {showUrgentBadge && (
+              {urgentBadge && (
                 <Chip
-                  label="⚡ GẤP"
+                  label={`⚡ ${urgentBadge.label}`}
                   size="small"
                   sx={{
-                    background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.65rem',
-                    height: 20,
-                    flexShrink: 0,
+                    ...urgentBadge.chipSx,
                   }}
                 />
               )}
@@ -208,7 +205,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
               {job.location && (
                 <Chip
                   icon={<MapPin size={12} />}
-                  label={job.location}
+                  label={formatProvinceLabel(job.location)}
                   size="small"
                   sx={{
                     bgcolor: '#f0fdf4',
@@ -314,7 +311,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
               <Button
                 variant="contained"
                 size="small"
-                onClick={(e) => {
+                onClick={() => {
                   // Let CardActionArea handle navigation
                 }}
                 sx={{
@@ -368,18 +365,6 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
 }
 
 // ===== Helpers =====
-const formatJobType = (jobType) => {
-  if (!jobType) return '';
-  const map = {
-    FULL_TIME: 'Full-time',
-    PART_TIME: 'Part-time',
-    INTERNSHIP: 'Internship',
-    REMOTE: 'Remote',
-    FREELANCE: 'Freelance',
-  };
-  return map[jobType] || jobType;
-};
-
 const formatSalary = (job) => {
   if (job.salaryNegotiable) return 'Thỏa thuận';
 

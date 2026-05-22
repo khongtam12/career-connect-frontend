@@ -13,6 +13,7 @@ import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
 import CVDashboard from "../pages/Candidate/CVDashboard/index.jsx";
 import ChatCandidate from "../pages/Candidate/ChatCandidate.jsx";
 import CandidateProfile from "../pages/Candidate/Profile/CandidateProfile.jsx";
+import FeaturedCompanies from "../pages/Candidate/FeaturedCompanies.jsx";
 import Home1 from "../pages/Employer/Home";
 import About from "../pages/Employer/About";
 import JobManagement from "../pages/Employer/Jobs";
@@ -63,6 +64,11 @@ export const router = createBrowserRouter([
             {
                 path: "jobs",
                 element: <Jobs />
+            },
+
+            {
+                path: "featured-companies",
+                element: <FeaturedCompanies />
             },
 
             {
