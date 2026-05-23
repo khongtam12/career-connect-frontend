@@ -34,7 +34,7 @@ export default function BestJobsSection({
   onViewAll,
   savedJobs = [],
   appliedJobs = [],
-  emptyText = 'Chua tim thay viec lam phu hop',
+  emptyText = 'Chưa tìm thấy việc làm phù hợp',
 }) {
   const [activeFilterType, setActiveFilterType] = useState('location');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -251,7 +251,7 @@ export default function BestJobsSection({
 
         {jobs.length === 0 && (
           <div className="mt-6 text-center text-sm text-gray-500">
-            {emptyText === 'Chua tim thay viec lam phu hop' ? 'Chưa tìm thấy việc làm phù hợp' : emptyText}
+            {emptyText === 'Chưa tìm thấy việc làm phù hợp' ? 'Chưa tìm thấy việc làm phù hợp' : emptyText}
           </div>
         )}
       </div>

@@ -14,7 +14,7 @@ export default function QuickJobsSection({
   onViewAll,
   backgroundClassName = 'bg-slate-50',
   accentClassName = 'text-emerald-600',
-  emptyText = 'Chua co viec lam phu hop',
+  emptyText = 'Chưa có việc làm phù hợp',
   loading = false,
 }) {
   const locationOptions = useMemo(() => locations.filter(Boolean), [locations]);
@@ -61,7 +61,7 @@ export default function QuickJobsSection({
 
         {loading ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-500">
-            Dang tai viec lam...
+            Đang tải việc làm...
           </div>
         ) : jobs.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-500">
