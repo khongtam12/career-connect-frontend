@@ -403,7 +403,7 @@ export default function Home() {
     return () => window.removeEventListener('jobTrackerUpdated', syncManagedJobs);
   }, []);
 
-  const jobUnavailableText = 'Job service dang tam gian doan. Vui long thu lai sau.';
+  const jobUnavailableText = 'Job service đang tạm gián đoạn. Vui lòng thử lại sau.';
 
   return (
     <div className="bg-white">
@@ -426,7 +426,7 @@ export default function Home() {
         onViewAll={() => navigate('/jobs')}
         savedJobs={savedJobs}
         appliedJobs={appliedJobs}
-        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chua tim thay viec lam phu hop'}
+        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chưa tìm thấy việc làm phù hợp'}
       />
 
       <QuickJobsSection
@@ -451,7 +451,7 @@ export default function Home() {
         }
         backgroundClassName="bg-slate-50"
         accentClassName="text-rose-600"
-        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chua tim thay viec lam tuyen gap'}
+        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chưa tìm thấy việc làm tuyển gấp'}
         loading={urgentLoading}
       />
 
@@ -477,7 +477,7 @@ export default function Home() {
         }
         backgroundClassName="bg-orange-50/70"
         accentClassName="text-orange-600"
-        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chua tim thay viec di lam ngay'}
+        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chưa tìm thấy việc đi làm ngay'}
         loading={immediateLoading}
       />
 
@@ -486,7 +486,7 @@ export default function Home() {
         total={featuredCompaniesTotal}
         loading={featuredCompaniesLoading}
         onViewAll={() => navigate('/featured-companies')}
-        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chua tim thay cong ty noi bat'}
+        emptyText={jobServiceUnavailable ? jobUnavailableText : 'Chưa tìm thấy công ty nổi bật'}
       />
 
       <HowItWorks />

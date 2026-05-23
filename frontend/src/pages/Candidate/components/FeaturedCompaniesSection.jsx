@@ -10,7 +10,7 @@ export default function FeaturedCompaniesSection({
   total = 0,
   onViewAll,
   loading = false,
-  emptyText = 'Chua co cong ty noi bat',
+  emptyText = 'Chưa có công ty nổi bật',
 }) {
   return (
     <section className="py-12 sm:py-14 bg-emerald-50/60">
@@ -39,7 +39,7 @@ export default function FeaturedCompaniesSection({
 
         {loading ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-500">
-            Dang tai cong ty noi bat...
+            Đang tải công ty nổi bật...
           </div>
         ) : companies.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-500">
@@ -66,7 +66,7 @@ export default function FeaturedCompaniesSection({
                     <h3 className="text-base font-semibold text-slate-800 line-clamp-2">{company.name}</h3>
                     <p className="mt-1 text-xs text-gray-500 inline-flex items-center gap-1">
                       <BriefcaseBusiness size={13} />
-                      {company.jobCount} tin tuyen dung dang hoat dong
+                      {company.jobCount} tin tuyển dụng đang hoạt động
                     </p>
                     {company.location && (
                       <p className="mt-1 text-xs text-gray-500 line-clamp-1">{formatProvinceLabel(company.location)}</p>
