@@ -55,6 +55,18 @@ export const removeMarketingPackage = async (jobId) => {
   return res.data;
 };
 
+export const applyCompanyMarketingPackage = async (payload) => {
+  const res = await apiClient.post('/api/v1/job/employer/marketing/company', payload);
+  return res.data;
+};
+
+export const removeCompanyMarketingPackage = async (assignmentId) => {
+  const res = await apiClient.delete('/api/v1/job/employer/marketing/shared', {
+    params: { assignmentId },
+  });
+  return res.data;
+};
+
 export const getJobById = async (jobId, requestConfig = {}) => {
   const res = await apiClient.get(`/api/v1/job/${jobId}`, jobRequestConfig(requestConfig));
   return res.data;

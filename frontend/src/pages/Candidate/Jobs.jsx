@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import JobSection from './components/JobSection';
+import QuickJobsSection from './components/QuickJobsSection';
 import { getJobFilters, searchJobs } from '../../service/jobService';
 import { categoriesData } from '../../data/categoriesData';
 import useProvinces from '../../hooks/useProvinces';
+import { Layers3 } from 'lucide-react';
 
 const normalizeIndustryLabel = (value = '') =>
   value
@@ -74,6 +76,9 @@ export default function Jobs() {
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [industryPriorityJobs, setIndustryPriorityJobs] = useState([]);
+  const [industryPriorityTotal, setIndustryPriorityTotal] = useState(0);
+  const [industryPriorityLoading, setIndustryPriorityLoading] = useState(false);
   const lastQueryRef = useRef(null);
   const hasFetchedRef = useRef(false);
   const provinceLocations = useMemo(
@@ -84,6 +89,14 @@ export default function Jobs() {
     ...filterOptions,
     locations: provinceLocations.length > 0 ? provinceLocations : filterOptions.locations,
   }), [filterOptions, provinceLocations]);
+  const currentIndustryName = useMemo(
+    () =>
+      filterOptions.industries.find((item) => item.industryId === filters.industryId)?.name || '',
+    [filterOptions.industries, filters.industryId]
+  );
+  const shouldShowIndustryPrioritySection = Boolean(
+    filters.industryId && filters.marketingPackageType !== 'INDUSTRY_PRIORITY'
+  );
 
   const paramsKey = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -201,8 +214,75 @@ export default function Jobs() {
     applyFilters(0, nextFilters, selectedId || undefined);
   }, [paramsKey, applyFilters, searchParams, filterOptions.industries]);
 
+  useEffect(() => {
+    const loadIndustryPriorityJobs = async () => {
+      if (!shouldShowIndustryPrioritySection) {
+        setIndustryPriorityJobs([]);
+        setIndustryPriorityTotal(0);
+        setIndustryPriorityLoading(false);
+        return;
+      }
+
+      setIndustryPriorityLoading(true);
+      try {
+        const response = await searchJobs({
+          industryId: filters.industryId,
+          location: filters.location || undefined,
+          marketingPackageType: 'INDUSTRY_PRIORITY',
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+          page: 0,
+          size: 6,
+        });
+
+        setIndustryPriorityJobs(response.content || []);
+        setIndustryPriorityTotal(response.totalElements || 0);
+      } catch (error) {
+        console.error('Failed to load industry priority jobs', error);
+        setIndustryPriorityJobs([]);
+        setIndustryPriorityTotal(0);
+      } finally {
+        setIndustryPriorityLoading(false);
+      }
+    };
+
+    loadIndustryPriorityJobs();
+  }, [filters.industryId, filters.location, shouldShowIndustryPrioritySection]);
+
   return (
     <div className="min-h-screen bg-slate-50">
+      {shouldShowIndustryPrioritySection && (
+        <QuickJobsSection
+          title={
+            currentIndustryName
+              ? `Việc làm ưu tiên trong ngành ${currentIndustryName}`
+              : 'Việc làm ưu tiên trong ngành này'
+          }
+          subtitle="Những tin tuyển dụng được quảng bá nổi bật trong lĩnh vực bạn đang quan tâm"
+          icon={<Layers3 size={18} className="text-blue-600" />}
+          jobs={industryPriorityJobs}
+          total={industryPriorityTotal}
+          locations={displayFilterOptions.locations}
+          locationFilter={filters.location}
+          onLocationChange={(value) => {
+            const nextFilters = { ...filters, location: value };
+            setFilters(nextFilters);
+            const params = buildParams(nextFilters);
+            navigate(`/jobs?${params.toString()}`);
+          }}
+          onViewAll={() => {
+            const nextFilters = {
+              ...filters,
+              marketingPackageType: 'INDUSTRY_PRIORITY',
+            };
+            navigate(`/jobs?${buildParams(nextFilters).toString()}`);
+          }}
+          backgroundClassName="bg-blue-50/70"
+          accentClassName="text-blue-700"
+          emptyText="Chưa có tin tuyển dụng ưu tiên trong ngành này"
+          loading={industryPriorityLoading}
+        />
+      )}
       <JobSection
         jobs={jobs}
         totalElements={totalElements}

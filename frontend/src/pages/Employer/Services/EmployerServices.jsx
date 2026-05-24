@@ -9,6 +9,7 @@ import {
     LinearProgress,
     IconButton,
     Tooltip,
+    Alert,
 } from '@mui/material';
 import {
     FiBox, FiCalendar, FiClock, FiSearch, FiXCircle,
@@ -18,8 +19,17 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserStore } from '../../../stores/useUserStore';
-import { getCompanySubscriptions } from '../../../service/companyService';
+import { 
+    getCompanySubscriptions, 
+    getCompanyMarketingEntitlements,
+    getActiveMarketingAssignment 
+} from '../../../service/companyService';
 import { getPackage } from '../../../service/paymentService';
+import { 
+    applyCompanyMarketingPackage, 
+    removeCompanyMarketingPackage 
+} from '../../../service/jobService';
+import { toast } from 'react-toastify';
 
 // Category config — đồng bộ với PricingSection.jsx
 const categoryLabels = {
@@ -78,21 +88,39 @@ export default function EmployerServices() {
     const [activeTab, setActiveTab] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSubscription, setSelectedSubscription] = useState(null);
+    const [activeBrandingAssignment, setActiveBrandingAssignment] = useState(null);
+    const [brandingActionLoading, setBrandingActionLoading] = useState(false);
 
     // Fetch data
     const fetchData = useCallback(async () => {
-        if (!companyId) {
-            setLoading(false);
-            return;
-        }
+        if (!companyId) return;
         setLoading(true);
         try {
-            const [subsData, pkgData] = await Promise.all([
-                getCompanySubscriptions(companyId).catch(() => []),
-                getPackage({ includeInactive: true }).catch(() => []),
+            const [subs, entitlements] = await Promise.all([
+                getCompanySubscriptions(companyId),
+                getCompanyMarketingEntitlements(companyId)
             ]);
-            setSubscriptions(subsData || []);
-            setPackages(pkgData || []);
+            
+            // Convert entitlements to match subscription format for display
+            const mappedEntitlements = (entitlements || []).map(ent => ({
+                id: ent.id,
+                packageId: ent.packageId,
+                packageLabel: ent.packageLabel,
+                packageCategory: ent.packageCategory,
+                status: ent.status,
+                startDate: ent.startDate,
+                endDate: ent.endDate,
+                // These fields are specific to entitlements but we map them to sub format
+                jobPostLimit: ent.usageLimit,
+                jobPostedCount: ent.usedCount,
+                isMarketingEntitlement: true,
+                durationDays: ent.durationDays,
+                entitlementId: ent.id // Store for reference
+            }));
+
+            // Filter out existing subs if they also appear as entitlements (to avoid duplicates)
+            // But usually they are separate types. We combine them.
+            setSubscriptions([...subs, ...mappedEntitlements]);
         } catch (err) {
             console.error('Lỗi khi tải dữ liệu dịch vụ:', err);
         } finally {
@@ -183,8 +211,65 @@ export default function EmployerServices() {
     }, [enrichedSubscriptions]);
 
     // Open detail drawer
-    const handleViewDetail = (sub) => {
+    const handleViewDetail = async (sub) => {
         setSelectedSubscription(sub);
+        if (sub.packageCategory === 'BRANDING') {
+            try {
+                const active = await getActiveMarketingAssignment(companyId, 'COMPANY', companyId);
+                setActiveBrandingAssignment(active);
+            } catch (err) {
+                console.error('Lỗi khi tải trạng thái branding:', err);
+                setActiveBrandingAssignment(null);
+            }
+        }
+    };
+
+    const handleApplyBranding = async (sub) => {
+        setBrandingActionLoading(true);
+        try {
+            let entitlementId = sub.entitlementId;
+
+            if (!entitlementId) {
+                // If it's a regular subscription, try to find an entitlement that matches its ID or payment ID
+                const entitlements = await getCompanyMarketingEntitlements(companyId, 'BRANDING');
+                // Note: In some systems, they might be linked by paymentId or packageId + startDate
+                const entitlement = (entitlements || []).find(e => 
+                    e.subscriptionId === sub.id || e.paymentId === sub.paymentId || (e.packageId === sub.packageId && e.startDate === sub.startDate)
+                );
+                entitlementId = entitlement?.id;
+            }
+            
+            if (!entitlementId) {
+                toast.error('Không tìm thấy quyền lợi tương ứng cho gói này.');
+                return;
+            }
+
+            await applyCompanyMarketingPackage({ entitlementId: entitlementId });
+            toast.success('Đã kích hoạt hiển thị logo nổi bật trên trang chủ!');
+            
+            // Refresh status
+            const active = await getActiveMarketingAssignment(companyId, 'COMPANY', companyId);
+            setActiveBrandingAssignment(active);
+        } catch (err) {
+            console.error('Lỗi khi kích hoạt branding:', err);
+            toast.error('Kích hoạt thất bại: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setBrandingActionLoading(false);
+        }
+    };
+
+    const handleRemoveBranding = async (assignmentId) => {
+        setBrandingActionLoading(true);
+        try {
+            await removeCompanyMarketingPackage(assignmentId);
+            toast.success('Đã gỡ hiển thị logo nổi bật.');
+            setActiveBrandingAssignment(null);
+        } catch (err) {
+            console.error('Lỗi khi gỡ branding:', err);
+            toast.error('Gỡ thất bại: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setBrandingActionLoading(false);
+        }
     };
 
     // Close detail drawer
@@ -400,6 +485,10 @@ export default function EmployerServices() {
                 {selectedSubscription && (
                     <DetailDrawer
                         subscription={selectedSubscription}
+                        activeBrandingAssignment={activeBrandingAssignment}
+                        brandingActionLoading={brandingActionLoading}
+                        onApplyBranding={handleApplyBranding}
+                        onRemoveBranding={handleRemoveBranding}
                         onClose={handleCloseDrawer}
                     />
                 )}
@@ -562,7 +651,14 @@ function SubscriptionCard({ subscription, onViewDetail }) {
 }
 
 // ── Detail Drawer Component ──
-function DetailDrawer({ subscription, onClose }) {
+function DetailDrawer({ 
+    subscription, 
+    activeBrandingAssignment, 
+    brandingActionLoading,
+    onApplyBranding,
+    onRemoveBranding,
+    onClose 
+}) {
     const sub = subscription;
     const status = String(sub.status || '').toUpperCase();
     const isActive = status === 'ACTIVE';
@@ -624,6 +720,56 @@ function DetailDrawer({ subscription, onClose }) {
 
                 {/* Drawer Content */}
                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+                    {/* Branding Actions */}
+                    {sub.packageCategory === 'BRANDING' && isActive && (
+                        <div className="bg-white rounded-xl p-5 border border-emerald-200 bg-emerald-50/30">
+                            <h4 className="text-sm font-black text-emerald-800 mb-2 flex items-center gap-2">
+                                <FiCheckCircle /> Quản lý hiển thị logo
+                            </h4>
+                            <p className="text-xs text-emerald-700 leading-relaxed mb-4">
+                                Gói Branding này cho phép hiển thị logo công ty tại mục "Công ty nổi bật" trên trang chủ ứng viên.
+                            </p>
+                            
+                            {activeBrandingAssignment && activeBrandingAssignment.entitlementId === (sub.entitlementId || sub.id) ? (
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                                        <FiCheckCircle /> Đang được kích hoạt
+                                    </div>
+                                    <Button
+                                        fullWidth
+                                        variant="outlined"
+                                        color="error"
+                                        disabled={brandingActionLoading}
+                                        onClick={() => onRemoveBranding(activeBrandingAssignment.id)}
+                                        sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
+                                    >
+                                        Gỡ hiển thị nổi bật
+                                    </Button>
+                                </div>
+                            ) : activeBrandingAssignment ? (
+                                <Alert severity="info" sx={{ borderRadius: '10px', fontSize: '0.8rem' }}>
+                                    Một gói Branding khác (<strong>{activeBrandingAssignment.packageLabel}</strong>) đang được kích hoạt. Gỡ gói đó trước nếu muốn kích hoạt gói này.
+                                </Alert>
+                            ) : (
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    disabled={brandingActionLoading}
+                                    onClick={() => onApplyBranding(sub)}
+                                    sx={{ 
+                                        bgcolor: '#10b981', 
+                                        '&:hover': { bgcolor: '#059669' },
+                                        textTransform: 'none', 
+                                        fontWeight: 700, 
+                                        borderRadius: '10px' 
+                                    }}
+                                >
+                                    {brandingActionLoading ? 'Đang xử lý...' : 'Kích hoạt logo nổi bật'}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+
                     {/* Package Info */}
                     <div className="flex items-center gap-4">
                         {sub.imageUrl ? (
