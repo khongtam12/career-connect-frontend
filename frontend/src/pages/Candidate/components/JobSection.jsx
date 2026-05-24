@@ -12,6 +12,7 @@ import {
 import JobCard from './JobCard';
 import JobDetailPanel from './JobDetailPanel';
 import JobListItem from './JobListItem';
+import { formatProvinceLabel } from '../../../lib/utils';
 
 export default function JobSection({
   jobs = [],
@@ -94,7 +95,7 @@ export default function JobSection({
               <option value="">Tất cả địa điểm</option>
               {(filterOptions.locations || []).map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {formatProvinceLabel(item)}
                 </option>
               ))}
             </select>
@@ -134,7 +135,7 @@ export default function JobSection({
                         : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-600'
                     }`}
                   >
-                    {item}
+                    {formatProvinceLabel(item)}
                   </button>
                 );
               })}

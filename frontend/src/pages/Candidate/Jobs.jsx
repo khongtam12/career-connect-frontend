@@ -2,6 +2,44 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import JobSection from './components/JobSection';
 import { getJobFilters, searchJobs } from '../../service/jobService';
+import { categoriesData } from '../../data/categoriesData';
+import useProvinces from '../../hooks/useProvinces';
+
+const normalizeIndustryLabel = (value = '') =>
+  value
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9 /-]+/g, '')
+    .trim();
+
+const resolveIndustryQuery = (filters, industries) => {
+  if (filters.industryId || !filters.keyword) {
+    return filters;
+  }
+
+  const normalizedKeyword = normalizeIndustryLabel(filters.keyword);
+  const matchedIndustry = industries.find(
+    (item) => normalizeIndustryLabel(item.name) === normalizedKeyword
+  );
+  const matchedCategory = categoriesData.find(
+    (item) => normalizeIndustryLabel(item.title) === normalizedKeyword || normalizeIndustryLabel(item.industryId) === normalizedKeyword
+  );
+
+  const resolvedIndustryId = matchedIndustry?.industryId || matchedCategory?.backendIndustryId;
+
+  if (!resolvedIndustryId) {
+    return filters;
+  }
+
+  return {
+    ...filters,
+    industryId: resolvedIndustryId,
+    keyword: '',
+  };
+};
 
 const initialFilters = {
   keyword: '',
@@ -22,6 +60,7 @@ const initialFilters = {
 export default function Jobs() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { provinces } = useProvinces(true);
   const [filters, setFilters] = useState(initialFilters);
   const [jobs, setJobs] = useState([]);
   const [filterOptions, setFilterOptions] = useState({
@@ -37,6 +76,14 @@ export default function Jobs() {
   const [selectedJob, setSelectedJob] = useState(null);
   const lastQueryRef = useRef(null);
   const hasFetchedRef = useRef(false);
+  const provinceLocations = useMemo(
+    () => provinces.map((province) => province.name).filter(Boolean),
+    [provinces]
+  );
+  const displayFilterOptions = useMemo(() => ({
+    ...filterOptions,
+    locations: provinceLocations.length > 0 ? provinceLocations : filterOptions.locations,
+  }), [filterOptions, provinceLocations]);
 
   const paramsKey = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -49,7 +96,7 @@ export default function Jobs() {
         experienceMax: overrideFilters.experienceMax ? Number(overrideFilters.experienceMax) : undefined,
         salaryMin: overrideFilters.salaryMin ? Number(overrideFilters.salaryMin) * 1000000 : undefined,
         salaryMax: overrideFilters.salaryMax ? Number(overrideFilters.salaryMax) * 1000000 : undefined,
-        page: nextPage,
+        page: nextPage + 1,
         size: 10,
       });
       setJobs(response.content || []);
@@ -99,9 +146,10 @@ export default function Jobs() {
   };
 
   const handleSearch = (overrideFilters = filters) => {
-    const params = buildParams(overrideFilters);
+    const resolvedFilters = resolveIndustryQuery(overrideFilters, filterOptions.industries);
+    const params = buildParams(resolvedFilters);
     navigate(`/jobs?${params.toString()}`);
-    applyFilters(0, overrideFilters);
+    applyFilters(0, resolvedFilters);
   };
 
   const handlePageChange = (nextPage) => {
@@ -132,7 +180,7 @@ export default function Jobs() {
     }
     lastQueryRef.current = paramsKey;
     hasFetchedRef.current = true;
-    const nextFilters = {
+    const nextFilters = resolveIndustryQuery({
       ...initialFilters,
       keyword: searchParams.get('keyword') || '',
       location: searchParams.get('location') || '',
@@ -147,11 +195,11 @@ export default function Jobs() {
       salaryMax: searchParams.get('salaryMax') || '',
       sortBy: searchParams.get('sortBy') || 'createdAt',
       sortDir: searchParams.get('sortDir') || 'desc',
-    };
+    }, filterOptions.industries);
     setFilters(nextFilters);
     const selectedId = searchParams.get('jobId');
     applyFilters(0, nextFilters, selectedId || undefined);
-  }, [paramsKey, applyFilters, searchParams]);
+  }, [paramsKey, applyFilters, searchParams, filterOptions.industries]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -159,7 +207,7 @@ export default function Jobs() {
         jobs={jobs}
         totalElements={totalElements}
         filters={filters}
-        filterOptions={filterOptions}
+        filterOptions={displayFilterOptions}
         onChange={handleFilterChange}
         onApply={handleSearch}
         page={page}

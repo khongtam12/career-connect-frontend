@@ -489,7 +489,7 @@ export default function EditorPage() {
                      <CVForm data={cvData} onChange={setCvData} />
                   </TabsContent>
                   <TabsContent value="ai" className="mt-0 h-full data-[state=inactive]:hidden focus:outline-none">
-                     <AIAssistant data={cvData} />
+                     <AIAssistant data={cvData} onSave={saveCVData} />
                   </TabsContent>
                </div>
             </Tabs>

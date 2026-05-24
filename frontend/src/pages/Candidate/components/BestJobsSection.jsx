@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import JobCard from './JobCard';
 import { Briefcase, ChevronDown } from 'lucide-react';
+import { formatProvinceLabel } from '../../../lib/utils';
 
 const filterOptionsList = [
   { value: 'location', label: 'Địa điểm' },
@@ -33,7 +34,7 @@ export default function BestJobsSection({
   onViewAll,
   savedJobs = [],
   appliedJobs = [],
-  emptyText = 'Chua tim thay viec lam phu hop',
+  emptyText = 'Chưa tìm thấy việc làm phù hợp',
 }) {
   const [activeFilterType, setActiveFilterType] = useState('location');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -57,9 +58,6 @@ export default function BestJobsSection({
   }, []);
 
   const chips = useMemo(() => {
-    if (activeFilterType === 'location') {
-      return (filterOptions.locations || []).map((item) => ({ label: item, value: item }));
-    }
     if (activeFilterType === 'industry') {
       return (filterOptions.industries || []).map((item) => ({
         label: item.name,
@@ -73,7 +71,7 @@ export default function BestJobsSection({
       return experienceRanges.map((item) => ({ label: item.label, value: item }));
     }
     return [];
-  }, [activeFilterType, filterOptions.industries, filterOptions.locations]);
+  }, [activeFilterType, filterOptions.industries]);
 
   const handleChipClick = (chip) => {
     if (activeFilterType === 'location') {
@@ -196,14 +194,37 @@ export default function BestJobsSection({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {chips.length === 0 ? (
-              <span className="text-xs text-gray-500">Chưa có dữ liệu bộ lọc</span>
-            ) : (
-              chips.map((chip) => {
-                const isActive =
-                  (activeFilterType === 'location' && filters.location === chip.value) ||
-                  (activeFilterType === 'industry' && filters.industryId === chip.value);
+          {activeFilterType === 'location' ? (
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,360px)_auto] sm:items-center">
+              <select
+                value={filters.location}
+                onChange={(event) => onQuickFilter({ location: event.target.value })}
+                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm outline-none transition-colors hover:border-emerald-200 focus:border-emerald-500"
+              >
+                <option value="">Chọn tỉnh/thành phố</option>
+                {(filterOptions.locations || []).map((item) => (
+                  <option key={item} value={item}>
+                    {formatProvinceLabel(item)}
+                  </option>
+                ))}
+              </select>
+
+              {filters.location ? (
+                <button
+                  type="button"
+                  onClick={() => onQuickFilter({ location: '' })}
+                  className="justify-self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 hover:border-emerald-200 hover:text-emerald-700"
+                >
+                  Xóa bộ lọc địa điểm
+                </button>
+              ) : null}
+            </div>
+          ) : chips.length === 0 ? (
+            <span className="text-xs text-gray-500">Chưa có dữ liệu bộ lọc</span>
+          ) : (
+            <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {chips.map((chip) => {
+                const isActive = activeFilterType === 'industry' && filters.industryId === chip.value;
                 return (
                   <button
                     key={chip.label}
@@ -217,9 +238,9 @@ export default function BestJobsSection({
                     {chip.label}
                   </button>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -229,7 +250,9 @@ export default function BestJobsSection({
         </div>
 
         {jobs.length === 0 && (
-          <div className="mt-6 text-center text-sm text-gray-500">Chưa tìm thấy việc làm phù hợp</div>
+          <div className="mt-6 text-center text-sm text-gray-500">
+            {emptyText === 'Chưa tìm thấy việc làm phù hợp' ? 'Chưa tìm thấy việc làm phù hợp' : emptyText}
+          </div>
         )}
       </div>
     </section>

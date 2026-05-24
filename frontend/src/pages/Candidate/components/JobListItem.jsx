@@ -1,10 +1,12 @@
 import React from 'react';
 import { isBoldJob, isFrameJob, isHotJob } from '../utils/jobBadges';
+import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
 export default function JobListItem({ job, isActive, onSelect }) {
   const salaryLabel = formatSalary(job.salaryMin, job.salaryMax);
   const jobTypeLabel = formatJobType(job.jobType);
   const showHotBadge = isHotJob(job);
+  const urgentBadge = getMarketingPackageBadge(job?.marketingPackageType);
   const isFrame = isFrameJob(job);
   const isBold = isBoldJob(job);
 
@@ -38,6 +40,11 @@ export default function JobListItem({ job, isActive, onSelect }) {
             {showHotBadge && (
               <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">
                 🔥 HOT
+              </span>
+            )}
+            {urgentBadge && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${urgentBadge.tailwindClass}`}>
+                ⚡ {urgentBadge.label}
               </span>
             )}
           </div>

@@ -29,6 +29,7 @@ import {
 import { getPackage } from '../../../service/paymentService';
 import { toast } from 'react-toastify';
 import { useCartStore } from '../../../stores/useCartStore';
+import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
 // Icons for categories
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -39,7 +40,6 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 
 const PricingSection = () => {
     const navigate = useNavigate();
-    const [currentSlide, setCurrentSlide] = useState(0);
     const [selectedTab, setSelectedTab] = useState('JOB_POSTING');
     const [rawPackages, setRawPackages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -49,32 +49,9 @@ const PricingSection = () => {
     // Cart store
     const { items, addToCart, removeFromCart, clearCart } = useCartStore();
 
-    // Modal states
-    const [openUrgentModal, setOpenUrgentModal] = useState(false);
     const [openCartModal, setOpenCartModal] = useState(false);
     const [openImageModal, setOpenImageModal] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
-
-    const banners = [
-        { id: 1, title: 'GIỮ LỬA TIN ĐĂNG', subtitle: 'MÙNG ĐẠI LỄ', bg: 'bg-gradient-to-r from-red-700 via-red-800 to-red-900' },
-        { id: 2, title: 'Ưu đãi đặc biệt', subtitle: 'Gói giải pháp', bg: 'bg-[#f3e5f5]' },
-    ];
-
-    const categories = [
-        { icon: <DescriptionIcon />, label: 'Tin đăng tuyển dụng' },
-        { icon: <AssessmentIcon />, label: 'Gia tăng độ hiển thị' },
-        { icon: <AutoAwesomeIcon />, label: 'Hiệu ứng nổi bật tin' },
-        { icon: <MilitaryTechIcon />, label: 'Điểm dịch vụ' },
-        { icon: <CampaignIcon />, label: 'Quảng bá thương hiệu' },
-    ];
-
-    const categoryConfig = {
-        JOB_POSTING: { icon: <DescriptionIcon />, label: 'Tin Ä‘Äƒng tuyá»ƒn dá»¥ng' },
-        HIGHLIGHT: { icon: <AssessmentIcon />, label: 'Gia tÄƒng Ä‘á»™ hiá»ƒn thá»‹' },
-        EFFECT: { icon: <AutoAwesomeIcon />, label: 'Hiá»‡u á»©ng ná»•i báº­t tin' },
-        POINTS: { icon: <MilitaryTechIcon />, label: 'Äiá»ƒm dá»‹ch vá»¥' },
-        BRANDING: { icon: <CampaignIcon />, label: 'Quáº£ng bÃ¡ thÆ°Æ¡ng hiá»‡u' },
-    };
 
     useEffect(() => {
         const fetchPackages = async () => {
@@ -176,8 +153,13 @@ const PricingSection = () => {
             desc: p.description,
             image: p.imageUrl,
             duration: getDurationText(p.durationDays),
-            badgeColor: badgeColorMap[p.badgeColor] || 'bg-gray-500',
-            cardBorder: p.type === 'TRENDING_POST' ? 'border-yellow-400' : (p.type === 'INDUSTRY_PRIORITY' ? 'border-orange-600' : ''),
+                        badge: p.badge || getMarketingPackageBadge(p.type)?.label || '',
+                        badgeColor: badgeColorMap[p.badgeColor] || getMarketingPackageBadge(p.type)?.tailwindClass || 'bg-gray-500',
+                        cardBorder: p.type === 'TRENDING_POST'
+                            ? 'border-yellow-400'
+                            : (p.type === 'URGENT_JOB_POST'
+                                ? 'border-orange-500'
+                                : (p.type === 'INDUSTRY_PRIORITY' ? 'border-orange-600' : '')),
         }))
     })).filter((section) => section.items.length > 0);
 

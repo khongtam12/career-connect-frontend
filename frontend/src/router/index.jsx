@@ -13,6 +13,7 @@ import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
 import CVDashboard from "../pages/Candidate/CVDashboard/index.jsx";
 import ChatCandidate from "../pages/Candidate/ChatCandidate.jsx";
 import CandidateProfile from "../pages/Candidate/Profile/CandidateProfile.jsx";
+import FeaturedCompanies from "../pages/Candidate/FeaturedCompanies.jsx";
 import Home1 from "../pages/Employer/Home";
 import About from "../pages/Employer/About";
 import JobManagement from "../pages/Employer/Jobs";
@@ -20,6 +21,7 @@ import RecruitmentAccountForm from "../pages/Employer/company/RecruitmentAccount
 import PricingSection from "../pages/Employer/Pricing/PricingSection.jsx";
 import CheckoutPage from "../pages/Employer/Payment/CheckoutPage.jsx";
 import Candidates from "../pages/Employer/Candidates/CVManagement.jsx";
+import EmployerServices from "../pages/Employer/Services/EmployerServices.jsx";
 import EmployerChat from "../pages/Employer/EmployerChat.jsx";
 import EmployerProfile from "../pages/Employer/Profile/EmployerProfile.jsx";
 import Dashboard from "../pages/Admin/Dashboard/index.jsx";
@@ -63,6 +65,11 @@ export const router = createBrowserRouter([
             {
                 path: "jobs",
                 element: <Jobs />
+            },
+
+            {
+                path: "featured-companies",
+                element: <FeaturedCompanies />
             },
 
             {
@@ -187,6 +194,11 @@ export const router = createBrowserRouter([
             {
                 path: "candidates",
                 element: <Candidates />
+            },
+
+            {
+                path: "services",
+                element: <EmployerServices />
             },
 
             {

@@ -43,6 +43,10 @@ const Header = ({ rightSlot }) => {
                 <span>Hồ sơ & CV</span>
                 <ChevronDown size={16} />
               </Link>
+              <Link to="/featured-companies" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                <span>Công ty nổi bật</span>
+                <ChevronDown size={16} />
+              </Link>
               <div className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
                 <span>Công cụ</span>
                 <ChevronDown size={16} />

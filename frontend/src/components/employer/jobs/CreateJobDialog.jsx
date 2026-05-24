@@ -9,9 +9,7 @@ import {
   Box,
   Typography,
   Grid,
-  MenuItem,
-  Select,
-  FormControl,
+  Autocomplete,
   IconButton,
   CircularProgress,
   Chip,
@@ -21,6 +19,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   INDUSTRIES,
   JOB_TYPES,
@@ -30,17 +29,19 @@ import {
 import { DEFAULT_MAP_POSITION, QUILL_MODULES } from './jobDialogConfig';
 import {
   fieldSx,
-  selectSx,
   sectionLabelSx,
   sectionTitleSx,
   quillBoxSx,
+  autocompleteSx,
 } from './jobDialogStyles';
+import useProvinces from './useProvinces';
+import useWards from './useWards';
 
 const ReactQuill = lazy(() => import('react-quill-new'));
 const JobLocationMap = lazy(() => import('./JobLocationMap'));
 
 const INITIAL_FORM = {
-  title: '', industry: '', address: '', jobType: '', experience: '',
+  title: '', industry: '', address: '', provinceCode: '', ward: '', wardCode: '', addressDetail: '', jobType: '', experience: '',
   salaryMin: '', salaryMax: '', salaryNegotiable: false,
   deadline: '', description: '', requirements: '',
   benefits: '',
@@ -110,7 +111,6 @@ export default function CreateJobDialog({
   subscriptionOptions = [],
   subscriptionsLoading = false,
   allowEditSubscription = false,
-  currentSubscriptionLabel,
   fieldErrors = {},
   onClearError,
 }) {
@@ -118,11 +118,13 @@ export default function CreateJobDialog({
   const [mapPosition, setMapPosition] = useState(DEFAULT_MAP_POSITION);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeMessage, setGeocodeMessage] = useState('');
+  const { provinces, loading: provincesLoading, error: provincesError } = useProvinces(open);
+  const { wards, loading: wardsLoading, error: wardsError } = useWards(form.provinceCode, open);
 
   useEffect(() => {
     if (!open) return;
     if (mode === 'edit' && initialValues) {
-      setForm((prev) => ({ ...prev, ...initialValues }));
+      setForm({ ...INITIAL_FORM, ...initialValues });
     } else if (mode !== 'edit') {
       // reset sạch khi mở form tạo mới
       setForm({ ...INITIAL_FORM });
@@ -131,16 +133,49 @@ export default function CreateJobDialog({
   }, [open, mode, initialValues]);
 
   useEffect(() => {
+    if (!open) return;
+    if (form.provinceCode || !form.address || provinces.length === 0) return;
+    const matched = provinces.find((province) => province.name === form.address);
+    if (matched) {
+      setForm((prev) => ({ ...prev, provinceCode: matched.code }));
+    }
+  }, [open, form.address, form.provinceCode, provinces]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (form.wardCode || !form.ward || wards.length === 0) return;
+    const matched = wards.find((ward) => ward.name === form.ward);
+    if (matched) {
+      setForm((prev) => ({ ...prev, wardCode: matched.code }));
+    }
+  }, [open, form.ward, form.wardCode, wards]);
+
+  useEffect(() => {
     if (!open) {
       setMapPosition(DEFAULT_MAP_POSITION);
       setIsGeocoding(false);
       setGeocodeMessage('');
       return;
     }
-    const query = form.address.trim();
-    if (query.length < 6) { setGeocodeMessage(''); return; }
+    if (!form.addressDetail.trim()) {
+      setIsGeocoding(false);
+      setGeocodeMessage('');
+      setMapPosition(DEFAULT_MAP_POSITION);
+      return;
+    }
+    const queryParts = [form.addressDetail, form.ward, form.address]
+      .map((val) => val.trim())
+      .filter(Boolean);
+    const query = queryParts.join(', ');
+    if (query.length < 6) {
+      setIsGeocoding(false);
+      setGeocodeMessage('');
+      setMapPosition(DEFAULT_MAP_POSITION);
+      return;
+    }
     let ignore = false;
     setIsGeocoding(true);
+    setGeocodeMessage('');
     const timer = setTimeout(async () => {
       try {
         const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
@@ -164,7 +199,7 @@ export default function CreateJobDialog({
       }
     }, 650);
     return () => { ignore = true; clearTimeout(timer); };
-  }, [form.address, open]);
+  }, [form.address, form.addressDetail, form.ward, open]);
 
   const handleChange = useCallback((field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -208,6 +243,31 @@ export default function CreateJobDialog({
 
   const isEdit = mode === 'edit';
   const showSubscriptionSection = !isEdit || allowEditSubscription;
+  const autocompleteSlotProps = {
+    paper: {
+      sx: {
+        borderRadius: 2,
+        mt: 0.6,
+        boxShadow: '0 10px 30px rgba(15, 23, 42, 0.12)',
+        border: '1px solid #e5e7eb',
+      },
+    },
+    listbox: {
+      sx: {
+        py: 0.4,
+        maxHeight: 260,
+        '& .MuiAutocomplete-option': {
+          fontSize: '0.82rem',
+          px: 1.2,
+          py: 0.7,
+          borderRadius: 1.5,
+          mx: 0.6,
+          '&[aria-selected="true"]': { backgroundColor: '#ecfdf5', color: '#065f46' },
+          '&.Mui-focused': { backgroundColor: '#f3f4f6' },
+        },
+      },
+    },
+  };
 
   return (
     <Dialog
@@ -233,37 +293,38 @@ export default function CreateJobDialog({
             <Typography sx={sectionTitleSx}>Gói tin đã mua</Typography>
             <Box sx={{ mb: 2.5 }}>
               <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Chọn gói tin</Typography>
-              <FormControl fullWidth size="small" error={!!fieldErrors.companySubscriptionId}>
-                <Select
-                  value={form.companySubscriptionId}
-                  onChange={handleChange('companySubscriptionId')}
-                  displayEmpty
-                  sx={selectSx}
-                  MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-                  renderValue={(val) => {
-                    if (!val) {
-                      return <span style={{ color: '#9ca3af' }}>Chọn gói tin</span>;
-                    }
-                    const selected = subscriptionOptions.find((opt) => opt.id === val);
-                    return selected?.label || currentSubscriptionLabel || 'Gói đã chọn';
-                  }}
-                >
-                  {subscriptionsLoading && (
-                    <MenuItem disabled>Đang tải gói tin...</MenuItem>
-                  )}
-                  {!subscriptionsLoading && subscriptionOptions.length === 0 && (
-                    <MenuItem disabled>Chưa có gói tin phù hợp</MenuItem>
-                  )}
-                  {subscriptionOptions.map((opt) => (
-                    <MenuItem key={opt.id} value={opt.id}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-                {fieldErrors.companySubscriptionId && (
-                  <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
-                    {fieldErrors.companySubscriptionId}
-                  </Typography>
+              <Autocomplete
+                options={subscriptionOptions}
+                getOptionLabel={(option) => option?.label || ''}
+                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                value={subscriptionOptions.find((opt) => opt.id === form.companySubscriptionId) || null}
+                autoHighlight
+                disableClearable
+                popupIcon={<ExpandMoreIcon />}
+                onChange={(_, newValue) => {
+                  setForm((prev) => ({ ...prev, companySubscriptionId: newValue?.id || '' }));
+                  onClearError?.('companySubscriptionId');
+                }}
+                loading={subscriptionsLoading}
+                loadingText="Đang tải gói tin..."
+                noOptionsText={subscriptionsLoading ? 'Đang tải gói tin...' : 'Chưa có gói tin phù hợp'}
+                sx={autocompleteSx}
+                slotProps={autocompleteSlotProps}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    size="small"
+                    placeholder="Chọn gói tin"
+                    error={!!fieldErrors.companySubscriptionId}
+                    sx={{...fieldSx, ...fieldErrorSx('companySubscriptionId')}}
+                  />
                 )}
-              </FormControl>
+              />
+              {fieldErrors.companySubscriptionId && (
+                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                  {fieldErrors.companySubscriptionId}
+                </Typography>
+              )}
             </Box>
           </>
         )}
@@ -294,34 +355,144 @@ export default function CreateJobDialog({
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Ngành nghề</Typography>
-            <FormControl fullWidth size="small" error={!!fieldErrors.industry}>
-              <Select value={form.industry} onChange={handleChange('industry')} displayEmpty sx={{...selectSx, ...(fieldErrors.industry ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
-                MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-                renderValue={(val) => val || <span style={{ color: '#9ca3af' }}>Chọn ngành nghề</span>}
-              >
-                {INDUSTRIES.map((ind) => <MenuItem key={ind} value={ind}>{ind}</MenuItem>)}
-              </Select>
-              {fieldErrors.industry && (
-                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
-                  {fieldErrors.industry}
-                </Typography>
+            <Autocomplete
+              options={INDUSTRIES}
+              value={form.industry || null}
+              autoHighlight
+              disableClearable
+              popupIcon={<ExpandMoreIcon />}
+              onChange={(_, newValue) => {
+                setForm((prev) => ({ ...prev, industry: newValue || '' }));
+                onClearError?.('industry');
+              }}
+              sx={autocompleteSx}
+              slotProps={autocompleteSlotProps}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder="Chọn ngành nghề"
+                  error={!!fieldErrors.industry}
+                  sx={{...fieldSx, ...fieldErrorSx('industry')}}
+                />
               )}
-            </FormControl>
+            />
+            {fieldErrors.industry && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrors.industry}
+              </Typography>
+            )}
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Địa chỉ làm việc</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Nhập địa chỉ..."
-              value={form.address}
-              onChange={handleChange('address')}
-              sx={{...fieldSx, ...fieldErrorSx('address')}}
-              error={!!fieldErrors.address}
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Tỉnh/Thành làm việc</Typography>
+            <Autocomplete
+              options={provinces}
+              getOptionLabel={(option) => option?.name || ''}
+              isOptionEqualToValue={(option, value) => option?.code === value?.code}
+              value={provinces.find((province) => province.code === form.provinceCode) || null}
+              autoHighlight
+              disableClearable
+              popupIcon={<ExpandMoreIcon />}
+              onChange={(_, newValue) => {
+                const nextCode = newValue?.code || '';
+                setForm((prev) => ({
+                  ...prev,
+                  provinceCode: nextCode,
+                  address: newValue?.name || '',
+                  ward: '',
+                  wardCode: '',
+                }));
+                onClearError?.('address');
+                onClearError?.('ward');
+              }}
+              loading={provincesLoading}
+              loadingText="Đang tải tỉnh/thành..."
+              noOptionsText="Không có dữ liệu tỉnh/thành"
+              sx={autocompleteSx}
+              slotProps={autocompleteSlotProps}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder="Chọn tỉnh/thành"
+                  error={!!fieldErrors.address}
+                  sx={{...fieldSx, ...fieldErrorSx('address')}}
+                />
+              )}
             />
             {fieldErrors.address && (
               <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
                 {fieldErrorText('address')}
+              </Typography>
+            )}
+            {provincesError && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {provincesError}
+              </Typography>
+            )}
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Phường/Xã làm việc</Typography>
+            <Autocomplete
+              options={wards}
+              getOptionLabel={(option) => option?.name || ''}
+              isOptionEqualToValue={(option, value) => option?.code === value?.code}
+              value={wards.find((ward) => ward.code === form.wardCode) || null}
+              autoHighlight
+              disableClearable
+              popupIcon={<ExpandMoreIcon />}
+              onChange={(_, newValue) => {
+                setForm((prev) => ({
+                  ...prev,
+                  wardCode: newValue?.code || '',
+                  ward: newValue?.name || '',
+                }));
+                onClearError?.('ward');
+              }}
+              loading={wardsLoading}
+              loadingText="Đang tải phường/xã..."
+              noOptionsText={form.provinceCode ? 'Không có dữ liệu phường/xã' : 'Chọn tỉnh/thành trước'}
+              disabled={!form.provinceCode}
+              sx={autocompleteSx}
+              slotProps={autocompleteSlotProps}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder="Chọn phường/xã"
+                  error={!!fieldErrors.ward}
+                  sx={{...fieldSx, ...fieldErrorSx('ward')}}
+                />
+              )}
+            />
+            {fieldErrors.ward && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrorText('ward')}
+              </Typography>
+            )}
+            {wardsError && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {wardsError}
+              </Typography>
+            )}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography sx={sectionLabelSx}>Địa chỉ cụ thể</Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Số nhà, đường, tòa nhà, khu..."
+              value={form.addressDetail}
+              onChange={handleChange('addressDetail')}
+              sx={{...fieldSx, ...fieldErrorSx('addressDetail')}}
+              error={!!fieldErrors.addressDetail}
+            />
+            {fieldErrors.addressDetail && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrorText('addressDetail')}
               </Typography>
             )}
             {(isGeocoding || geocodeMessage) && (
@@ -343,21 +514,33 @@ export default function CreateJobDialog({
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Loại hình công việc</Typography>
-            <FormControl fullWidth size="small" error={!!fieldErrors.jobType}>
-              <Select value={form.jobType} onChange={handleChange('jobType')} displayEmpty sx={{...selectSx, ...(fieldErrors.jobType ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
-                MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-                renderValue={(val) =>
-                  val ? val : <span style={{ color: '#9ca3af' }}>Chọn loại hình</span>
-                }
-              >
-                {JOB_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-              </Select>
-              {fieldErrors.jobType && (
-                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
-                  {fieldErrors.jobType}
-                </Typography>
+            <Autocomplete
+              options={JOB_TYPES}
+              value={form.jobType || null}
+              autoHighlight
+              disableClearable
+              popupIcon={<ExpandMoreIcon />}
+              onChange={(_, newValue) => {
+                setForm((prev) => ({ ...prev, jobType: newValue || '' }));
+                onClearError?.('jobType');
+              }}
+              sx={autocompleteSx}
+              slotProps={autocompleteSlotProps}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder="Chọn loại hình"
+                  error={!!fieldErrors.jobType}
+                  sx={{...fieldSx, ...fieldErrorSx('jobType')}}
+                />
               )}
-            </FormControl>
+            />
+            {fieldErrors.jobType && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrors.jobType}
+              </Typography>
+            )}
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Kinh nghiệm yêu cầu</Typography>
@@ -465,35 +648,63 @@ export default function CreateJobDialog({
         <Grid container spacing={2} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Cấp bậc</Typography>
-            <FormControl fullWidth size="small" error={!!fieldErrors.rank}>
-              <Select value={form.rank} onChange={handleChange('rank')} displayEmpty sx={{...selectSx, ...(fieldErrors.rank ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
-                MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-                renderValue={(val) => val || <span style={{ color: '#9ca3af' }}>Chọn cấp bậc</span>}
-              >
-                {RANK_OPTIONS.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-              </Select>
-              {fieldErrors.rank && (
-                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
-                  {fieldErrors.rank}
-                </Typography>
+            <Autocomplete
+              options={RANK_OPTIONS}
+              value={form.rank || null}
+              autoHighlight
+              disableClearable
+              popupIcon={<ExpandMoreIcon />}
+              onChange={(_, newValue) => {
+                setForm((prev) => ({ ...prev, rank: newValue || '' }));
+                onClearError?.('rank');
+              }}
+              sx={autocompleteSx}
+              slotProps={autocompleteSlotProps}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder="Chọn cấp bậc"
+                  error={!!fieldErrors.rank}
+                  sx={{...fieldSx, ...fieldErrorSx('rank')}}
+                />
               )}
-            </FormControl>
+            />
+            {fieldErrors.rank && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrors.rank}
+              </Typography>
+            )}
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Học vấn</Typography>
-            <FormControl fullWidth size="small" error={!!fieldErrors.education}>
-              <Select value={form.education} onChange={handleChange('education')} displayEmpty sx={{...selectSx, ...(fieldErrors.education ? {'& .MuiOutlinedInput-notchedOutline': {borderColor: '#ef4444 !important'}} : {})}}
-                MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-                renderValue={(val) => val || <span style={{ color: '#9ca3af' }}>Chọn trình độ</span>}
-              >
-                {EDUCATION_OPTIONS.map((e) => <MenuItem key={e} value={e}>{e}</MenuItem>)}
-              </Select>
-              {fieldErrors.education && (
-                <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
-                  {fieldErrors.education}
-                </Typography>
+            <Autocomplete
+              options={EDUCATION_OPTIONS}
+              value={form.education || null}
+              autoHighlight
+              disableClearable
+              popupIcon={<ExpandMoreIcon />}
+              onChange={(_, newValue) => {
+                setForm((prev) => ({ ...prev, education: newValue || '' }));
+                onClearError?.('education');
+              }}
+              sx={autocompleteSx}
+              slotProps={autocompleteSlotProps}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  placeholder="Chọn trình độ"
+                  error={!!fieldErrors.education}
+                  sx={{...fieldSx, ...fieldErrorSx('education')}}
+                />
               )}
-            </FormControl>
+            />
+            {fieldErrors.education && (
+              <Typography sx={{ color: '#ef4444', fontSize: '0.78rem', mt: 0.6 }}>
+                {fieldErrors.education}
+              </Typography>
+            )}
           </Grid>
         </Grid>
 
@@ -618,34 +829,38 @@ export default function CreateJobDialog({
         {/* Danh mục nghề liên quan */}
         <Box sx={{ mb: 2.5 }}>
           <Typography sx={sectionLabelSx}>Danh mục Nghề liên quan</Typography>
-          <FormControl fullWidth size="small" sx={{ mb: form.relatedCategories.length > 0 ? 1 : 0 }}>
-            <Select
-              value="" displayEmpty sx={selectSx}
-              MenuProps={{ PaperProps: { sx: { '& .MuiMenuItem-root': { fontSize: '0.85rem' } } } }}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val && !form.relatedCategories.includes(val)) {
-                  setForm((prev) => ({ ...prev, relatedCategories: [...prev.relatedCategories, val] }));
-                }
-              }}
-              renderValue={() => <span style={{ color: '#9ca3af' }}>Chọn danh mục nghề...</span>}
-            >
-              {INDUSTRIES.filter((ind) => !form.relatedCategories.includes(ind)).map((ind) => (
-                <MenuItem key={ind} value={ind}>{ind}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {form.relatedCategories.length > 0 && (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
-              {form.relatedCategories.map((cat, i) => (
+          <Autocomplete
+            multiple
+            options={INDUSTRIES}
+            value={form.relatedCategories}
+            autoHighlight
+            onChange={(_, newValue) => {
+              setForm((prev) => ({ ...prev, relatedCategories: newValue }));
+            }}
+            filterSelectedOptions
+            sx={autocompleteSx}
+            popupIcon={<ExpandMoreIcon />}
+            slotProps={autocompleteSlotProps}
+            renderTags={(value, getTagProps) => (
+              value.map((option, index) => (
                 <Chip
-                  key={i} label={cat} size="small"
-                  onDelete={() => setForm((prev) => ({ ...prev, relatedCategories: prev.relatedCategories.filter((_, idx) => idx !== i) }))}
+                  {...getTagProps({ index })}
+                  key={option}
+                  label={option}
+                  size="small"
                   sx={{ bgcolor: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb', fontWeight: 500, fontSize: '0.78rem', borderRadius: '16px', height: 28 }}
                 />
-              ))}
-            </Box>
-          )}
+              ))
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                placeholder="Chọn danh mục nghề..."
+                sx={fieldSx}
+              />
+            )}
+          />
         </Box>
 
         {/* Kỹ năng cần có */}
