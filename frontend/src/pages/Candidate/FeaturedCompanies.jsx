@@ -95,7 +95,7 @@ export default function FeaturedCompanies() {
         ? baseCompanies.filter((company) => brandedCompanyKeysFromJobs.has(company.key || company.companyId))
         : filterFeaturedCompaniesByBranding(baseCompanies, brandingMap, brandedCompanyKeysFromJobs);
 
-      setCompanies(featuredCompanies.length > 0 ? featuredCompanies : baseCompanies);
+      setCompanies(featuredCompanies);
     } catch (error) {
       if (isServiceUnavailableError(error)) {
         setServiceUnavailable(true);

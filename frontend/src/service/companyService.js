@@ -40,6 +40,18 @@ export const getCompanyMarketingEntitlements = async (companyId, category) => {
     return res.data;
 };
 
+export const getActiveMarketingAssignment = async (companyId, targetScope, targetId) => {
+    const res = await apiClient.get(`/api/v1/company/marketing-entitlements/company/${companyId}/active-assignment`, {
+        params: { targetScope, targetId },
+    });
+    return res.data;
+};
+
+export const getFeaturedCompanyIds = async () => {
+    const res = await apiClient.get(`/api/v1/company/marketing-entitlements/featured-companies`);
+    return res.data; // returns string[] of companyIds
+};
+
 export const processApproval = async (payload) => {
     // payload: { companyId, action: 'APPROVED' | 'REJECTED', note: '' }
     const res = await apiClient.post('/api/v1/company/approval', payload);

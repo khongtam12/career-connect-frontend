@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
 import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
 import JobTable from '../../../components/employer/jobs/JobTable';
@@ -573,6 +574,7 @@ export default function JobManagement() {
       showSnack(`Không thể gỡ gói hiển thị: ${backendMessage}`, 'error');
     }
   };
+
 
   const editInitialValues = useMemo(() => {
     if (dialogMode !== 'edit' || !editingJob) return undefined;
