@@ -45,6 +45,7 @@ export default function JobCard({ job, isFeatured = false, isSaved, onToggleSave
 
   const salaryLabel = formatSalary(job);
   const daysLeft = getDaysLeft(job.deadline, job.deadlineExpired);
+  const fullAddress = [job.addressDetail, job.ward, job.province].filter(Boolean).join(', ') || job.location;
 
   const handleToggleSave = () => {
     if (!isAuthenticated) {
@@ -205,10 +206,10 @@ export default function JobCard({ job, isFeatured = false, isSaved, onToggleSave
 
             {/* Tags row */}
             <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
-              {job.location && (
+              {fullAddress && (
                 <Chip
                   icon={<MapPin size={12} />}
-                  label={formatProvinceLabel(job.location)}
+                  label={fullAddress}
                   size="small"
                   sx={{
                     bgcolor: '#f0fdf4',
@@ -217,6 +218,12 @@ export default function JobCard({ job, isFeatured = false, isSaved, onToggleSave
                     fontSize: '0.72rem',
                     height: 26,
                     border: '1px solid #bbf7d0',
+                    maxWidth: 300,
+                    '& .MuiChip-label': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    },
                     '& .MuiChip-icon': { color: '#22c55e' },
                   }}
                 />

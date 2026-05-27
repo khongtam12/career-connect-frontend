@@ -278,7 +278,7 @@ export default function JobDetail() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Địa điểm</p>
-                        <p className="font-semibold text-gray-800">{job.location}</p>
+                        <p className="font-semibold text-gray-800">{job.workAddress}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">

@@ -27,13 +27,14 @@ const CompanyJobItem = ({ job, company }) => {
   };
 
   const daysLeft = calculateDaysLeft(job?.deadline, job?.deadlineExpired);
+  const fullAddress = [job?.addressDetail, job?.ward, job?.province].filter(Boolean).join(', ') || job?.location;
 
   const formatSalary = (min, max, negotiable) => {
     if (negotiable) return "Thoả thuận";
     if (!min && !max) return "Thoả thuận";
-    if (min && max) return `${min} - ${max} Triệu`;
-    if (min) return `Từ ${min} Triệu`;
-    return `Đến ${max} Triệu`;
+    if (min && max) return `${min} - ${max} VNĐ/Tháng`;
+    if (min) return `Từ ${min} VNĐ/Tháng`;
+    return `Đến ${max} VNĐ/Tháng`;
   };
 
   const salaryLabel = job?.salary || formatSalary(job?.salaryMin, job?.salaryMax, job?.salaryNegotiable);
@@ -83,23 +84,25 @@ const CompanyJobItem = ({ job, company }) => {
         </div>
 
         {/* Bottom tags & Actions */}
-        <div className="flex flex-wrap items-end justify-between gap-3 mt-2">
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-xs sm:text-sm rounded-md font-medium">
-              {job?.location || "Địa điểm"}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mt-2">
+          {/* Tags */}
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0 pr-2">
+            <span 
+              className="inline-block w-max max-w-full px-2.5 py-1 bg-gray-100 text-gray-700 text-[11px] sm:text-xs rounded-md font-medium truncate"
+              title={fullAddress || "Địa điểm"}
+            >
+              {fullAddress || "Địa điểm"}
             </span>
-            <span className={`inline-flex items-center px-3 py-1 text-xs sm:text-sm rounded-md font-medium ${daysLeft < 0 ? 'bg-rose-50 text-rose-600' : 'bg-gray-100 text-gray-700'}`}>
+            <span className={`inline-block w-max max-w-full px-2.5 py-1 text-[11px] sm:text-xs rounded-md font-medium truncate ${daysLeft < 0 ? 'bg-rose-50 text-rose-600' : 'bg-gray-100 text-gray-700'}`}>
               {daysLeft < 0 ? 'Đã hết hạn' : `Còn ${daysLeft} ngày để ứng tuyển`}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Link to={`/job/${job?.jobId || job?.id}`} className="flex-1 sm:flex-none text-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-sm shadow-green-600/20 transition-colors">
+          {/* Actions */}
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
+            <Link to={`/job/${job?.jobId || job?.id}`} className="flex-1 sm:flex-none text-center px-4 py-1.5 sm:px-5 sm:py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-sm shadow-green-600/20 transition-colors">
               Ứng tuyển
             </Link>
-            <button className="p-2 border border-green-200 hover:bg-green-50 hover:border-green-600 text-green-600 rounded-lg transition-colors flex items-center justify-center">
-              <Heart size={20} />
-            </button>
           </div>
         </div>
       </div>
