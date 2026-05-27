@@ -7,6 +7,7 @@ import {
   SearchX,
   Loader2,
   Search,
+  RotateCcw,
 } from 'lucide-react';
 
 import JobCard from './JobCard';
@@ -21,6 +22,7 @@ export default function JobSection({
   filterOptions,
   onChange,
   onApply,
+  onReset,
   page = 0,
   totalPages = 0,
   onPageChange,
@@ -31,6 +33,43 @@ export default function JobSection({
 }) {
   const hasJobs = useMemo(() => jobs.length > 0, [jobs]);
   const locationChips = (filterOptions.locations || []).slice(0, 6);
+  const activeFilterCount = useMemo(() => {
+    return [
+      filters.keyword,
+      filters.location,
+      filters.jobType,
+      filters.industryId,
+      filters.rank,
+      filters.education,
+      filters.experienceMin,
+      filters.experienceMax,
+      filters.salaryMin,
+      filters.salaryMax,
+      filters.salaryNegotiable,
+      filters.marketingPackageType,
+      filters.marketingPackageCategory,
+    ].filter(Boolean).length;
+  }, [filters]);
+
+  const activeFilterLabels = useMemo(() => {
+    const labels = [];
+
+    if (filters.keyword) labels.push(`Từ khóa: ${filters.keyword}`);
+    if (filters.location) labels.push(`Địa điểm: ${formatProvinceLabel(filters.location)}`);
+    if (filters.jobType) labels.push(`Loại hình: ${formatJobType(filters.jobType)}`);
+    if (filters.rank) labels.push(`Cấp bậc: ${filters.rank}`);
+    if (filters.education) labels.push(`Học vấn: ${filters.education}`);
+    if (filters.salaryNegotiable === 'true') labels.push('Lương: Có thương lượng');
+    if (filters.salaryNegotiable === 'false') labels.push('Lương: Không thương lượng');
+    if (filters.experienceMin || filters.experienceMax) {
+      labels.push(`Kinh nghiệm: ${filters.experienceMin || '0'} - ${filters.experienceMax || '∞'} năm`);
+    }
+    if (filters.salaryMin || filters.salaryMax) {
+      labels.push(`Lương: ${filters.salaryMin || '0'} - ${filters.salaryMax || '∞'} triệu`);
+    }
+
+    return labels;
+  }, [filters]);
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.09),transparent_28%),radial-gradient(circle_at_top_right,rgba(15,23,42,0.05),transparent_22%),linear-gradient(180deg,#f8fafc_0%,#ffffff_38%,#ecfdf5_100%)] py-10 sm:py-14">
@@ -73,7 +112,6 @@ export default function JobSection({
             </div>
           </div>
         </div>
-
         <div className="mb-10 rounded-4xl border border-white/70 bg-white/85 p-5 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-6">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px_auto] lg:items-center">
             <div className="relative">
@@ -141,6 +179,43 @@ export default function JobSection({
               })}
             </div>
           )}
+
+          {activeFilterLabels.length > 0 && (
+            <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800">
+                    Bộ lọc đang dùng {activeFilterCount ? `(${activeFilterCount})` : ''}
+                  </p>
+                  <p className="text-xs text-emerald-700/80">
+                    URL sẽ giữ nguyên các tiêu chí đã chọn khi chia sẻ.
+                  </p>
+                </div>
+
+                {onReset && (
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Xóa bộ lọc
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {activeFilterLabels.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-8 lg:flex-row">
@@ -181,6 +256,34 @@ export default function JobSection({
                   {filterOptions.jobTypes.map((item) => (
                     <option key={item} value={item}>
                       {formatJobType(item)}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  label="Cấp bậc"
+                  value={filters.rank}
+                  onChange={(e) => onChange({ rank: e.target.value })}
+                >
+                  <option value="">Tất cả</option>
+
+                  {(filterOptions.ranks || []).map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  label="Học vấn"
+                  value={filters.education}
+                  onChange={(e) => onChange({ education: e.target.value })}
+                >
+                  <option value="">Tất cả</option>
+
+                  {(filterOptions.educations || []).map((item) => (
+                    <option key={item} value={item}>
+                      {item}
                     </option>
                   ))}
                 </FilterSelect>
@@ -243,6 +346,16 @@ export default function JobSection({
                   </div>
                 </div>
 
+                <FilterSelect
+                  label="Lương thương lượng"
+                  value={filters.salaryNegotiable}
+                  onChange={(e) => onChange({ salaryNegotiable: e.target.value })}
+                >
+                  <option value="">Tất cả</option>
+                  <option value="true">Có thể thương lượng</option>
+                  <option value="false">Không thương lượng</option>
+                </FilterSelect>
+
                 {/* Industry */}
                 <FilterSelect
                   label="Ngành nghề"
@@ -265,12 +378,23 @@ export default function JobSection({
 
                 {/* Button */}
                 <button
-                  onClick={onApply}
+                  onClick={() => onApply?.({ ...filters })}
                   className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-emerald-500 to-emerald-600 px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_35px_rgba(16,185,129,0.28)] transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-[0_22px_45px_rgba(16,185,129,0.34)]"
                 >
                   <Filter className="h-4 w-4 transition-transform group-hover:rotate-12" />
                   Áp dụng bộ lọc
                 </button>
+
+                {onReset && (
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:text-emerald-700"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Đặt lại bộ lọc
+                  </button>
+                )}
               </div>
             </div>
           </aside>
@@ -468,7 +592,7 @@ function FilterSelect({ label, children, ...props }) {
   );
 }
 
-const formatJobType = (jobType) => {
+function formatJobType(jobType) {
   const map = {
     FULL_TIME: 'Full-time',
     PART_TIME: 'Part-time',
@@ -478,4 +602,4 @@ const formatJobType = (jobType) => {
   };
 
   return map[jobType] || jobType;
-};
+}
