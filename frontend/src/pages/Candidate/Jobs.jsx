@@ -7,6 +7,27 @@ import { categoriesData } from '../../data/categoriesData';
 import useProvinces from '../../hooks/useProvinces';
 import { Layers3 } from 'lucide-react';
 
+const FALLBACK_RANKS = [
+  'Thực tập sinh',
+  'Nhân viên',
+  'Trưởng nhóm',
+  'Phó phòng',
+  'Trưởng phòng',
+  'Phó giám đốc',
+  'Giám đốc',
+];
+
+const FALLBACK_EDUCATIONS = [
+  'Trung học phổ thông',
+  'Trung cấp',
+  'Cao Đẳng trở lên',
+  'Đại học',
+  'Đại học (đang học)',
+  'Thạc sĩ',
+  'Tiến sĩ',
+  'Không yêu cầu',
+];
+
 const normalizeIndustryLabel = (value = '') =>
   value
     .toString()
@@ -55,6 +76,9 @@ const initialFilters = {
   experienceMax: '',
   salaryMin: '',
   salaryMax: '',
+  rank: '',
+  education: '',
+  salaryNegotiable: '',
   sortBy: 'createdAt',
   sortDir: 'desc',
 };
@@ -70,6 +94,8 @@ export default function Jobs() {
     statuses: [],
     locations: [],
     industries: [],
+    ranks: [],
+    educations: [],
   });
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -88,6 +114,8 @@ export default function Jobs() {
   const displayFilterOptions = useMemo(() => ({
     ...filterOptions,
     locations: provinceLocations.length > 0 ? provinceLocations : filterOptions.locations,
+    ranks: filterOptions.ranks.length > 0 ? filterOptions.ranks : FALLBACK_RANKS,
+    educations: filterOptions.educations.length > 0 ? filterOptions.educations : FALLBACK_EDUCATIONS,
   }), [filterOptions, provinceLocations]);
   const currentIndustryName = useMemo(
     () =>
@@ -109,6 +137,7 @@ export default function Jobs() {
         experienceMax: overrideFilters.experienceMax ? Number(overrideFilters.experienceMax) : undefined,
         salaryMin: overrideFilters.salaryMin ? Number(overrideFilters.salaryMin) * 1000000 : undefined,
         salaryMax: overrideFilters.salaryMax ? Number(overrideFilters.salaryMax) * 1000000 : undefined,
+        salaryNegotiable: overrideFilters.salaryNegotiable === '' ? undefined : overrideFilters.salaryNegotiable === 'true',
         page: nextPage + 1,
         size: 10,
       });
@@ -153,6 +182,9 @@ export default function Jobs() {
     if (data.experienceMax) params.set('experienceMax', data.experienceMax);
     if (data.salaryMin) params.set('salaryMin', data.salaryMin);
     if (data.salaryMax) params.set('salaryMax', data.salaryMax);
+    if (data.rank) params.set('rank', data.rank);
+    if (data.education) params.set('education', data.education);
+    if (data.salaryNegotiable) params.set('salaryNegotiable', data.salaryNegotiable);
     if (data.sortBy) params.set('sortBy', data.sortBy);
     if (data.sortDir) params.set('sortDir', data.sortDir);
     return params;
@@ -170,6 +202,13 @@ export default function Jobs() {
     applyFilters(nextPage, filters);
   };
 
+  const handleResetFilters = () => {
+    const nextFilters = { ...initialFilters };
+    setFilters(nextFilters);
+    navigate('/jobs');
+    applyFilters(0, nextFilters);
+  };
+
   useEffect(() => {
     const loadOptions = async () => {
       try {
@@ -179,6 +218,8 @@ export default function Jobs() {
           statuses: options.statuses || [],
           locations: options.locations || [],
           industries: options.industries || [],
+          ranks: options.ranks || FALLBACK_RANKS,
+          educations: options.educations || FALLBACK_EDUCATIONS,
         });
       } catch (error) {
         console.error('Failed to load job filters', error);
@@ -206,6 +247,9 @@ export default function Jobs() {
       experienceMax: searchParams.get('experienceMax') || '',
       salaryMin: searchParams.get('salaryMin') || '',
       salaryMax: searchParams.get('salaryMax') || '',
+      rank: searchParams.get('rank') || '',
+      education: searchParams.get('education') || '',
+      salaryNegotiable: searchParams.get('salaryNegotiable') || '',
       sortBy: searchParams.get('sortBy') || 'createdAt',
       sortDir: searchParams.get('sortDir') || 'desc',
     }, filterOptions.industries);
@@ -290,6 +334,7 @@ export default function Jobs() {
         filterOptions={displayFilterOptions}
         onChange={handleFilterChange}
         onApply={handleSearch}
+          onReset={handleResetFilters}
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}

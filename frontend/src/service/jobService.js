@@ -1,9 +1,40 @@
+import axios from 'axios';
 import apiClient from './apiClient';
+
+const rawJobServiceURL = import.meta.env.VITE_JOB_SERVICE_URL || 'http://localhost:8082';
+const jobServiceURL = rawJobServiceURL.replace(/\/+$/, '');
+
+const jobServiceClient = axios.create({
+  baseURL: jobServiceURL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 const jobRequestConfig = (overrides = {}) => ({
   serviceName: 'job-service',
   ...overrides,
 });
+
+const shouldFallbackToDirectJobService = (error) => {
+  const status = error?.response?.status;
+  return status === 503 || status === 504 || error?.code === 'ERR_NETWORK';
+};
+
+const callJobService = async (request, requestConfig = {}) => {
+  try {
+    const response = await request(apiClient);
+    return response.data;
+  } catch (error) {
+    if (!shouldFallbackToDirectJobService(error) || requestConfig?.skipJobFallback) {
+      throw error;
+    }
+
+    const directResponse = await request(jobServiceClient);
+    return directResponse.data;
+  }
+};
 
 export const createJob = async (payload) => {
   const res = await apiClient.post('/api/v1/job/employer/create', payload);
@@ -68,15 +99,18 @@ export const removeCompanyMarketingPackage = async (assignmentId) => {
 };
 
 export const getJobById = async (jobId, requestConfig = {}) => {
-  const res = await apiClient.get(`/api/v1/job/${jobId}`, jobRequestConfig(requestConfig));
-  return res.data;
+  return callJobService(
+    (client) => client.get(`/api/v1/job/${jobId}`, jobRequestConfig(requestConfig)),
+    requestConfig
+  );
 };
 
 export const getJobs = async ({ page = 0, size = 9, sortBy = 'createdAt', sortDir = 'desc' } = {}) => {
-  const response = await apiClient.get('/api/v1/job', {
-    params: { page, size, sortBy, sortDir },
-  });
-  return response.data;
+  return callJobService((client) =>
+    client.get('/api/v1/job', {
+      params: { page, size, sortBy, sortDir },
+    })
+  );
 };
 
 export const searchJobs = async ({
@@ -92,43 +126,56 @@ export const searchJobs = async ({
   experienceMax,
   salaryMin,
   salaryMax,
+  rank,
+  education,
+  salaryNegotiable,
   page = 0,
   size = 9,
   sortBy = 'createdAt',
   sortDir = 'desc',
 } = {}, requestConfig = {}) => {
-  const response = await apiClient.get('/api/v1/job/search', {
-    ...jobRequestConfig(requestConfig),
-    params: {
-      keyword,
-      location,
-      industryId,
-      fieldId,
-      jobType,
-      marketingPackageCategory,
-      marketingPackageType,
-      status,
-      experienceMin,
-      experienceMax,
-      salaryMin,
-      salaryMax,
-      page,
-      size,
-      sortBy,
-      sortDir,
-    },
-  });
-  return response.data;
+  return callJobService(
+    (client) =>
+      client.get('/api/v1/job/search', {
+        ...jobRequestConfig(requestConfig),
+        params: {
+          keyword,
+          location,
+          industryId,
+          fieldId,
+          jobType,
+          marketingPackageCategory,
+          marketingPackageType,
+          status,
+          experienceMin,
+          experienceMax,
+          salaryMin,
+          salaryMax,
+          rank,
+          education,
+          salaryNegotiable,
+          page,
+          size,
+          sortBy,
+          sortDir,
+        },
+      }),
+    requestConfig
+  );
 };
 
 export const getJobFilters = async (requestConfig = {}) => {
-  const response = await apiClient.get('/api/v1/job/filters', jobRequestConfig(requestConfig));
-  return response.data;
+  return callJobService(
+    (client) => client.get('/api/v1/job/filters', jobRequestConfig(requestConfig)),
+    requestConfig
+  );
 };
 
 export const getJobStats = async (requestConfig = {}) => {
-  const response = await apiClient.get('/api/v1/job/stats', jobRequestConfig(requestConfig));
-  return response.data;
+  return callJobService(
+    (client) => client.get('/api/v1/job/stats', jobRequestConfig(requestConfig)),
+    requestConfig
+  );
 };
 
 export const applyForJob = async (payload) => {
