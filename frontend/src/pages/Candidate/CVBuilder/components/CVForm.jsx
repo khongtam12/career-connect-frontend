@@ -275,6 +275,7 @@ export default function CVForm({ data, onChange }) {
                           <Field label="Mục tiêu nghề nghiệp" className="col-span-2" warning={warnings.summary}>
                             <Textarea
                               rows={4}
+                              maxLength={2000}
                               value={p.summary || ''}
                               onChange={e => updateP('summary', e.target.value)}
                               placeholder="Tóm tắt ngắn gọn kinh nghiệm, thế mạnh và định hướng phát triển..."
@@ -383,7 +384,7 @@ export default function CVForm({ data, onChange }) {
                                   </Field>
                                 </div>
                                 <Field label="Mô tả công việc" className="col-span-2">
-                                  <Textarea rows={4} value={exp.desc || ''} onChange={e => updateArr('experience', i, 'desc', e.target.value)} placeholder="— Xây dựng tính năng X giúp tăng conversion Y%&#10;— Tech stack: React, TypeScript..." />
+                                  <Textarea rows={4} maxLength={2000} value={exp.desc || ''} onChange={e => updateArr('experience', i, 'desc', e.target.value)} placeholder="— Xây dựng tính năng X giúp tăng conversion Y%&#10;— Tech stack: React, TypeScript..." />
                                 </Field>
                               </div>
                             </ItemCard>
@@ -432,7 +433,7 @@ export default function CVForm({ data, onChange }) {
                                   </Field>
                                 </div>
                                 <Field label="GPA / Chi tiết" className="col-span-2">
-                                  <Textarea rows={2} value={edu.desc || ''} onChange={e => updateArr('education', i, 'desc', e.target.value)} placeholder="GPA: 3.7/4.0 — Tốt nghiệp loại Giỏi" />
+                                  <Textarea rows={2} maxLength={2000} value={edu.desc || ''} onChange={e => updateArr('education', i, 'desc', e.target.value)} placeholder="GPA: 3.7/4.0 — Tốt nghiệp loại Giỏi" />
                                 </Field>
                               </div>
                             </ItemCard>
@@ -480,7 +481,7 @@ export default function CVForm({ data, onChange }) {
                                   <Input value={prj.link || ''} onChange={e => updateArr('projects', i, 'link', e.target.value)} placeholder="https://github.com/..." />
                                 </Field>
                                 <Field label="Mô tả" className="col-span-2">
-                                  <Textarea rows={4} value={prj.desc || ''} onChange={e => updateArr('projects', i, 'desc', e.target.value)} placeholder="— Stack: Next.js, Prisma&#10;— Vai trò: Lead Developer&#10;— Kết quả: 10k MAU" />
+                                  <Textarea rows={4} maxLength={2000} value={prj.desc || ''} onChange={e => updateArr('projects', i, 'desc', e.target.value)} placeholder="— Stack: Next.js, Prisma&#10;— Vai trò: Lead Developer&#10;— Kết quả: 10k MAU" />
                                 </Field>
                               </div>
                             </ItemCard>

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, MessageSquare } from "lucide-react";
+import { ChevronDown, MessageSquare, Plus, FileText, UploadCloud, User, Sparkles, FolderOpen } from "lucide-react";
 
 import CandidateMenu from "./CandidateMenu";
 import { useUserStore } from "../../stores/useUserStore";
@@ -68,6 +68,7 @@ const SectionTitle = ({ children }) => (
 );
 
 const Header = ({ rightSlot }) => {
+  const [cvMenuOpen, setCvMenuOpen] = useState(false);
   const hydrated = useUserStore.persist.hasHydrated();
   const user = useUserStore((s) => s.user);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
@@ -87,7 +88,7 @@ const Header = ({ rightSlot }) => {
               <div className="bg-emerald-500 w-2 h-2 rounded-full"></div>
               <div>
                 <div className="font-bold text-emerald-600 text-lg">
-                  CAREER
+                  CAREER CONNECT
                 </div>
                 <div className="text-xs text-gray-500 -mt-1">
                   Tiếp lợi thế - Nối thành công
@@ -154,10 +155,11 @@ const Header = ({ rightSlot }) => {
                   </div>
                 </div>
               </div>
-              <Link to="/cv-dashboard" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
-                <span>Hồ sơ & CV</span>
-                <ChevronDown size={16} />
+
+              <Link to="/cv-templates" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                <span>Tạo CV</span>
               </Link>
+
               <Link to="/featured-companies" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
                 <span>Công ty nổi bật</span>
                 <ChevronDown size={16} />
@@ -182,8 +184,8 @@ const Header = ({ rightSlot }) => {
           <div className="flex items-center space-x-3">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <Link 
-                  to="/chat" 
+                <Link
+                  to="/chat"
                   className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all relative group"
                   title="Tin nhắn"
                 >

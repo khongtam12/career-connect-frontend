@@ -1,15 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
     Box, Typography, Button, Card, CardContent, Divider, Grid, 
-    Container, Stack, Dialog, DialogTitle, DialogContent, DialogActions
+    Container, Stack, Dialog, DialogTitle, DialogContent, DialogActions,
+    CircularProgress, Chip
 } from '@mui/material';
 import { 
     Add as PlusIcon, 
     Description as FileTextIcon, 
     TrendingUp as TrendingUpIcon, 
     Dashboard as LayoutDashboardIcon,
-    NoteAdd as NoteAddIcon
+    NoteAdd as NoteAddIcon,
+    CloudUpload as CloudUploadIcon,
+    Assignment as AssignmentIcon,
+    Folder as FolderIcon,
+    Lightbulb as LightbulbIcon,
+    TrackChanges as TargetIcon,
+    BarChart as ChartIcon,
+    Search as SearchIcon
 } from '@mui/icons-material';
 import CVCard from '../../../components/user/cv-shared/CVCard';
 import * as cvService from '../../../service/cvService';
@@ -29,6 +37,16 @@ function StatWidget({ icon: Icon, value, label, accent = false }) {
             </Box>
         </Card>
     );
+}
+
+function hasDataContent(cv) {
+    const d = cv.data || cv;
+    const p = d.personal || {};
+    if (p.fullName || p.email || p.phone || p.jobTitle) return true;
+    if (d.skills?.length || d.experiences?.length || d.educations?.length || d.projects?.length || d.certificates?.length) return true;
+    if (cv.fullName || cv.email || cv.phone || cv.jobTitle) return true;
+    if (cv.skills?.length || cv.experiences?.length || cv.educations?.length || cv.projects?.length || cv.certificates?.length) return true;
+    return false;
 }
 
 /* ── Template preview card ── */
@@ -93,20 +111,26 @@ function NewCVCard({ onClick }) {
 
 /* ── Tips section ── */
 const TIPS = [
-    { icon: '🎯', title: 'Tùy chỉnh theo công việc', desc: 'Điều chỉnh CV phù hợp với từng vị trí ứng tuyển.' },
-    { icon: '📊', title: 'Dùng số liệu cụ thể', desc: 'Thay vì "làm tốt" hãy viết "tăng doanh thu 30%".' },
-    { icon: '🔍', title: 'Tối ưu từ khóa', desc: 'Dùng từ khóa từ mô tả công việc để vượt ATS.' },
+    { key: 'target', title: 'Tùy chỉnh theo công việc', desc: 'Điều chỉnh CV phù hợp với từng vị trí ứng tuyển.' },
+    { key: 'chart', title: 'Dùng số liệu cụ thể', desc: 'Thay vì "làm tốt" hãy viết "tăng doanh thu 30%".' },
+    { key: 'search', title: 'Tối ưu từ khóa', desc: 'Dùng từ khóa từ mô tả công việc để vượt ATS.' },
 ];
 
 function TipsSection() {
     return (
         <Box sx={{ mt: 6, mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', mb: 3 }}>💡 Mẹo viết CV hiệu quả</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LightbulbIcon sx={{ color: '#eab308' }} /> Mẹo viết CV hiệu quả
+            </Typography>
             <Grid container spacing={2}>
                 {TIPS.map((t, i) => (
                     <Grid item xs={12} md={4} key={i}>
                         <Card sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #f3f4f6', boxShadow: 'none', height: '100%', background: 'linear-gradient(135deg,#fafafa,#fff)' }}>
-                            <Typography sx={{ fontSize: 26, mb: 1 }}>{t.icon}</Typography>
+                            <Box sx={{ color: '#6366f1', mb: 1.5, display: 'flex' }}>
+                                {t.key === 'target' && <TargetIcon sx={{ fontSize: 28 }} />}
+                                {t.key === 'chart' && <ChartIcon sx={{ fontSize: 28 }} />}
+                                {t.key === 'search' && <SearchIcon sx={{ fontSize: 28 }} />}
+                            </Box>
                             <Typography sx={{ fontWeight: 700, fontSize: 14, color: '#111827', mb: 0.5 }}>{t.title}</Typography>
                             <Typography variant="caption" sx={{ color: '#6b7280', lineHeight: 1.6 }}>{t.desc}</Typography>
                         </Card>
@@ -152,27 +176,100 @@ function EmptyState({ onCreateClick }) {
    ═══════════════════════════════════════════ */
 export default function CVDashboard() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [cvList, setCvList] = useState([]);
     const [mounted, setMounted] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [cvToDelete, setCvToDelete] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+    const uploadRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const { user } = useUserStore();
 
+    const fetchCVs = async () => {
+        if (!user) return;
+        try {
+            const data = await cvService.getMyCVs();
+            setCvList(data);
+        } catch (e) {
+            console.error('Failed to fetch CVs:', e);
+            toast.error('Không thể tải danh sách CV');
+        }
+    };
+
     useEffect(() => {
         setMounted(true);
-        const fetchCVs = async () => {
-            if (!user) return;
-            try {
-                const data = await cvService.getMyCVs();
-                setCvList(data);
-            } catch (e) {
-                console.error('Failed to fetch CVs:', e);
-                toast.error('Không thể tải danh sách CV');
-            }
-        };
         fetchCVs();
     }, [user]);
+
+    // Auto-scroll to upload zone when ?action=upload
+    useEffect(() => {
+        if (searchParams.get('action') === 'upload' && uploadRef.current) {
+            setTimeout(() => {
+                uploadRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+        }
+    }, [searchParams, mounted]);
+
+    const handleFileUpload = async (file) => {
+        if (!file || file.type !== 'application/pdf') {
+            toast.error('Chỉ chấp nhận file PDF. Vui lòng chọn lại.');
+            return;
+        }
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để tải lên CV.');
+            return;
+        }
+        setUploading(true);
+        try {
+            // 1. Create empty CV record with filename as name
+            const cvPayload = {
+                userId: user.userId || user.id,
+                name: file.name.replace(/\.pdf$/i, ''),
+                templateId: 1,
+                status: 'PUBLISHED',
+                fullName: '',
+                email: '',
+                phone: '',
+                address: '',
+                dob: '',
+                jobTitle: '',
+                linkedin: '',
+                summary: '',
+                skills: [],
+                experiences: [],
+                educations: [],
+                projects: [],
+                certificates: [],
+            };
+            const created = await cvService.createCV(cvPayload);
+
+            // 2. Upload the actual PDF file
+            const formData = new FormData();
+            formData.append('file', file, file.name);
+            await cvService.uploadCVFile(created.id, formData);
+
+            toast.success('Tải lên CV thành công!');
+            await fetchCVs();
+        } catch (err) {
+            console.error('Upload CV failed:', err);
+            toast.error('Không thể tải lên CV. Vui lòng thử lại.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const onDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        handleFileUpload(file);
+    };
+
+    const onDragOver = (e) => { e.preventDefault(); setDragOver(true); };
+    const onDragLeave = () => setDragOver(false);
 
 const generateUUIDv7 = () => {
     // 48-bit timestamp
@@ -269,8 +366,16 @@ const generateUUIDv7 = () => {
 
     const isEmpty = cvList.length === 0;
 
+    // Phân loại CV: CV đã tải lên (chỉ chứa file PDF, không có data builder) vs CV thiết kế trực tuyến
+    const builderCVs = cvList.filter(cv => hasDataContent(cv) || !(cv.fileUrl || cv.cvFileUrl));
+    const uploadedCVs = cvList.filter(cv => !hasDataContent(cv) && (cv.fileUrl || cv.cvFileUrl));
     return (
-        <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb', py: 5 }}>
+        <Box className="plus-jakarta-theme" sx={{ minHeight: '100vh', backgroundColor: '#f9fafb', py: 5 }}>
+            <style dangerouslySetInnerHTML={{ __html: `
+                .plus-jakarta-theme, .plus-jakarta-theme * {
+                    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+                }
+            `}} />
             <Container maxWidth="lg">
                 {/* ── Page header ── */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 5 }}>
@@ -298,12 +403,51 @@ const generateUUIDv7 = () => {
                     )}
                 </Box>
 
+                {/* ── Upload Zone ── */}
+                <Card
+                    ref={uploadRef}
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}
+                    onDragLeave={onDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{
+                        mb: 4, p: 4, borderRadius: '16px', cursor: 'pointer',
+                        border: dragOver ? '2px dashed #6366f1' : searchParams.get('action') === 'upload' ? '2px dashed #6366f1' : '2px dashed #e5e7eb',
+                        backgroundColor: dragOver ? '#eef2ff' : searchParams.get('action') === 'upload' ? '#f5f3ff' : '#fafafa',
+                        transition: 'all 0.2s ease',
+                        '&:hover': { borderColor: '#6366f1', backgroundColor: '#f5f3ff' },
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5
+                    }}
+                >
+                    {uploading ? (
+                        <>
+                            <CircularProgress size={32} sx={{ color: '#6366f1' }} />
+                            <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#6366f1' }}>Đang tải lên...</Typography>
+                        </>
+                    ) : (
+                        <>
+                            <Box sx={{ width: 52, height: 52, borderRadius: '14px', backgroundColor: '#ede9fe', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <CloudUploadIcon fontSize="medium" />
+                            </Box>
+                            <Typography sx={{ fontWeight: 700, fontSize: 14, color: '#374151' }}>Tải lên CV có sẵn (PDF)</Typography>
+                            <Typography variant="caption" sx={{ color: '#9ca3af' }}>Kéo thả file PDF vào đây hoặc nhấn để chọn file</Typography>
+                        </>
+                    )}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleFileUpload(e.target.files?.[0])}
+                    />
+                </Card>
+
                 {isEmpty ? (
                     <EmptyState onCreateClick={handleCreate} />
                 ) : (
                     <>
                         {/* ── Stats ── */}
-                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid container spacing={3} sx={{ mb: 5 }}>
                             <Grid item xs={12} sm={4}>
                                 <StatWidget icon={FileTextIcon} value={cvList.length} label="Tổng số CV" accent />
                             </Grid>
@@ -321,18 +465,43 @@ const generateUUIDv7 = () => {
                             </Grid>
                         </Grid>
 
-                        {/* ── CV Grid ── */}
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#374151', mb: 2 }}>CV của tôi</Typography>
-                        <Grid container spacing={3}>
-                            {cvList.map((cv, i) => (
-                                <Grid item xs={12} sm={6} md={4} lg={3} key={cv.id}>
+                        {/* ── Section 1: CV Thiết Kế Trực Tuyến ── */}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1f2937', mb: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <AssignmentIcon sx={{ color: '#4f46e5', fontSize: 20 }} /> CV thiết kế trực tuyến
+                            <Chip label={builderCVs.length} size="small" sx={{ bgcolor: '#e0e7ff', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
+                        </Typography>
+                        <Grid container spacing={3} sx={{ mb: 6 }}>
+                            {builderCVs.map((cv, i) => (
+                                <Grid item xs={12} sm={6} md={4} lg={3} key={cv.id} sx={{ display: 'flex' }}>
                                     <CVCard cv={cv} index={i} onDelete={confirmDelete} />
                                 </Grid>
                             ))}
-                            <Grid item xs={12} sm={6} md={4} lg={3}>
+                            <Grid item xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex' }}>
                                 <NewCVCard onClick={() => handleCreate(1)} />
                             </Grid>
                         </Grid>
+
+                        {/* ── Section 2: CV Tải Lên Từ Máy Tính ── */}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1f2937', mb: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <FolderIcon sx={{ color: '#ef4444', fontSize: 20 }} /> CV đã tải lên từ máy tính
+                            <Chip label={uploadedCVs.length} size="small" sx={{ bgcolor: '#fee2e2', color: '#ef4444', fontWeight: 700, fontSize: 11 }} />
+                        </Typography>
+                        
+                        {uploadedCVs.length === 0 ? (
+                            <Card sx={{ p: 4, borderRadius: '16px', border: '1px dashed #e5e7eb', textAlign: 'center', backgroundColor: '#fafafa', mb: 6, boxShadow: 'none' }}>
+                                <Typography sx={{ color: '#9ca3af', fontSize: 13, fontWeight: 600 }}>
+                                    Chưa có CV nào được tải lên. Bạn có thể kéo thả file PDF vào vùng tải lên phía trên!
+                                </Typography>
+                            </Card>
+                        ) : (
+                            <Grid container spacing={3} sx={{ mb: 6 }}>
+                                {uploadedCVs.map((cv, i) => (
+                                    <Grid item xs={12} sm={6} md={4} lg={3} key={cv.id} sx={{ display: 'flex' }}>
+                                        <CVCard cv={cv} index={i} onDelete={confirmDelete} />
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        )}
 
                         <Divider sx={{ my: 5, borderColor: '#e5e7eb' }} />
 
