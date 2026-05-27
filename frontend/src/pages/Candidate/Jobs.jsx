@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import JobSection from './components/JobSection';
 import QuickJobsSection from './components/QuickJobsSection';
 import { getJobFilters, searchJobs } from '../../service/jobService';
-import { categoriesData } from '../../data/categoriesData';
 import useProvinces from '../../hooks/useProvinces';
 import { Layers3 } from 'lucide-react';
 
@@ -47,11 +46,7 @@ const resolveIndustryQuery = (filters, industries) => {
   const matchedIndustry = industries.find(
     (item) => normalizeIndustryLabel(item.name) === normalizedKeyword
   );
-  const matchedCategory = categoriesData.find(
-    (item) => normalizeIndustryLabel(item.title) === normalizedKeyword || normalizeIndustryLabel(item.industryId) === normalizedKeyword
-  );
-
-  const resolvedIndustryId = matchedIndustry?.industryId || matchedCategory?.backendIndustryId;
+  const resolvedIndustryId = matchedIndustry?.industryId;
 
   if (!resolvedIndustryId) {
     return filters;

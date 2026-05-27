@@ -21,7 +21,6 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
-  INDUSTRIES,
   JOB_TYPES,
   EDUCATION_OPTIONS,
   RANK_OPTIONS,
@@ -109,6 +108,7 @@ export default function CreateJobDialog({
   mode = 'create',
   initialValues,
   subscriptionOptions = [],
+  industryOptions = [],
   subscriptionsLoading = false,
   allowEditSubscription = false,
   fieldErrors = {},
@@ -131,6 +131,16 @@ export default function CreateJobDialog({
       setMapPosition(DEFAULT_MAP_POSITION);
     }
   }, [open, mode, initialValues]);
+
+  useEffect(() => {
+    if (!open || !form.industry || industryOptions.length === 0) return;
+    const matchedIndustry = industryOptions.find(
+      (option) => option.industryId === form.industry || option.name === form.industry
+    );
+    if (matchedIndustry && matchedIndustry.industryId !== form.industry) {
+      setForm((prev) => ({ ...prev, industry: matchedIndustry.industryId }));
+    }
+  }, [open, form.industry, industryOptions]);
 
   useEffect(() => {
     if (!open) return;
@@ -356,15 +366,20 @@ export default function CreateJobDialog({
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography sx={sectionLabelSx}><span style={{ color: '#ef4444' }}>*</span> Ngành nghề</Typography>
             <Autocomplete
-              options={INDUSTRIES}
-              value={form.industry || null}
+              options={industryOptions}
+              getOptionLabel={(option) => option?.name || ''}
+              isOptionEqualToValue={(option, value) => option?.industryId === value?.industryId}
+              value={industryOptions.find((option) =>
+                option.industryId === form.industry || option.name === form.industry
+              ) || null}
               autoHighlight
               disableClearable
               popupIcon={<ExpandMoreIcon />}
               onChange={(_, newValue) => {
-                setForm((prev) => ({ ...prev, industry: newValue || '' }));
+                setForm((prev) => ({ ...prev, industry: newValue?.industryId || '' }));
                 onClearError?.('industry');
               }}
+              noOptionsText="KhÃ´ng cÃ³ dá»¯ liá»‡u ngÃ nh nghá»"
               sx={autocompleteSx}
               slotProps={autocompleteSlotProps}
               renderInput={(params) => (
@@ -831,7 +846,7 @@ export default function CreateJobDialog({
           <Typography sx={sectionLabelSx}>Danh mục Nghề liên quan</Typography>
           <Autocomplete
             multiple
-            options={INDUSTRIES}
+            options={industryOptions.map((option) => option.name)}
             value={form.relatedCategories}
             autoHighlight
             onChange={(_, newValue) => {
