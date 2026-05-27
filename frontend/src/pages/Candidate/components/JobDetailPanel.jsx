@@ -1,5 +1,6 @@
 import React from 'react';
 import { isHotJob } from '../utils/jobBadges';
+import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
 export default function JobDetailPanel({ job }) {
   if (!job) {
@@ -16,6 +17,7 @@ export default function JobDetailPanel({ job }) {
   const benefits = splitToList(job.benefitsDetail || job.benefit || job.benefitTags);
   const description = splitToList(job.description);
   const showHotBadge = isHotJob(job);
+  const urgentBadge = getMarketingPackageBadge(job?.marketingPackageType);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -38,6 +40,11 @@ export default function JobDetailPanel({ job }) {
               {showHotBadge && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">
                   🔥 HOT
+                </span>
+              )}
+              {urgentBadge && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${urgentBadge.tailwindClass}`}>
+                  ⚡ {urgentBadge.label}
                 </span>
               )}
             </div>

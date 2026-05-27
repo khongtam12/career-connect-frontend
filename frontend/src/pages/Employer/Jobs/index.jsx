@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
 import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
 import JobTable from '../../../components/employer/jobs/JobTable';
@@ -98,6 +99,9 @@ function mapJobFromApi(job) {
     workSchedule: job.workSchedule || '',
     relatedCategories: job.relatedCategories || [],
     skills: job.skills || [],
+    province: job.province || '',
+    ward: job.ward || '',
+    addressDetail: job.addressDetail || '',
   };
 }
 
@@ -291,6 +295,21 @@ export default function JobManagement() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const parseLocationParts = (location) => {
+    const parts = String(location || '')
+      .split(',')
+      .map((val) => val.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return { province: '', ward: '', addressDetail: '' };
+    if (parts.length === 1) return { province: parts[0], ward: '', addressDetail: '' };
+    if (parts.length === 2) return { province: parts[1], ward: parts[0], addressDetail: '' };
+    return {
+      province: parts[parts.length - 1],
+      ward: parts[parts.length - 2],
+      addressDetail: parts.slice(0, -2).join(', '),
+    };
+  };
+
 
   // ── Handlers ──
   const handleRefresh = () => {
@@ -320,7 +339,10 @@ export default function JobManagement() {
       const payload = {
         title: formData.title,
         industry: formData.industry,
-        address: formData.address,
+        address: null,
+        province: formData.address,
+        ward: formData.ward,
+        addressDetail: formData.addressDetail,
         jobType: jobTypeValue(formData.jobType),
         experience: formData.experience,
         salaryMin: formData.salaryNegotiable ? 0 : parseFloat(String(formData.salaryMin).replace(/,/g, '')) || 0,
@@ -373,7 +395,10 @@ export default function JobManagement() {
       const payload = {
         title: formData.title,
         industry: formData.industry,
-        address: formData.address,
+        address: null,
+        province: formData.address,
+        ward: formData.ward,
+        addressDetail: formData.addressDetail,
         jobType: jobTypeValue(formData.jobType),
         experience: formData.experience,
         salaryMin: formData.salaryNegotiable ? 0 : parseFloat(String(formData.salaryMin).replace(/,/g, '')) || 0,
@@ -550,11 +575,15 @@ export default function JobManagement() {
     }
   };
 
+
   const editInitialValues = useMemo(() => {
     if (dialogMode !== 'edit' || !editingJob) return undefined;
+    const fallbackLocation = parseLocationParts(editingJob.location);
     return {
       title: editingJob.title || '',
-      address: editingJob.location || '',
+      address: editingJob.province || fallbackLocation.province || '',
+      ward: editingJob.ward || fallbackLocation.ward || '',
+      addressDetail: editingJob.addressDetail || fallbackLocation.addressDetail || '',
       jobType: jobTypeLabel(editingJob.jobType) || editingJob.type || '',
       salaryMin: editingJob.salaryMin ?? '',
       salaryMax: editingJob.salaryMax ?? '',

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -35,6 +35,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
 import { getPackage, updatePackage } from '../../../service/paymentService';
+import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
 const categoryOptions = [
   { value: 'JOB_POSTING', label: 'Tin đăng tuyển dụng' },
@@ -106,10 +107,10 @@ const ServiceManagement = () => {
     setSnack({ open: true, message, severity });
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
 
-  const fetchPackages = async (showToast) => {
+  const fetchPackages = useCallback(async (showToast) => {
     try {
       setError('');
-      const data = await getPackage();
+      const data = await getPackage({ includeInactive: true });
       setPackages(Array.isArray(data) ? data : []);
       if (showToast) {
         showSnack('Đã cập nhật danh sách gói dịch vụ');
@@ -119,7 +120,7 @@ const ServiceManagement = () => {
       setError('Không thể tải danh sách gói dịch vụ. Vui lòng thử lại.');
       setPackages([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -128,7 +129,7 @@ const ServiceManagement = () => {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [fetchPackages]);
 
   const stats = useMemo(() => {
     const total = packages.length;
@@ -476,13 +477,13 @@ const ServiceManagement = () => {
                     >
                       <TableCell sx={{ ...bodyCellSx, minWidth: 220 }}>
                         <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#1f2937' }}>{pkg.name}</Typography>
-                        {pkg.badge && (
+                        {(pkg.badge || getMarketingPackageBadge(pkg.type)?.label) && (
                           <Chip
-                            label={pkg.badge}
+                            label={pkg.badge || getMarketingPackageBadge(pkg.type)?.label}
                             size="small"
                             sx={{
                               mt: 0.5,
-                              bgcolor: pkg.badgeColor || '#0ea5e9',
+                              bgcolor: pkg.badgeColor || getMarketingPackageBadge(pkg.type)?.borderColor || '#0ea5e9',
                               color: '#fff',
                               fontWeight: 500,
                               borderRadius: '10px',
@@ -681,7 +682,7 @@ const ServiceManagement = () => {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <TextField
                 label="Badge"
-                value={formValues.badge || ''}
+                value={formValues.badge || getMarketingPackageBadge(formValues.type)?.label || ''}
                 onChange={handleChange('badge')}
                 fullWidth
               />

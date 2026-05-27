@@ -1,5 +1,10 @@
 import apiClient from './apiClient';
 
+const jobRequestConfig = (overrides = {}) => ({
+  serviceName: 'job-service',
+  ...overrides,
+});
+
 export const createJob = async (payload) => {
   const res = await apiClient.post('/api/v1/job/employer/create', payload);
   return res.data;
@@ -50,8 +55,20 @@ export const removeMarketingPackage = async (jobId) => {
   return res.data;
 };
 
-export const getJobById = async (jobId) => {
-  const res = await apiClient.get(`/api/v1/job/${jobId}`);
+export const applyCompanyMarketingPackage = async (payload) => {
+  const res = await apiClient.post('/api/v1/job/employer/marketing/company', payload);
+  return res.data;
+};
+
+export const removeCompanyMarketingPackage = async (assignmentId) => {
+  const res = await apiClient.delete('/api/v1/job/employer/marketing/shared', {
+    params: { assignmentId },
+  });
+  return res.data;
+};
+
+export const getJobById = async (jobId, requestConfig = {}) => {
+  const res = await apiClient.get(`/api/v1/job/${jobId}`, jobRequestConfig(requestConfig));
   return res.data;
 };
 
@@ -68,6 +85,8 @@ export const searchJobs = async ({
   industryId,
   fieldId,
   jobType,
+  marketingPackageCategory,
+  marketingPackageType,
   status,
   experienceMin,
   experienceMax,
@@ -77,14 +96,17 @@ export const searchJobs = async ({
   size = 9,
   sortBy = 'createdAt',
   sortDir = 'desc',
-} = {}) => {
+} = {}, requestConfig = {}) => {
   const response = await apiClient.get('/api/v1/job/search', {
+    ...jobRequestConfig(requestConfig),
     params: {
       keyword,
       location,
       industryId,
       fieldId,
       jobType,
+      marketingPackageCategory,
+      marketingPackageType,
       status,
       experienceMin,
       experienceMax,
@@ -99,13 +121,13 @@ export const searchJobs = async ({
   return response.data;
 };
 
-export const getJobFilters = async () => {
-  const response = await apiClient.get('/api/v1/job/filters');
+export const getJobFilters = async (requestConfig = {}) => {
+  const response = await apiClient.get('/api/v1/job/filters', jobRequestConfig(requestConfig));
   return response.data;
 };
 
-export const getJobStats = async () => {
-  const response = await apiClient.get('/api/v1/job/stats');
+export const getJobStats = async (requestConfig = {}) => {
+  const response = await apiClient.get('/api/v1/job/stats', jobRequestConfig(requestConfig));
   return response.data;
 };
 

@@ -1,7 +1,9 @@
 'use client'
 
+import { Phone, Mail, Calendar, MapPin, Link as LinkIcon } from 'lucide-react'
+
 const TEMPLATE_COLORS = {
-  1: { primary: '#0c7fda', secondary: '#ebf8ff', accent: '#2b6cb0' },
+  1: { primary: '#0c7fda', secondary: '#f0f7ff', accent: '#1d4ed8' },
   2: { primary: '#7c3aed', secondary: '#f5f3ff', accent: '#5b21b6' },
   3: { primary: '#374151', secondary: '#f9fafb', accent: '#111827' },
   4: { primary: '#4c1d95', secondary: '#f5f3ff', accent: '#2e1065' },
@@ -21,173 +23,225 @@ export default function CVPreview({ data, templateId }) {
   const colors = TEMPLATE_COLORS[templateId] || TEMPLATE_COLORS[1]
   const p = data.personal || {}
 
+  const styleBlock = (
+    <style dangerouslySetInnerHTML={{ __html: `
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+      
+      .cv-preview-font-wrapper {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+      }
+      
+      .cv-preview-font-wrapper h1, 
+      .cv-preview-font-wrapper h2, 
+      .cv-preview-font-wrapper h3 {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+      }
+    `}} />
+  )
+
   const sectionTitle = (title) => (
-    <div style={{ marginBottom: 8 }}>
+    <div style={{ marginBottom: 14 }}>
       <h2 style={{
-        fontSize: 11, fontWeight: 800, color: colors.primary,
-        textTransform: 'uppercase', letterSpacing: '1px',
-        borderBottom: `2px solid ${colors.primary}`,
-        paddingBottom: 4, marginBottom: 6
+        fontSize: 11.5, fontWeight: 800, color: colors.primary,
+        textTransform: 'uppercase', letterSpacing: '1.2px',
+        borderBottom: `2.5px solid ${colors.primary}`,
+        paddingBottom: 6, margin: 0
       }}>{title}</h2>
     </div>
   )
 
-  // Template 1 & 7: Two-column layout
+  // ==========================================
+  // TEMPLATE 1 & 7: Two-column layout (Coordinated Grid)
+  // ==========================================
   if ([1, 7].includes(templateId)) {
     return (
-      <div id="cv-print-area" style={{
+      <div className="cv-preview-font-wrapper" style={{
         background: 'white', width: '100%', minHeight: '297mm',
-        fontSize: 11, fontFamily: "'Segoe UI', Arial, sans-serif",
-        boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4,
-        overflow: 'hidden'
+        fontSize: 11, color: '#2d3748', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', boxSizing: 'border-box'
       }}>
+        {styleBlock}
+        
         {/* Header */}
         <div style={{
           background: `linear-gradient(135deg, ${colors.primary}, ${colors.accent})`,
-          padding: '24px 28px', color: 'white', display: 'flex', gap: 24, alignItems: 'center'
+          padding: '32px 36px', color: 'white', display: 'flex', gap: 28, alignItems: 'center',
+          position: 'relative'
         }}>
           {p.avatar && (
-            <div style={{ width: 90, height: 90, borderRadius: '50%', border: '4px solid rgba(255,255,255,0.3)', overflow: 'hidden', flexShrink: 0, background: 'white' }}>
+            <div style={{ 
+              width: 96, height: 96, borderRadius: '50%', 
+              border: '4px solid rgba(255,255,255,0.35)', 
+              boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+              overflow: 'hidden', flexShrink: 0, background: 'white' 
+            }}>
               <img src={p.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.3px' }}>
+            <h1 style={{ fontSize: 25, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
               {p.fullName || 'Họ và tên của bạn'}
             </h1>
-            <p style={{ fontSize: 12, margin: '4px 0 10px', opacity: 0.9, fontWeight: 500 }}>
+            <p style={{ fontSize: 12.5, margin: '6px 0 14px', opacity: 0.95, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.5px' }}>
               {p.jobTitle || 'Vị trí / Chức danh'}
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: 10.5, opacity: 0.9 }}>
-              {p.phone && <span>📱 {p.phone}</span>}
-              {p.email && <span>✉ {p.email}</span>}
-              {p.dob && <span>🎂 {p.dob}</span>}
-              {p.address && <span>📍 {p.address}</span>}
-              {p.linkedin && <span>🔗 {p.linkedin}</span>}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px', fontSize: 10.5, opacity: 0.9 }}>
+              {p.phone && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Phone size={12} strokeWidth={2} /> {p.phone}</span>}
+              {p.email && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Mail size={12} strokeWidth={2} /> {p.email}</span>}
+              {p.dob && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Calendar size={12} strokeWidth={2} /> {p.dob}</span>}
+              {p.address && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><MapPin size={12} strokeWidth={2} /> {p.address}</span>}
+              {p.linkedin && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><LinkIcon size={12} strokeWidth={2} /> {p.linkedin}</span>}
             </div>
           </div>
         </div>
 
         {/* Body: 2 column */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: 0, minHeight: '230mm' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.7fr', gap: 0, flex: 1 }}>
           {/* Left col */}
-          <div style={{ background: colors.secondary, padding: '20px 16px', borderRight: `1px solid ${colors.primary}20` }}>
+          <div style={{ background: colors.secondary, padding: '28px 24px', borderRight: `1px solid ${colors.primary}12`, display: 'flex', flexDirection: 'column', gap: 24 }}>
             {p.summary && (
-              <div style={{ marginBottom: 16 }}>
+              <div>
                 {sectionTitle('Mục tiêu')}
-                <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#4a5568' }}>{p.summary}</p>
+                <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#4a5568', margin: 0 }}>{p.summary}</p>
               </div>
             )}
 
             {(data.skills || []).length > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div>
                 {sectionTitle('Kỹ năng')}
-                {(data.skills || []).map(skill => (
-                  <div key={skill.id} style={{ marginBottom: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <span style={{ fontSize: 10.5, fontWeight: 600, color: '#2d3748' }}>{skill.name}</span>
-                      <span style={{ fontSize: 10, color: colors.primary, fontWeight: 700 }}>{skill.level}%</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {(data.skills || []).map(skill => (
+                    <div key={skill.id}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 600, color: '#2d3748' }}>{skill.name}</span>
+                        <span style={{ fontSize: 10, color: colors.primary, fontWeight: 700 }}>{skill.level}%</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 10, height: 6, overflow: 'hidden' }}>
+                        <div style={{
+                          width: `${skill.level}%`, background: `linear-gradient(90deg, ${colors.primary}, ${colors.accent})`,
+                          height: '100%', borderRadius: 10,
+                          transition: 'width 0.4s ease'
+                        }} />
+                      </div>
                     </div>
-                    <div style={{ background: '#e2e8f0', borderRadius: 4, height: 5 }}>
-                      <div style={{
-                        width: `${skill.level}%`, background: colors.primary,
-                        height: '100%', borderRadius: 4,
-                        transition: 'width 0.4s ease'
-                      }} />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
             {(data.education || []).length > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div>
                 {sectionTitle('Học vấn')}
-                {(data.education || []).map(edu => (
-                  <div key={edu.id} style={{ marginBottom: 8 }}>
-                    <div style={{ fontWeight: 700, fontSize: 10.5, color: '#2d3748' }}>{edu.school}</div>
-                    <div style={{ fontSize: 10, color: colors.primary, fontWeight: 600 }}>{edu.major}</div>
-                    <div style={{ fontSize: 9.5, color: '#718096' }}>
-                      {fmt(edu.start)} – {fmt(edu.end)}
-                      {edu.desc && ` | ${edu.desc}`}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {(data.education || []).map(edu => (
+                    <div key={edu.id}>
+                      <div style={{ fontWeight: 700, fontSize: 11, color: '#1a202c' }}>{edu.school}</div>
+                      <div style={{ fontSize: 10, color: colors.primary, fontWeight: 600, marginTop: 1 }}>{edu.major}</div>
+                      <div style={{ fontSize: 9.5, color: '#718096', marginTop: 2, fontWeight: 500 }}>
+                        {fmt(edu.start)} – {fmt(edu.end)}
+                      </div>
+                      {edu.desc && <div style={{ fontSize: 9.5, color: '#4a5568', marginTop: 4, fontStyle: 'italic', lineHeight: 1.5 }}>{edu.desc}</div>}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
             {(data.certificates || []).length > 0 && (
               <div>
                 {sectionTitle('Chứng chỉ')}
-                {(data.certificates || []).map(cert => (
-                  <div key={cert.id} style={{ marginBottom: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 700, fontSize: 10.5 }}>{cert.name}</div>
-                      {cert.date && <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(cert.date)}</div>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {(data.certificates || []).map(cert => (
+                    <div key={cert.id}>
+                      <div style={{ fontWeight: 700, fontSize: 11, color: '#1a202c' }}>{cert.name}</div>
+                      <div style={{ fontSize: 9.5, color: colors.accent, fontWeight: 600, marginTop: 1 }}>{cert.org}</div>
+                      {cert.date && <div style={{ fontSize: 9, color: '#718096', marginTop: 2 }}>Tháng {fmt(cert.date)}</div>}
                     </div>
-                    <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.org}</div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           {/* Right col */}
-          <div style={{ padding: '20px 20px' }}>
+          <div style={{ padding: '28px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
             {(data.experience || []).length > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div>
                 {sectionTitle('Kinh nghiệm làm việc')}
-                {(data.experience || []).map(exp => (
-                  <div key={exp.id} style={{ marginBottom: 12, paddingLeft: 8, borderLeft: `3px solid ${colors.primary}40` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{exp.role}</div>
-                        <div style={{ fontSize: 10.5, color: colors.primary, fontWeight: 600 }}>{exp.company}</div>
+                <div style={{ position: 'relative', borderLeft: `2px solid ${colors.primary}20`, paddingLeft: 18, marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {(data.experience || []).map(exp => (
+                    <div key={exp.id} style={{ position: 'relative' }}>
+                      {/* Timeline Node */}
+                      <div style={{
+                        position: 'absolute', left: -23, top: 4, width: 8, height: 8,
+                        borderRadius: '50%', background: colors.primary, border: '2px solid white',
+                        boxShadow: `0 0 0 2px ${colors.primary}30`
+                      }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: 12, color: '#1a202c' }}>{exp.role}</div>
+                          <div style={{ fontSize: 11, color: colors.primary, fontWeight: 600, marginTop: 2 }}>{exp.company}</div>
+                        </div>
+                        <span style={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
+                          {fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}
+                        </span>
                       </div>
-                      <span style={{ fontSize: 9.5, color: '#718096', whiteSpace: 'nowrap', marginLeft: 8 }}>
-                        {fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}
-                      </span>
+                      {exp.desc && (
+                        <p style={{ fontSize: 10, color: '#4b5563', marginTop: 6, lineHeight: 1.6, whiteSpace: 'pre-line', margin: '6px 0 0 0' }}>
+                          {exp.desc}
+                        </p>
+                      )}
                     </div>
-                    {exp.desc && (
-                      <p style={{ fontSize: 10, color: '#4a5568', marginTop: 4, lineHeight: 1.5 }}>
-                        {exp.desc}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
             {(data.projects || []).length > 0 && (
               <div>
                 {sectionTitle('Dự án cá nhân')}
-                {(data.projects || []).map(proj => (
-                  <div key={proj.id} style={{ marginBottom: 10, paddingLeft: 8, borderLeft: `3px solid ${colors.primary}40` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{proj.name}</div>
-                      {proj.role && <span style={{ fontSize: 9.5, color: colors.primary, fontWeight: 600 }}>{proj.role}</span>}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {(proj.start || proj.end) && (
-                        <div style={{ fontSize: 9, color: '#718096' }}>{fmt(proj.start)} – {fmt(proj.end)}</div>
-                      )}
-                      {proj.link && (
-                        <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: colors.primary, textDecoration: 'none' }}>{proj.link}</a>
-                      )}
-                    </div>
-                    {proj.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3, lineHeight: 1.5 }}>{proj.desc}</p>}
-                    {proj.technologies && (
-                      <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                        {proj.technologies.split(',').map((t, i) => (
-                          <span key={i} style={{
-                            background: colors.secondary, color: colors.primary,
-                            fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
-                          }}>{t.trim()}</span>
-                        ))}
+                <div style={{ position: 'relative', borderLeft: `2px solid ${colors.primary}20`, paddingLeft: 18, marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {(data.projects || []).map(proj => (
+                    <div key={proj.id} style={{ position: 'relative' }}>
+                      {/* Timeline Node */}
+                      <div style={{
+                        position: 'absolute', left: -23, top: 4, width: 8, height: 8,
+                        borderRadius: '50%', background: colors.primary, border: '2px solid white',
+                        boxShadow: `0 0 0 2px ${colors.primary}30`
+                      }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: 12, color: '#1a202c' }}>{proj.name}</div>
+                          {proj.role && <div style={{ fontSize: 10.5, color: colors.primary, fontWeight: 600, marginTop: 2 }}>{proj.role}</div>}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: 9.5, color: '#64748b', fontWeight: 600 }}>
+                          {(proj.start || proj.end) && (
+                            <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 4, marginBottom: 4 }}>
+                              {fmt(proj.start)} – {fmt(proj.end)}
+                            </span>
+                          )}
+                          {proj.link && (
+                            <a href={proj.link} target="_blank" rel="noreferrer" style={{ color: colors.primary, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                              <LinkIcon size={9} /> {proj.link}
+                            </a>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {proj.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 6, lineHeight: 1.6, whiteSpace: 'pre-line', margin: '6px 0 0 0' }}>{proj.desc}</p>}
+                      {proj.technologies && (
+                        <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {proj.technologies.split(',').map((t, i) => (
+                            <span key={i} style={{
+                              background: colors.secondary, color: colors.primary,
+                              fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                              border: `1px solid ${colors.primary}15`
+                            }}>{t.trim()}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -196,115 +250,154 @@ export default function CVPreview({ data, templateId }) {
     )
   }
 
-  // Template 3, 4, 5: Dark header single column
+  // ==========================================
+  // TEMPLATE 3, 4, 5: Dark header (Single-column Grid Layout)
+  // ==========================================
   if ([3, 4, 5].includes(templateId)) {
     return (
-      <div id="cv-print-area" style={{
+      <div className="cv-preview-font-wrapper" style={{
         background: 'white', width: '100%', minHeight: '297mm',
-        fontSize: 11, fontFamily: "'Segoe UI', Arial, sans-serif",
-        boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden'
+        fontSize: 11, color: '#2d3748', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', boxSizing: 'border-box'
       }}>
-        <div style={{ background: colors.primary, padding: '28px 32px', color: 'white', display: 'flex', gap: 24, alignItems: 'center' }}>
+        {styleBlock}
+        
+        <div style={{ 
+          background: `linear-gradient(135deg, ${colors.primary}, ${colors.accent})`, 
+          padding: '36px 40px', color: 'white', display: 'flex', gap: 28, alignItems: 'center' 
+        }}>
           {p.avatar && (
-            <div style={{ width: 90, height: 90, borderRadius: '5px', border: '3px solid rgba(255,255,255,0.2)', overflow: 'hidden', flexShrink: 0, background: 'white' }}>
+            <div style={{ 
+              width: 96, height: 96, borderRadius: '8px', 
+              border: '3px solid rgba(255,255,255,0.3)', 
+              boxShadow: '0 6px 14px rgba(0,0,0,0.12)',
+              overflow: 'hidden', flexShrink: 0, background: 'white' 
+            }}>
               <img src={p.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>{p.fullName || 'Họ và tên'}</h1>
-            <p style={{ margin: '4px 0 12px', fontSize: 13, opacity: 0.8 }}>{p.jobTitle || 'Chức danh'}</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 20px', fontSize: 10.5, opacity: 0.85 }}>
-              {p.phone && <span>📱 {p.phone}</span>}
-              {p.email && <span>✉ {p.email}</span>}
-              {p.dob && <span>🎂 {p.dob}</span>}
-              {p.address && <span>📍 {p.address}</span>}
+            <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>{p.fullName || 'Họ và tên'}</h1>
+            <p style={{ margin: '6px 0 14px', fontSize: 13, fontWeight: 600, opacity: 0.9, textTransform: 'uppercase', letterSpacing: '1px' }}>{p.jobTitle || 'Chức danh'}</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px', fontSize: 10.5, opacity: 0.9 }}>
+              {p.phone && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Phone size={12} strokeWidth={2} /> {p.phone}</span>}
+              {p.email && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Mail size={12} strokeWidth={2} /> {p.email}</span>}
+              {p.dob && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Calendar size={12} strokeWidth={2} /> {p.dob}</span>}
+              {p.address && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><MapPin size={12} strokeWidth={2} /> {p.address}</span>}
+              {p.linkedin && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><LinkIcon size={12} strokeWidth={2} /> {p.linkedin}</span>}
             </div>
           </div>
         </div>
-        <div style={{ padding: '20px 32px' }}>
+
+        <div style={{ padding: '32px 40px', flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
           {p.summary && (
-            <div style={{ marginBottom: 16 }}>
+            <div>
               {sectionTitle('Mục tiêu nghề nghiệp')}
-              <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#4a5568' }}>{p.summary}</p>
+              <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#4a5568', margin: 0 }}>{p.summary}</p>
             </div>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-            <div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '0 32px', flex: 1 }}>
+            {/* Column 1: Experience & Projects */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {(data.experience || []).length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  {sectionTitle('Kinh nghiệm')}
-                  {(data.experience || []).map(exp => (
-                    <div key={exp.id} style={{ marginBottom: 10 }}>
-                      <div style={{ fontWeight: 700, fontSize: 11 }}>{exp.role}</div>
-                      <div style={{ color: colors.primary, fontSize: 10.5, fontWeight: 600 }}>{exp.company}</div>
-                      <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}</div>
-                      {exp.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{exp.desc}</p>}
-                    </div>
-                  ))}
+                <div>
+                  {sectionTitle('Kinh nghiệm làm việc')}
+                  <div style={{ position: 'relative', borderLeft: `2px solid ${colors.primary}20`, paddingLeft: 16, marginLeft: 6, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {(data.experience || []).map(exp => (
+                      <div key={exp.id} style={{ position: 'relative' }}>
+                        <div style={{
+                          position: 'absolute', left: -21, top: 4, width: 8, height: 8,
+                          borderRadius: '50%', background: colors.primary, border: '2px solid white',
+                          boxShadow: `0 0 0 2px ${colors.primary}30`
+                        }} />
+                        <div style={{ fontWeight: 800, fontSize: 11.5, color: '#1a202c' }}>{exp.role}</div>
+                        <div style={{ color: colors.primary, fontSize: 10.5, fontWeight: 600, marginTop: 1 }}>{exp.company}</div>
+                        <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600, marginTop: 2 }}>{fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}</div>
+                        {exp.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4, lineHeight: 1.5, margin: '4px 0 0 0' }}>{exp.desc}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
               {(data.projects || []).length > 0 && (
                 <div>
-                  {sectionTitle('Dự án')}
-                  {(data.projects || []).map(proj => (
-                    <div key={proj.id} style={{ marginBottom: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 11 }}>{proj.name} {proj.role && <span style={{ color: colors.primary }}> · {proj.role}</span>}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {(proj.start || proj.end) && (
-                        <div style={{ fontSize: 9, color: '#718096' }}>{fmt(proj.start)} – {fmt(proj.end)}</div>
-                      )}
-                      {proj.link && (
-                        <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: colors.primary, textDecoration: 'none' }}>{proj.link}</a>
-                      )}
-                    </div>
-                      {proj.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{proj.desc}</p>}
-                      {proj.technologies && <p style={{ fontSize: 10, color: '#718096' }}>{proj.technologies}</p>}
-                    </div>
-                  ))}
+                  {sectionTitle('Dự án cá nhân')}
+                  <div style={{ position: 'relative', borderLeft: `2px solid ${colors.primary}20`, paddingLeft: 16, marginLeft: 6, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {(data.projects || []).map(proj => (
+                      <div key={proj.id} style={{ position: 'relative' }}>
+                        <div style={{
+                          position: 'absolute', left: -21, top: 4, width: 8, height: 8,
+                          borderRadius: '50%', background: colors.primary, border: '2px solid white',
+                          boxShadow: `0 0 0 2px ${colors.primary}30`
+                        }} />
+                        <div style={{ fontWeight: 800, fontSize: 11.5, color: '#1a202c' }}>{proj.name}</div>
+                        {proj.role && <div style={{ color: colors.primary, fontSize: 10, fontWeight: 600, marginTop: 1 }}>{proj.role}</div>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2, fontSize: 9 }}>
+                          <span style={{ color: '#64748b', fontWeight: 600 }}>{fmt(proj.start)} – {fmt(proj.end)}</span>
+                          {proj.link && (
+                            <a href={proj.link} target="_blank" rel="noreferrer" style={{ color: colors.primary, textDecoration: 'none', fontWeight: 600 }}>{proj.link}</a>
+                          )}
+                        </div>
+                        {proj.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4, lineHeight: 1.5, margin: '4px 0 0 0' }}>{proj.desc}</p>}
+                        {proj.technologies && <p style={{ fontSize: 9, color: '#64748b', marginTop: 4, margin: '4px 0 0 0', fontWeight: 500 }}>Tech: {proj.technologies}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-            <div>
+
+            {/* Column 2: Skills, Education, Certs */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {(data.skills || []).length > 0 && (
-                <div style={{ marginBottom: 16 }}>
+                <div>
                   {sectionTitle('Kỹ năng')}
-                  {(data.skills || []).map(skill => (
-                    <div key={skill.id} style={{ marginBottom: 6 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 600 }}>{skill.name}</span>
-                        <span style={{ fontSize: 10, color: colors.primary }}>{skill.level}%</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(data.skills || []).map(skill => (
+                      <div key={skill.id}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 10.5, fontWeight: 600, color: '#2d3748' }}>{skill.name}</span>
+                          <span style={{ fontSize: 10, color: colors.primary, fontWeight: 700 }}>{skill.level}%</span>
+                        </div>
+                        <div style={{ background: 'rgba(0,0,0,0.06)', borderRadius: 10, height: 6, overflow: 'hidden' }}>
+                          <div style={{ width: `${skill.level}%`, background: colors.primary, height: '100%', borderRadius: 10 }} />
+                        </div>
                       </div>
-                      <div style={{ background: '#e2e8f0', borderRadius: 4, height: 5 }}>
-                        <div style={{ width: `${skill.level}%`, background: colors.primary, height: '100%', borderRadius: 4 }} />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
+
               {(data.education || []).length > 0 && (
-                <div style={{ marginBottom: 16 }}>
+                <div>
                   {sectionTitle('Học vấn')}
-                  {(data.education || []).map(edu => (
-                    <div key={edu.id} style={{ marginBottom: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 10.5 }}>{edu.school}</div>
-                      <div style={{ fontSize: 10, color: colors.primary }}>{edu.major}</div>
-                      <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(edu.start)} – {fmt(edu.end)} {edu.desc && `| ${edu.desc}`}</div>
-                    </div>
-                  ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {(data.education || []).map(edu => (
+                      <div key={edu.id}>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: '#1a202c' }}>{edu.school}</div>
+                        <div style={{ fontSize: 10, color: colors.primary, fontWeight: 600, marginTop: 1 }}>{edu.major}</div>
+                        <div style={{ fontSize: 9, color: '#64748b', marginTop: 2, fontWeight: 600 }}>{fmt(edu.start)} – {fmt(edu.end)}</div>
+                        {edu.desc && <div style={{ fontSize: 9.5, color: '#4b5563', marginTop: 4, lineHeight: 1.4 }}>{edu.desc}</div>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
               {(data.certificates || []).length > 0 && (
                 <div>
                   {sectionTitle('Chứng chỉ')}
-                  {(data.certificates || []).map(cert => (
-                  <div key={cert.id} style={{ marginBottom: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 700, fontSize: 10.5 }}>{cert.name}</div>
-                      {cert.date && <div style={{ fontSize: 9.5, color: '#718096' }}>{fmt(cert.date)}</div>}
-                    </div>
-                    <div style={{ fontSize: 9.5, color: '#718096' }}>{cert.org}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(data.certificates || []).map(cert => (
+                      <div key={cert.id}>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: '#1a202c' }}>{cert.name}</div>
+                        <div style={{ fontSize: 9.5, color: colors.accent, fontWeight: 600, marginTop: 1 }}>{cert.org}</div>
+                        {cert.date && <div style={{ fontSize: 9, color: '#718096', marginTop: 2 }}>{fmt(cert.date)}</div>}
+                      </div>
+                    ))}
                   </div>
-                ))}
                 </div>
               )}
             </div>
@@ -314,118 +407,157 @@ export default function CVPreview({ data, templateId }) {
     )
   }
 
-  // Templates 2, 6, 8: Accent side bar
+  // ==========================================
+  // TEMPLATE 2, 6, 8: Elegant Sidebar
+  // ==========================================
   return (
-    <div id="cv-preview-root" className="cv-preview-container" style={{
-      width: '210mm',
-      minHeight: '297mm',
-      fontSize: 11, fontFamily: "'Segoe UI', Arial, sans-serif",
-      boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden',
-      display: 'grid', gridTemplateColumns: '35% 1fr'
+    <div className="cv-preview-font-wrapper cv-preview-container" style={{
+      width: '100%', minHeight: '297mm',
+      fontSize: 11, color: '#2d3748', overflow: 'hidden',
+      display: 'grid', gridTemplateColumns: '32% 68%', flex: 1, boxSizing: 'border-box'
     }}>
+      {styleBlock}
+      
       {/* Sidebar */}
-      <div style={{ background: `linear-gradient(180deg, ${colors.primary}, ${colors.accent})`, padding: '28px 16px', color: 'white' }}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+      <div style={{ 
+        background: `linear-gradient(180deg, ${colors.primary}, ${colors.accent})`, 
+        padding: '32px 20px', color: 'white', display: 'flex', flexDirection: 'column', gap: 24 
+      }}>
+        <div style={{ textAlign: 'center' }}>
           {p.avatar ? (
-            <div style={{ width: 84, height: 84, borderRadius: '50%', background: 'white', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(255,255,255,0.5)', overflow: 'hidden' }}>
+            <div style={{ 
+              width: 96, height: 96, borderRadius: '50%', background: 'white', 
+              margin: '0 auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              border: '4px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              overflow: 'hidden' 
+            }}>
               <img src={p.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           ) : (
-            <div style={{ width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, border: '3px solid rgba(255,255,255,0.5)' }}>👤</div>
+            <div style={{ 
+              width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', 
+              margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              fontSize: 32, border: '4px solid rgba(255,255,255,0.3)' 
+            }}>👤</div>
           )}
-          <h1 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 3px' }}>{p.fullName || 'Họ và tên'}</h1>
-          <p style={{ fontSize: 10, opacity: 0.85, margin: 0 }}>{p.jobTitle || 'Chức danh'}</p>
+          <h1 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.3px', textTransform: 'capitalize' }}>{p.fullName || 'Họ và tên'}</h1>
+          <p style={{ fontSize: 10.5, opacity: 0.9, margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{p.jobTitle || 'Chức danh'}</p>
         </div>
-        <div style={{ borderTop: 'rgba(255,255,255,0.3) 1px solid', paddingTop: 12, marginBottom: 14, fontSize: 9.5 }}>
-          {p.phone && <div style={{ marginBottom: 4 }}>📱 {p.phone}</div>}
-          {p.email && <div style={{ marginBottom: 4 }}>✉ {p.email}</div>}
-          {p.dob && <div style={{ marginBottom: 4 }}>🎂 {p.dob}</div>}
-          {p.address && <div style={{ marginBottom: 4 }}>📍 {p.address}</div>}
+        
+        <div style={{ borderTop: 'rgba(255,255,255,0.2) 1px solid', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 10 }}>
+          {p.phone && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Phone size={12} strokeWidth={2.5} /> {p.phone}</div>}
+          {p.email && <div style={{ display: 'flex', alignItems: 'center', gap: 8, wordBreak: 'break-all' }}><Mail size={12} strokeWidth={2.5} /> {p.email}</div>}
+          {p.dob && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={12} strokeWidth={2.5} /> {p.dob}</div>}
+          {p.address && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><MapPin size={12} strokeWidth={2.5} /> {p.address}</div>}
+          {p.linkedin && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><LinkIcon size={12} strokeWidth={2.5} /> {p.linkedin}</div>}
         </div>
+        
         {(data.skills || []).length > 0 && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, opacity: 0.7 }}>Kỹ năng</div>
-            {(data.skills || []).map(skill => (
-              <div key={skill.id} style={{ marginBottom: 6 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2, fontSize: 10 }}>
-                  <span>{skill.name}</span><span>{skill.level}%</span>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, opacity: 0.85 }}>Kỹ năng</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {(data.skills || []).map(skill => (
+                <div key={skill.id}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 10, fontWeight: 500 }}>
+                    <span>{skill.name}</span><span>{skill.level}%</span>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 10, height: 5, overflow: 'hidden' }}>
+                    <div style={{ width: `${skill.level}%`, background: 'white', height: '100%', borderRadius: 10 }} />
+                  </div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 4, height: 4 }}>
-                  <div style={{ width: `${skill.level}%`, background: 'white', height: '100%', borderRadius: 4 }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
+        
         {(data.education || []).length > 0 && (
           <div>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, opacity: 0.7 }}>Học vấn</div>
-            {(data.education || []).map(edu => (
-              <div key={edu.id} style={{ marginBottom: 8, fontSize: 9.5 }}>
-                <div style={{ fontWeight: 700 }}>{edu.school}</div>
-                <div style={{ opacity: 0.8 }}>{edu.major}</div>
-                <div style={{ opacity: 0.6 }}>{fmt(edu.start)} – {fmt(edu.end)}</div>
-                {edu.desc && <div style={{ opacity: 0.6, fontSize: 8.5, marginTop: 2 }}>{edu.desc}</div>}
-              </div>
-            ))}
+            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, opacity: 0.85 }}>Học vấn</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(data.education || []).map(edu => (
+                <div key={edu.id} style={{ fontSize: 9.5 }}>
+                  <div style={{ fontWeight: 700 }}>{edu.school}</div>
+                  <div style={{ opacity: 0.9, marginTop: 1 }}>{edu.major}</div>
+                  <div style={{ opacity: 0.7, marginTop: 2, fontWeight: 500 }}>{fmt(edu.start)} – {fmt(edu.end)}</div>
+                  {edu.desc && <div style={{ opacity: 0.8, fontSize: 8.5, marginTop: 4, fontStyle: 'italic', lineHeight: 1.4 }}>{edu.desc}</div>}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
       {/* Main content */}
-      <div style={{ padding: '28px 20px' }}>
+      <div style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {p.summary && (
-          <div style={{ marginBottom: 16 }}>
+          <div>
             {sectionTitle('Mục tiêu nghề nghiệp')}
-            <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#4a5568' }}>{p.summary}</p>
+            <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#4a5568', margin: 0 }}>{p.summary}</p>
           </div>
         )}
+        
         {(data.experience || []).length > 0 && (
-          <div style={{ marginBottom: 16 }}>
+          <div>
             {sectionTitle('Kinh nghiệm làm việc')}
-            {(data.experience || []).map(exp => (
-              <div key={exp.id} style={{ marginBottom: 10, paddingLeft: 8, borderLeft: `3px solid ${colors.primary}50` }}>
-                <div style={{ fontWeight: 700, fontSize: 11, color: '#2d3748' }}>{exp.role}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: colors.primary, fontSize: 10.5, fontWeight: 600 }}>{exp.company}</span>
-                  <span style={{ fontSize: 9.5, color: '#718096' }}>{fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}</span>
+            <div style={{ position: 'relative', borderLeft: `2px solid ${colors.primary}20`, paddingLeft: 18, marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {(data.experience || []).map(exp => (
+                <div key={exp.id} style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute', left: -23, top: 4, width: 8, height: 8,
+                    borderRadius: '50%', background: colors.primary, border: '2px solid white',
+                    boxShadow: `0 0 0 2px ${colors.primary}30`
+                  }} />
+                  <div style={{ fontWeight: 800, fontSize: 11.5, color: '#1a202c' }}>{exp.role}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 1 }}>
+                    <span style={{ color: colors.primary, fontSize: 10.5, fontWeight: 600 }}>{exp.company}</span>
+                    <span style={{ fontSize: 9.5, color: '#64748b', fontWeight: 600 }}>{fmt(exp.start)} – {exp.currentlyWorking ? 'Hiện tại' : fmt(exp.end)}</span>
+                  </div>
+                  {exp.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4, lineHeight: 1.5, margin: '4px 0 0 0' }}>{exp.desc}</p>}
                 </div>
-                {exp.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 4 }}>{exp.desc}</p>}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
+        
         {(data.projects || []).length > 0 && (
-          <div style={{ marginBottom: 16 }}>
+          <div>
             {sectionTitle('Dự án cá nhân')}
-            {(data.projects || []).map(proj => (
-              <div key={proj.id} style={{ marginBottom: 10 }}>
-                <div style={{ fontWeight: 700, fontSize: 11 }}>{proj.name} {proj.role && <span style={{ color: colors.primary, fontWeight: 500 }}> · {proj.role}</span>}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  {(proj.start || proj.end) && (
-                    <div style={{ fontSize: 9, color: '#718096', opacity: 0.8 }}>{fmt(proj.start)} – {fmt(proj.end)}</div>
-                  )}
-                  {proj.link && (
-                    <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: colors.primary, textDecoration: 'none' }}>{proj.link}</a>
-                  )}
+            <div style={{ position: 'relative', borderLeft: `2px solid ${colors.primary}20`, paddingLeft: 18, marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {(data.projects || []).map(proj => (
+                <div key={proj.id} style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute', left: -23, top: 4, width: 8, height: 8,
+                    borderRadius: '50%', background: colors.primary, border: '2px solid white',
+                    boxShadow: `0 0 0 2px ${colors.primary}30`
+                  }} />
+                  <div style={{ fontWeight: 800, fontSize: 11.5, color: '#1a202c' }}>{proj.name} {proj.role && <span style={{ color: colors.primary, fontWeight: 600 }}> · {proj.role}</span>}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 1 }}>
+                    {(proj.start || proj.end) && (
+                      <span style={{ fontSize: 9.5, color: '#64748b', fontWeight: 600 }}>{fmt(proj.start)} – {fmt(proj.end)}</span>
+                    )}
+                    {proj.link && (
+                      <a href={proj.link} target="_blank" rel="noreferrer" style={{ fontSize: 9.5, color: colors.primary, textDecoration: 'none', fontWeight: 600 }}>{proj.link}</a>
+                    )}
+                  </div>
+                  {proj.desc && <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4, lineHeight: 1.5, margin: '4px 0 0 0' }}>{proj.desc}</p>}
+                  {proj.technologies && <p style={{ fontSize: 9, color: '#64748b', marginTop: 4, margin: '4px 0 0 0', fontWeight: 500 }}>Tech: {proj.technologies}</p>}
                 </div>
-                {proj.desc && <p style={{ fontSize: 10, color: '#4a5568', marginTop: 3 }}>{proj.desc}</p>}
-                {proj.technologies && <p style={{ fontSize: 9.5, color: '#718096', marginTop: 2 }}>Tech: {proj.technologies}</p>}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
+        
         {(data.certificates || []).length > 0 && (
           <div>
             {sectionTitle('Chứng chỉ')}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {(data.certificates || []).map(cert => (
                 <div key={cert.id} style={{
-                  background: colors.secondary, border: `1px solid ${colors.primary}30`,
-                  borderRadius: 6, padding: '5px 10px'
+                  background: colors.secondary, border: `1px solid ${colors.primary}15`,
+                  borderRadius: 6, padding: '6px 12px'
                 }}>
                   <div style={{ fontWeight: 700, fontSize: 10.5, color: colors.accent }}>{cert.name}</div>
-                  <div style={{ fontSize: 9.5, color: '#718096', opacity: 0.8 }}>{cert.org} {cert.date && `| ${fmt(cert.date)}`}</div>
+                  <div style={{ fontSize: 9.5, color: '#64748b', marginTop: 2, fontWeight: 500 }}>{cert.org} {cert.date && `| ${fmt(cert.date)}`}</div>
                 </div>
               ))}
             </div>

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import JobCard from './JobCard';
+import { formatProvinceLabel } from '../../../lib/utils';
 
 export default function QuickJobsSection({
   title,
@@ -13,11 +14,10 @@ export default function QuickJobsSection({
   onViewAll,
   backgroundClassName = 'bg-slate-50',
   accentClassName = 'text-emerald-600',
-  emptyText = 'Chua co viec lam phu hop',
+  emptyText = 'Chưa có việc làm phù hợp',
   loading = false,
 }) {
   const locationOptions = useMemo(() => locations.filter(Boolean), [locations]);
-  const chips = useMemo(() => locationOptions.slice(0, 7), [locationOptions]);
 
   return (
     <section className={`py-12 sm:py-14 ${backgroundClassName}`}>
@@ -37,7 +37,7 @@ export default function QuickJobsSection({
             onClick={onViewAll}
             className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-2"
           >
-            Xem them {total ? `(${total})` : ''}
+            Xem thêm {total ? `(${total})` : ''}
             <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -49,39 +49,19 @@ export default function QuickJobsSection({
               onChange={(event) => onLocationChange?.(event.target.value)}
               className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm"
             >
-              <option value="">Loc theo: Dia diem</option>
+              <option value="">Lọc theo: Địa điểm</option>
               {locationOptions.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {formatProvinceLabel(item)}
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {chips.map((chip) => {
-              const isActive = chip === locationFilter;
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => onLocationChange?.(chip)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                    isActive
-                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-200 hover:text-emerald-600'
-                  }`}
-                >
-                  {chip}
-                </button>
-              );
-            })}
           </div>
         </div>
 
         {loading ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-500">
-            Dang tai viec lam...
+            Đang tải việc làm...
           </div>
         ) : jobs.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-500">

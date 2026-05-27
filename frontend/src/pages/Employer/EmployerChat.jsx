@@ -4,6 +4,7 @@ import { Send, Search, MoreVertical, MessageSquare, Phone, Video, Info, User, Ch
 import { useUserStore } from "../../stores/useUserStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
 import { fetchChatHistory, fetchCompanyChatRooms, markChatAsRead, connectChatWebSocket } from "../../service/notificationService";
+import { isServiceUnavailableError } from "../../service/apiClient";
 import { getCandidatesForEmployer } from "../../service/applicationService";
 import { getCandidateInfo } from "../../service/userService";
 
@@ -61,7 +62,9 @@ export default function EmployerChat() {
         try {
           chatRooms = await fetchCompanyChatRooms(user.companyId) || [];
         } catch (e) {
-          console.warn("Could not fetch chat rooms:", e);
+          if (!isServiceUnavailableError(e)) {
+            console.warn("Could not fetch chat rooms:", e);
+          }
         }
 
         // Lấy danh sách ứng viên đã ứng tuyển vào công ty
@@ -216,6 +219,9 @@ export default function EmployerChat() {
           }));
           await markChatAsRead(selectedId, user.companyId);
         } catch (err) {
+          if (isServiceUnavailableError(err)) {
+            return;
+          }
           console.error("Failed to load chat history", err);
         }
       };

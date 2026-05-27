@@ -8,13 +8,14 @@ import { cn } from '@/lib/utils'
 import { calcCVScore } from '@/lib/utils' 
 import { Button } from '@/components/ui/button'
 import * as cvService from '@/service/cvService'
+import { toast } from 'react-toastify'
 
 const PROFILE_SUGGESTIONS = [
   'Kỹ sư phần mềm với hơn 3 năm kinh nghiệm phát triển ứng dụng web full-stack. Có khả năng làm việc trong môi trường Agile, hiểu biết sâu về React, Node.js và các công nghệ đám mây. Luôn chủ động học hỏi và đóng góp cho sản phẩm kỹ thuật số chất lượng cao.',
   'Lập trình viên Frontend đam mê xây dựng giao diện người dùng trực quan và hiệu suất cao. Thành thạo React, TypeScript và các công nghệ CSS hiện đại. Kinh nghiệm làm việc với team quốc tế và triển khai hệ thống phục vụ hàng triệu người dùng.',
 ]
 
-export default function AIAssistant({ data }) {
+export default function AIAssistant({ data, onSave }) {
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [aiResult, setAiResult] = useState(null)
@@ -42,20 +43,39 @@ export default function AIAssistant({ data }) {
   const { score: initialScore, suggestions: initialSuggestions } = calcScore(data)
   
   const handleAIReview = async () => {
-    if (!editId) {
-      alert('Vui lòng lưu CV trước khi nhận Review từ AI!')
-      return
+    let currentEditId = editId;
+
+    if (!currentEditId || currentEditId.startsWith('cv_')) {
+      if (onSave) {
+        toast.info('Đang tự động lưu CV trước khi nhận Review từ AI...', { toastId: 'ai-save' })
+        try {
+          const result = await onSave()
+          if (result && result.id) {
+            currentEditId = result.id
+            toast.success('Đã lưu CV thành công!')
+          } else {
+            return // Lưu thất bại (do người dùng chưa nhập đủ info hoặc lỗi)
+          }
+        } catch (err) {
+          toast.error('Không thể lưu CV. Vui lòng thử lại.')
+          return
+        }
+      } else {
+        alert('Vui lòng lưu CV trước khi nhận Review từ AI!')
+        return
+      }
     }
     
     setLoading(true)
     setShowModal(true)
     try {
-      const result = await cvService.reviewCV(editId)
+      const result = await cvService.reviewCV(currentEditId)
       console.log(">>> AI REVIEW RESULT FROM SERVER:", result)
       setAiResult(result)
     } catch (err) {
       console.error(err)
       alert('Không thể kết nối với AI Assistant. Vui lòng thử lại sau!')
+      setShowModal(false)
     } finally {
       setLoading(false)
     }

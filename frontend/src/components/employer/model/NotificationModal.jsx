@@ -11,18 +11,27 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
 
   const handleNotiClick = async (noti) => {
     if (!noti.read) {
-      // Gọi API đánh dấu đã đọc
       try {
         await markNotificationAsRead(noti.id);
         markAsReadLocally(noti.id);
       } catch (error) {
-         console.log(error);
+        console.log(error);
       }
     }
-    onClose();
-    navigate('/employer/candidates'); // Chuyển sang trang ứng viên
-  };
 
+    const title = (noti.title || "").toLowerCase();
+    const message = (noti.message || "").toLowerCase();
+    const isJobStatusNotification =
+      title.includes("tin tuyển dụng")
+      || title.includes("tin tuyen dung")
+      || message.includes("admin duyệt")
+      || message.includes("admin duyet")
+      || message.includes("hiển thị trên hệ thống")
+      || message.includes("hien thi tren he thong");
+
+    onClose();
+    navigate(isJobStatusNotification ? "/employer/jobs" : "/employer/candidates");
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -45,7 +54,6 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
           : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
       }`}
     >
-      {/* HEADER */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-400 bg-gradient-to-r from-purple-50 to-indigo-50">
         <div className="flex items-center gap-2">
           <FiBell className="text-purple-600" />
@@ -59,11 +67,10 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
         </button>
       </div>
 
-      {/* LIST */}
       <div className="max-h-96 overflow-y-auto divide-y">
         {notifications.length === 0 ? (
           <div className="p-6 text-center text-gray-400 text-sm">
-             Không có thông báo nào
+            Không có thông báo nào
           </div>
         ) : (
           notifications.map((noti) => (
@@ -72,17 +79,15 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
               onClick={() => handleNotiClick(noti)}
               className={`flex gap-3 px-4 py-3 cursor-pointer transition group border-none
               ${
-                  !noti.read
+                !noti.read
                   ? "bg-purple-50/70"
                   : "hover:bg-gray-50"
               }`}
             >
-              {/* Avatar / Icon */}
               <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
                 {noti.title.charAt(0)}
               </div>
 
-              {/* Content */}
               <div className="flex-1">
                 <p className="text-sm text-gray-800 leading-snug">
                   <span className="font-semibold">
@@ -108,15 +113,14 @@ const NotificationModal = ({ open, onClose, notifications = [] }) => {
         )}
       </div>
 
-      {/* FOOTER */}
       {notifications.length > 0 && (
         <div className="p-2 border-t text-center">
-          <button 
+          <button
             onClick={() => {
-              const unreadNotis = notifications.filter(n => !n.read);
+              const unreadNotis = notifications.filter((n) => !n.read);
               if (unreadNotis.length === 0) return;
               markAllAsRead();
-              unreadNotis.forEach(n => {
+              unreadNotis.forEach((n) => {
                 markNotificationAsRead(n.id).catch(() => {});
               });
             }}

@@ -1,7 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserPlus, Search, Send, HandshakeIcon } from 'lucide-react';
 
+import { useUserStore } from '../../../stores/useUserStore';
+
 export default function HowItWorks() {
+  const navigate = useNavigate();
+  const { isAuthenticated, openAuthDialog } = useUserStore();
+
   const steps = [
     {
       number: '1',
@@ -33,6 +39,47 @@ export default function HowItWorks() {
     },
   ];
 
+  const handleStepClick = (step) => {
+    if (step.number === '1') {
+      navigate(isAuthenticated ? '/cv-dashboard' : '/register');
+      return;
+    }
+
+    if (step.number === '2') {
+      navigate('/jobs');
+      return;
+    }
+
+    if (step.number === '3') {
+      if (!isAuthenticated) {
+        openAuthDialog({
+          closable: true,
+          onSuccess: () => navigate('/jobs'),
+        });
+        return;
+      }
+
+      navigate('/jobs');
+      return;
+    }
+
+    if (step.number === '4') {
+      if (!isAuthenticated) {
+        openAuthDialog({
+          closable: true,
+          onSuccess: () => navigate('/applied-jobs'),
+        });
+        return;
+      }
+
+      navigate('/applied-jobs');
+    }
+  };
+
+  const handleCtaClick = () => {
+    navigate(isAuthenticated ? '/jobs' : '/register');
+  };
+
   return (
     <section className="py-16 sm:py-20 bg-linear-to-b from-white via-blue-50 to-white relative overflow-hidden">
       {/* Background Decoration */}
@@ -57,7 +104,12 @@ export default function HowItWorks() {
           {steps.map((step, index) => {
             const IconComponent = step.icon;
             return (
-              <div key={index} className="relative group">
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleStepClick(step)}
+                className="relative group text-left w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-4 rounded-2xl"
+              >
                 {/* Card */}
                 <div className="relative p-6 sm:p-8 bg-white rounded-2xl border-2 border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-2xl group-hover:shadow-2xl h-full">
                   {/* Background Gradient Overlay */}
@@ -90,14 +142,18 @@ export default function HowItWorks() {
                     <div className="absolute right-0 top-1/2 transform translate-y-1/2 w-0 h-0 border-l-2 border-t-2 border-b-2 border-l-emerald-400 border-t-emerald-400 border-b-emerald-400"></div>
                   </div>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
 
         {/* Bottom CTA */}
         <div className="text-center">
-          <button className="inline-flex items-center gap-2 px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg">
+          <button
+            type="button"
+            onClick={handleCtaClick}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg"
+          >
             Bắt đầu ngay hôm nay
             <span className="text-xl">→</span>
           </button>

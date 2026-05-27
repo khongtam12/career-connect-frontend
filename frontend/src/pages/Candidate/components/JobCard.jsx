@@ -13,16 +13,18 @@ import {
 import { Heart, MapPin, Clock, CheckCircle, DollarSign } from 'lucide-react';
 import { isJobSaved, toggleSavedJob } from '../utils/jobTracker';
 import { useUserStore } from '../../../stores/useUserStore';
+import { formatProvinceLabel } from '../../../lib/utils';
+import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
-import { isBoldJob, isFrameJob, isHighlightJob, isHotJob, isUrgentJob } from '../utils/jobBadges';
+import { isBoldJob, isFrameJob, isHighlightJob, isHotJob } from '../utils/jobBadges';
 
-export default function JobCard({ job, isFeatured = false, onDetail, isSaved, onToggleSave }) {
+export default function JobCard({ job, isFeatured = false, isSaved, onToggleSave }) {
   const jobId = job?.jobId || job?.id;
   const [localSaved, setLocalSaved] = React.useState(() => isJobSaved(jobId));
   const resolvedSaved = typeof isSaved === 'boolean' ? isSaved : localSaved;
   const { isAuthenticated, openAuthDialog } = useUserStore();
   const showHotBadge = isHotJob(job);
-  const showUrgentBadge = isUrgentJob(job);
+  const urgentBadge = getMarketingPackageBadge(job?.marketingPackageType);
   const isFrame = isFrameJob(job);
   const isBold = isBoldJob(job);
   const resolvedFeatured = isFeatured || isHighlightJob(job);
@@ -61,18 +63,19 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
     <Card
       elevation={0}
       sx={{
-        borderRadius: '16px',
-        border: '2px solid',
-        borderColor: resolvedFeatured || isFrame ? '#34d399' : '#e2e8f0',
-        backgroundColor: resolvedFeatured ? '#f0fdf4' : '#ffffff',
-        transition: 'all 0.3s cubic-bezier(.4,0,.2,1)',
-        overflow: 'hidden',
-        '&:hover': {
-          transform: 'translateY(-3px)',
-          boxShadow: '0 16px 40px rgba(16, 185, 129, 0.18)',
-          borderColor: '#34d399',
-        },
-      }}
+          borderRadius: '16px',
+          border: isFrame ? '3px solid #10b981' : '1.5px solid #e2e8f0',
+          borderColor: isFrame ? '#10b981' : '#e2e8f0',
+          backgroundColor: resolvedFeatured ? '#f0fdf4' : '#ffffff',
+          transition: 'all 0.3s cubic-bezier(.4,0,.2,1)',
+          overflow: 'hidden',
+          boxShadow: resolvedFeatured ? '0 10px 30px rgba(16,185,129,0.06)' : 'none',
+          '&:hover': {
+            transform: 'translateY(-3px)',
+            boxShadow: resolvedFeatured ? '0 16px 40px rgba(16, 185, 129, 0.18)' : '0 8px 18px rgba(15,23,42,0.06)',
+            borderColor: resolvedFeatured ? '#34d399' : (isFrame ? '#10b981' : '#c7d2fe'),
+          },
+        }}
     >
       <CardActionArea
         component={Link}
@@ -125,7 +128,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
               <Typography
                 className="job-card-title"
                 sx={{
-                  fontWeight: isBold ? 800 : 700,
+                  fontWeight: isBold ? 900 : 700,
                   color: '#1e293b',
                   fontSize: '1rem',
                   lineHeight: 1.35,
@@ -134,6 +137,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   minWidth: 0,
+                  textShadow: isHotJob(job) ? '0 1px 0 rgba(255,80,80,0.06)' : 'none'
                 }}
               >
                 {job.title}
@@ -178,26 +182,22 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
                   label="🔥 HOT"
                   size="small"
                   sx={{
-                    background: 'linear-gradient(135deg, #ef4444, #f87171)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.65rem',
-                    height: 20,
-                    flexShrink: 0,
-                  }}
+                      background: 'linear-gradient(135deg, #ef4444, #f87171)',
+                      color: '#fff',
+                      fontWeight: 800,
+                      fontSize: '0.7rem',
+                      height: 22,
+                      flexShrink: 0,
+                      boxShadow: '0 6px 12px rgba(239,68,68,0.12)'
+                    }}
                 />
               )}
-              {showUrgentBadge && (
+              {urgentBadge && (
                 <Chip
-                  label="⚡ GẤP"
+                  label={`⚡ ${urgentBadge.label}`}
                   size="small"
                   sx={{
-                    background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.65rem',
-                    height: 20,
-                    flexShrink: 0,
+                    ...urgentBadge.chipSx,
                   }}
                 />
               )}
@@ -208,7 +208,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
               {job.location && (
                 <Chip
                   icon={<MapPin size={12} />}
-                  label={job.location}
+                  label={formatProvinceLabel(job.location)}
                   size="small"
                   sx={{
                     bgcolor: '#f0fdf4',
@@ -314,7 +314,7 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
               <Button
                 variant="contained"
                 size="small"
-                onClick={(e) => {
+                onClick={() => {
                   // Let CardActionArea handle navigation
                 }}
                 sx={{
@@ -368,18 +368,6 @@ export default function JobCard({ job, isFeatured = false, onDetail, isSaved, on
 }
 
 // ===== Helpers =====
-const formatJobType = (jobType) => {
-  if (!jobType) return '';
-  const map = {
-    FULL_TIME: 'Full-time',
-    PART_TIME: 'Part-time',
-    INTERNSHIP: 'Internship',
-    REMOTE: 'Remote',
-    FREELANCE: 'Freelance',
-  };
-  return map[jobType] || jobType;
-};
-
 const formatSalary = (job) => {
   if (job.salaryNegotiable) return 'Thỏa thuận';
 
