@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Building2, MapPin, Map,Globe, Mail, Phone, FileText, Users, Calendar,CheckCircle2,Share2,ExternalLink,ChevronRight} from 'lucide-react';
+import { Building2, MapPin, Map, Globe, Mail, Phone, FileText, Users, Calendar, CheckCircle2, Share2, ExternalLink, ChevronRight } from 'lucide-react';
 import { getCompanyDetail } from '../../service/companyService';
 import { searchJobs } from '../../service/jobService';
 import { useParams } from 'react-router-dom';
@@ -13,53 +13,53 @@ const bannerImage = "https://nld.mediacdn.vn/2019/8/31/vingroup-1567242023179214
 const FALLBACK_COMPANY_LOGO = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeplpRN1hSAQoBqsMoIHnQwfn4zC8yFJldEjYoL8Mi8g&s=10';
 
 const CompanyDetail = () => {
-  const [company,setCompany] = useState(null);
+  const [company, setCompany] = useState(null);
   const [companyJobs, setCompanyJobs] = useState([]);
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [companyError, setCompanyError] = useState('');
   const { id } = useParams();
 
-    useEffect(() => {
-      const fetchCompanyDetailAndJobs = async () => {
-        setLoadingCompany(true);
-        setCompanyError('');
-        try {
-          const data = await getCompanyDetail(id);
-          const nextCompany = normalizeCompanyDetail(data, id);
-          setCompany(nextCompany);
+  useEffect(() => {
+    const fetchCompanyDetailAndJobs = async () => {
+      setLoadingCompany(true);
+      setCompanyError('');
+      try {
+        const data = await getCompanyDetail(id);
+        const nextCompany = normalizeCompanyDetail(data, id);
+        setCompany(nextCompany);
 
-          if (nextCompany?.name) {
-            setLoadingJobs(true);
-            const jobsData = await searchJobs({ keyword: nextCompany.name, size: 20, sortBy: 'createdAt', sortDir: 'desc' });
-            setCompanyJobs(filterJobsForCompany(jobsData?.content || [], nextCompany));
-          }
-        } catch (err) {
-          try {
-            const jobsData = await searchJobs({ keyword: id, size: 50, sortBy: 'createdAt', sortDir: 'desc' });
-            const jobs = jobsData?.content || [];
-
-            if (jobs.length === 0) {
-              throw err;
-            }
-
-            const fallbackCompany = buildFallbackCompany(jobs, id);
-            setCompany(fallbackCompany);
-            setCompanyJobs(filterJobsForCompany(jobs, fallbackCompany));
-          } catch (fallbackErr) {
-            console.error('Failed to load company detail', fallbackErr);
-            setCompany(null);
-            setCompanyJobs([]);
-            setCompanyError('Không thể tải thông tin công ty lúc này. Vui lòng thử lại sau.');
-          }
-        } finally {
-          setLoadingCompany(false);
-          setLoadingJobs(false);
+        if (nextCompany?.name) {
+          setLoadingJobs(true);
+          const jobsData = await searchJobs({ keyword: nextCompany.name, size: 20, sortBy: 'createdAt', sortDir: 'desc' });
+          setCompanyJobs(filterJobsForCompany(jobsData?.content || [], nextCompany));
         }
-      };
-  
-      fetchCompanyDetailAndJobs();
-    }, [id]);
+      } catch (err) {
+        try {
+          const jobsData = await searchJobs({ keyword: id, size: 50, sortBy: 'createdAt', sortDir: 'desc' });
+          const jobs = jobsData?.content || [];
+
+          if (jobs.length === 0) {
+            throw err;
+          }
+
+          const fallbackCompany = buildFallbackCompany(jobs, id);
+          setCompany(fallbackCompany);
+          setCompanyJobs(filterJobsForCompany(jobs, fallbackCompany));
+        } catch (fallbackErr) {
+          console.error('Failed to load company detail', fallbackErr);
+          setCompany(null);
+          setCompanyJobs([]);
+          setCompanyError('Không thể tải thông tin công ty lúc này. Vui lòng thử lại sau.');
+        }
+      } finally {
+        setLoadingCompany(false);
+        setLoadingJobs(false);
+      }
+    };
+
+    fetchCompanyDetailAndJobs();
+  }, [id]);
 
   if (loadingCompany) return <LoadingSpinner message="Đang tải thông tin công ty" />;
 
@@ -89,9 +89,9 @@ const CompanyDetail = () => {
     <div className="min-h-screen bg-gray-50 pb-12 font-sans">
       {/* Banner Section */}
       <div className="relative h-64 md:h-100 w-full ">
-        <img 
-          src={bannerImage} 
-          alt={`${company.name} Banner`} 
+        <img
+          src={bannerImage}
+          alt={`${company.name} Banner`}
           className="w-full h-full object-cover opacity-60"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
@@ -99,17 +99,17 @@ const CompanyDetail = () => {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Main Content Column */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Header Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
                 <div className="w-32 h-32 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center p-2">
-                  <img 
-                    src={company.logo || FALLBACK_COMPANY_LOGO} 
-                    alt={`${company.name} Logo`} 
+                  <img
+                    src={company.logo || FALLBACK_COMPANY_LOGO}
+                    alt={`${company.name} Logo`}
                     className="max-w-full max-h-full object-contain"
                     onError={(event) => {
                       event.currentTarget.onerror = null;
@@ -124,7 +124,7 @@ const CompanyDetail = () => {
                       <CheckCircle2 className="w-6 h-6 text-green-500" />
                     )}
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-4">
                     {company.website ? (
                       <div className="flex items-center gap-1.5">
@@ -154,22 +154,21 @@ const CompanyDetail = () => {
                   </button>
                   <button
                     className={`px-6 py-2.5 rounded-xl text-white font-medium transition-colors shadow-md
-                        ${
-                        company.statusCompany === "VERIFIED"
-                            ? "bg-green-600 hover:bg-green-700 shadow-green-500/20"
-                            : company.statusCompany === "ACTIVE"
-                              ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
-                              : "bg-yellow-500 hover:bg-yellow-600 shadow-yellow-500/20"
-                        }`}
-                    >
+                        ${company.statusCompany === "VERIFIED"
+                        ? "bg-green-600 hover:bg-green-700 shadow-green-500/20"
+                        : company.statusCompany === "ACTIVE"
+                          ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
+                          : "bg-yellow-500 hover:bg-yellow-600 shadow-yellow-500/20"
+                      }`}
+                  >
                     <span>
-                        {company.statusCompany === "VERIFIED"
+                      {company.statusCompany === "VERIFIED"
                         ? "Đã xác thực"
                         : company.statusCompany === "ACTIVE"
                           ? "Đang hoạt động"
                           : "Đang chờ duyệt"}
                     </span>
-                    </button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -224,7 +223,7 @@ const CompanyDetail = () => {
               <h3 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">
                 Thông tin liên hệ
               </h3>
-              
+
               <ul className="space-y-5">
                 <li className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 text-green-600">
@@ -235,7 +234,7 @@ const CompanyDetail = () => {
                     <p className="text-sm text-gray-600 mt-1">{company.address || 'Đang cập nhật'}</p>
                   </div>
                 </li>
-                
+
                 <li className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 text-green-600">
                     <Phone className="w-5 h-5" />
@@ -293,20 +292,21 @@ const CompanyDetail = () => {
                 Xem bản đồ
               </h3>
               <div className="w-full h-[250px] rounded-xl overflow-hidden border border-gray-100">
-                <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.85816909105!2d106.6842704745177!3d10.822164158349457!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3174deb3ef536f31%3A0x8b7bb8b7c956157b!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBDw7RuZyBuZ2hp4buHcCBUUC5IQ00!5e0!3m2!1svi!2s!4v1779005582519!5m2!1svi!2s"
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: 0 }} 
-                  allowFullScreen="" 
-                  loading="lazy" 
-                  referrerPolicy="no-referrer-when-downgrade"
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                    company.address || "Ho Chi Minh"
+                  )}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
                   title="Company Location Map"
-                ></iframe>
+                />
               </div>
             </div>
           </div>
-          
+
         </div>
       </div>
     </div>

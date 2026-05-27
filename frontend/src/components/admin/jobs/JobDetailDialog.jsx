@@ -259,7 +259,7 @@ export default function JobDetailDialog({ open, job, onClose, loading, onStatusC
             {/* Header: Logo + Title + Status */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar
-                src={job.company?.logoUrl}
+                src={job.logo || job.company?.logo || job.company?.logoUrl || job.companyLogoUrl || ''}
                 variant="rounded"
                 sx={{
                   width: 56,

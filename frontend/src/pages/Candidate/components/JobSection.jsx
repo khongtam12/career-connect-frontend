@@ -152,11 +152,10 @@ export default function JobSection({
               <button
                 type="button"
                 onClick={() => onApply?.({ ...filters, location: '' })}
-                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                  !filters.location
+                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${!filters.location
                     ? 'border-emerald-200 bg-emerald-100 text-emerald-700 shadow-sm'
                     : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-600'
-                }`}
+                  }`}
               >
                 Tất cả
               </button>
@@ -167,11 +166,10 @@ export default function JobSection({
                     key={item}
                     type="button"
                     onClick={() => onApply?.({ ...filters, location: item })}
-                    className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                      isActive
+                    className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${isActive
                         ? 'border-emerald-200 bg-emerald-100 text-emerald-700 shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-600'
-                    }`}
+                      }`}
                   >
                     {formatProvinceLabel(item)}
                   </button>
@@ -493,7 +491,7 @@ export default function JobSection({
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-1">
+                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-1 2xl:grid-cols-1">
                     {jobs.map((job) => (
                       <JobCard
                         key={job.jobId || job.id}
