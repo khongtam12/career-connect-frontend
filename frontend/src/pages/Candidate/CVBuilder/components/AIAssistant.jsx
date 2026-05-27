@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bot, Sparkles, X, Target, Copy, Zap, Briefcase } from 'lucide-react'
+import { Cpu, X, Target, Copy, Zap, Briefcase } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { calcCVScore } from '@/lib/utils' 
 import { Button } from '@/components/ui/button'
@@ -105,11 +105,11 @@ export default function AIAssistant({ data, onSave }) {
         {/* Header */}
         <div className="bg-gradient-to-br from-indigo-500 to-violet-600 px-5 py-4 flex items-center gap-3">
           <div className="size-10 rounded-xl bg-white/20 text-white flex items-center justify-center shadow-inner">
-            <Bot size={22} strokeWidth={2} />
+            <Cpu size={22} strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-white font-bold text-sm tracking-tight leading-none">AI Assistant</h3>
-            <p className="text-white/80 text-xs mt-1 font-medium">Phân tích CV thông minh</p>
+            <h3 className="text-white font-bold text-sm tracking-tight leading-none">Hệ Thống Tối Ưu</h3>
+            <p className="text-white/80 text-xs mt-1 font-medium">Phân tích chuyên sâu & đề xuất</p>
           </div>
         </div>
 
@@ -141,8 +141,8 @@ export default function AIAssistant({ data, onSave }) {
             className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-soft-md shadow-indigo-500/20"
             onClick={handleAIReview}
           >
-            <Sparkles size={16} />
-            Nhận Review chi tiết
+            <Zap size={16} />
+            Kích hoạt phân tích tối ưu
           </Button>
         </div>
       </div>
@@ -171,11 +171,11 @@ export default function AIAssistant({ data, onSave }) {
               <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="size-8 rounded-full bg-white/20 flex items-center justify-center text-white">
-                    <Sparkles size={16} />
+                    <Cpu size={16} />
                   </div>
                   <div>
-                    <h2 className="text-white font-bold text-base leading-none tracking-tight">AI Review Resume</h2>
-                    <p className="text-white/80 text-xs mt-1">Phân tích toàn diện và góp ý chỉnh sửa</p>
+                    <h2 className="text-white font-bold text-base leading-none tracking-tight">Bản Phân Tích Chuyên Sâu</h2>
+                    <p className="text-white/80 text-xs mt-1">Đánh giá toàn diện và cấu trúc tối ưu</p>
                   </div>
                 </div>
                 <button
@@ -190,7 +190,7 @@ export default function AIAssistant({ data, onSave }) {
                 {loading ? (
                   <div className="py-20 flex flex-col items-center justify-center gap-4">
                     <div className="size-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-indigo-600 font-bold animate-pulse">AI đang phân tích CV của bạn...</p>
+                    <p className="text-indigo-600 font-bold animate-pulse">Hệ thống đang phân tích CV của bạn...</p>
                   </div>
                 ) : (
                   <>

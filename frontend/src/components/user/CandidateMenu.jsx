@@ -73,7 +73,10 @@ export default function CandidateMenu({ user }) {
                                 </div>
 
                                 <Link to="/cv-dashboard" className="block px-6 py-2 rounded-md hover:bg-white">
-                                    CV của tôi
+                                    Quản lý CV (CV của tôi)
+                                </Link>
+                                <Link to="/cv-templates" className="block px-6 py-2 rounded-md hover:bg-white">
+                                    Tạo CV mới
                                 </Link>
                             </div>
 

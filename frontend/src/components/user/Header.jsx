@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, MessageSquare } from "lucide-react";
+import { ChevronDown, MessageSquare, Plus, FileText, UploadCloud, User, Sparkles, FolderOpen } from "lucide-react";
 
 import CandidateMenu from "./CandidateMenu";
 import { useUserStore } from "../../stores/useUserStore";
 import { useNotificationStore } from "../../stores/useNotificationStore";
+
 const Header = ({ rightSlot }) => {
+  const [cvMenuOpen, setCvMenuOpen] = useState(false);
   const hydrated = useUserStore.persist.hasHydrated();
   const user = useUserStore((s) => s.user);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
@@ -39,10 +41,11 @@ const Header = ({ rightSlot }) => {
                 <span>Việc làm</span>
                 <ChevronDown size={16} />
               </Link>
-              <Link to="/cv-dashboard" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
-                <span>Hồ sơ & CV</span>
-                <ChevronDown size={16} />
+
+              <Link to="/cv-templates" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                <span>Tạo CV</span>
               </Link>
+
               <Link to="/featured-companies" className="flex items-center space-x-1 px-3 py-2 rounded-md hover:text-emerald-600 hover:bg-gray-50 cursor-pointer transition-colors">
                 <span>Công ty nổi bật</span>
                 <ChevronDown size={16} />
@@ -67,8 +70,8 @@ const Header = ({ rightSlot }) => {
           <div className="flex items-center space-x-3">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <Link 
-                  to="/chat" 
+                <Link
+                  to="/chat"
                   className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all relative group"
                   title="Tin nhắn"
                 >

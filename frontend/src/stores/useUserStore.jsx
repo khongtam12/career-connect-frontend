@@ -103,6 +103,7 @@ export const useUserStore = create(
             loading: false,
           });
           localStorage.removeItem("user-storage");
+          localStorage.removeItem("career_connect_ai_messages");
         }
       },
 
