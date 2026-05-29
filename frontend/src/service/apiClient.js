@@ -1,8 +1,22 @@
 import axios from 'axios';
 import { useUserStore } from '../stores/useUserStore';
-
+import { toast } from 'react-toastify';
 const rawBaseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 const baseURL = rawBaseURL.replace(/\/+$/, '');
+
+
+
+
+
+
+
+
+
+
+// --- Rate Limiter Config (Client Side) ---
+const MAX_REQUESTS = 20; // Tối đa 30 request
+const WINDOW_MS = 10000; // Trong vòng 10 giây
+let requestTimestamps = [];
 
 const apiClient = axios.create({
   baseURL,
@@ -10,6 +24,28 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// --- Request Interceptor cho Rate Limiting ---
+apiClient.interceptors.request.use((config) => {
+  const now = Date.now();
+
+  // Loại bỏ các timestamp cũ hơn 10 giây
+  requestTimestamps = requestTimestamps.filter(timestamp => now - timestamp < WINDOW_MS);
+  if (requestTimestamps.length >= MAX_REQUESTS) {
+    // Thông báo cho người dùng
+    toast.error("Bạn đang thao tác quá nhanh! Vui lòng đợi một chút.", {
+      id: 'rate-limit-toast', // ID để không hiện nhiều toast trùng nhau
+    });
+
+    // Hủy request ngay tại Client
+    return Promise.reject(new Error('RATE_LIMIT_EXCEEDED'));
+  }
+  // Lưu timestamp của request mới
+  requestTimestamps.push(now);
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 const recentServiceLogs = new Map();
