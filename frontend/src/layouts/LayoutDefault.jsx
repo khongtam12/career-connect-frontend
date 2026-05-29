@@ -6,7 +6,7 @@ import ChatWidget from '../components/user/ChatWidget'
 
 
 // Danh sách các route không hiện Footer
-const NO_FOOTER_ROUTES = ['/cv-builder', '/cv-dashboard', '/profile']
+const NO_FOOTER_ROUTES = ['/cv-builder', '/cv-dashboard', '/profile', '/cv-templates']
 
 export default function LayoutDefault() {
     const location = useLocation()
