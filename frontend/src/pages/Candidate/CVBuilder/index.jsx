@@ -11,9 +11,16 @@ import {
   Printer,
   Save,
   PenLine,
-  Bot,
+  Cpu,
   User as UserIcon,
-  Loader2
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Trash2,
+  UserPlus,
+  Columns,
+  PanelLeft,
+  PanelRight
 } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
 import { cn } from '@/lib/utils'
@@ -52,6 +59,7 @@ export default function EditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [zoom, setZoom] = useState(80)
   const [activeTab, setActiveTab] = useState('form')
+  const [panelMode, setPanelMode] = useState('split') // 'form' | 'preview' | 'split'
   
   const [isValidating, setIsValidating] = useState(true)
   const [mounted, setMounted] = useState(false)
@@ -290,6 +298,31 @@ export default function EditorPage() {
     }
   }
 
+  const handleClearData = () => {
+    if (window.confirm('Bạn có chắc muốn xóa hết tất cả thông tin trong CV? Hành động này không thể hoàn tác.')) {
+      setCvData(JSON.parse(JSON.stringify(EMPTY_CV)))
+      toast.info('Đã xóa sạch toàn bộ nội dung CV.')
+    }
+  }
+
+  const handleAutoFill = () => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để sử dụng tính năng tự điền.')
+      return
+    }
+    setCvData(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        fullName: user.fullName || prev.personal.fullName,
+        email: user.email || prev.personal.email,
+        phone: user.phone || prev.personal.phone,
+        avatar: user.avatar || prev.personal.avatar,
+      }
+    }))
+    toast.success('Đã tự động điền thông tin từ hồ sơ cá nhân.')
+  }
+
   const handleExportPDF = async () => {
     if (!user) {
       toast.error('Vui lòng đăng nhập để thực hiện xuất PDF')
@@ -373,7 +406,12 @@ export default function EditorPage() {
 
   // Tiêu chuẩn UI Designer (Premium Aesthetic) - Nền tối, đổ bóng mượt
   return (
-    <div className="h-[calc(100vh-64px)] bg-zinc-100 flex flex-col font-sans overflow-hidden">
+    <div className="h-[calc(100vh-64px)] bg-zinc-100 flex flex-col font-sans overflow-hidden plus-jakarta-theme">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .plus-jakarta-theme, .plus-jakarta-theme * {
+          font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+        }
+      `}} />
 
       {/* Floating Toolbar (Header Bo Góc Cao Cấp) */}
       <div className="flex-none px-6 py-4">
@@ -402,6 +440,32 @@ export default function EditorPage() {
 
             {/* RIGHT: Tools */}
             <div className="flex items-center gap-4">
+
+               {/* Panel Mode Toggle */}
+               <div className="flex items-center gap-0.5 bg-zinc-100 p-1 rounded-xl shadow-inner border border-zinc-200/60">
+                 <button
+                   onClick={() => setPanelMode('form')}
+                   className={cn('p-1.5 rounded-lg transition-all', panelMode === 'form' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700')}
+                   title="Chỉ hiển thị Form"
+                 >
+                   <PanelLeft size={14} />
+                 </button>
+                 <button
+                   onClick={() => setPanelMode('split')}
+                   className={cn('p-1.5 rounded-lg transition-all', panelMode === 'split' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700')}
+                   title="Chia đôi Form & Preview"
+                 >
+                   <Columns size={14} />
+                 </button>
+                 <button
+                   onClick={() => setPanelMode('preview')}
+                   className={cn('p-1.5 rounded-lg transition-all', panelMode === 'preview' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700')}
+                   title="Chỉ hiển thị Preview"
+                 >
+                   <PanelRight size={14} />
+                 </button>
+               </div>
+
                {/* Zoom Control */}
                <div className="hidden lg:flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl shadow-inner border border-zinc-200/60">
                  <Button variant="ghost" size="icon-xs" onClick={() => setZoom(z => Math.max(40, z - 10))} className="text-zinc-500 hover:text-zinc-900 rounded-lg">
@@ -438,32 +502,38 @@ export default function EditorPage() {
       <div className="flex-1 flex overflow-hidden px-6 pb-6 gap-6">
 
          {/* TRÁI: DOCK TEMPLATE LƠ LỬNG */}
-         <motion.div
-           initial={false}
-           animate={{ width: sidebarOpen ? 280 : 0, opacity: sidebarOpen ? 1 : 0 }}
-           className={cn(
-             'shrink-0 h-full relative rounded-2xl bg-white/60 backdrop-blur-3xl border border-white/60 shadow-soft-md flex flex-col',
-             !sidebarOpen && 'invisible'
-           )}
-         >
-           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-              <TemplateSelector selectedId={templateId} onSelect={setTemplateId} />
-           </div>
+         <div className="relative shrink-0 h-full flex">
+           <motion.div
+             initial={false}
+             animate={{ width: sidebarOpen ? 280 : 0, opacity: sidebarOpen ? 1 : 0 }}
+             className="h-full rounded-2xl bg-white/60 backdrop-blur-3xl border border-white/60 shadow-soft-md flex flex-col overflow-hidden"
+           >
+             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar w-[280px]">
+                <TemplateSelector selectedId={templateId} onSelect={setTemplateId} />
+             </div>
+           </motion.div>
 
            {/* Toggle Sidebar Button Outside */}
            <button
              onClick={() => setSidebarOpen(!sidebarOpen)}
              className={cn(
-                "absolute top-1/2 -translate-y-1/2 min-w-6 min-h-12 rounded-r-xl bg-white/80 backdrop-blur-md border border-white/80 shadow-soft-md flex items-center justify-center text-zinc-500 hover:text-zinc-900 z-50 transition-all",
-                sidebarOpen ? "-right-6" : "-right-2"
+                "absolute top-1/2 -translate-y-1/2 min-w-6 min-h-12 rounded-r-xl bg-white/80 backdrop-blur-md border border-zinc-200/80 shadow-soft-md flex items-center justify-center text-zinc-500 hover:text-zinc-900 z-50 transition-all"
              )}
+             style={{
+               left: sidebarOpen ? '276px' : '-6px',
+               transition: 'left 0.2s ease-in-out'
+             }}
            >
              {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
            </button>
-         </motion.div>
+         </div>
 
          {/* GIỮA: TRUNG TÂM KIỂM SOÁT (FORM + AI) */}
-         <div className="w-[440px] shrink-0 h-full rounded-2xl bg-white border border-zinc-200/70 shadow-soft-xl flex flex-col z-10 overflow-hidden ring-1 ring-zinc-950/5">
+         {(panelMode === 'form' || panelMode === 'split') && (
+         <div className={cn(
+           'shrink-0 h-full rounded-2xl bg-white border border-zinc-200/70 shadow-soft-xl flex flex-col z-10 overflow-hidden ring-1 ring-zinc-950/5',
+           panelMode === 'form' ? 'flex-1' : 'w-[440px]'
+         )}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                {/* Custom Tab List Component */}
                <div className="h-14 border-b border-zinc-100 flex items-center px-2 bg-zinc-50/50 shrink-0">
@@ -479,9 +549,25 @@ export default function EditorPage() {
                         className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm text-sm font-semibold transition-all relative overflow-hidden"
                      >
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 data-[state=active]:opacity-100 transition-opacity" />
-                        <Bot size={15} /> AI Phân Tích
+                        <Cpu size={15} /> Tối Ưu Chuyên Sâu
                      </TabsTrigger>
                   </TabsList>
+               </div>
+
+               {/* Quick-action bar: Clear / Autofill */}
+               <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50/80">
+                  <button
+                     onClick={handleAutoFill}
+                     className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                     <UserPlus size={12} /> Tự điền từ hồ sơ
+                  </button>
+                  <button
+                     onClick={handleClearData}
+                     className="flex items-center gap-1.5 text-[11px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                     <Trash2 size={12} /> Xóa hết dữ liệu
+                  </button>
                </div>
                
                <div className="flex-1 overflow-y-auto bg-zinc-50/30 p-5 custom-scrollbar relative">
@@ -494,8 +580,10 @@ export default function EditorPage() {
                </div>
             </Tabs>
          </div>
+         )}
 
          {/* PHẢI: XEM TRƯỚC BẢN IN LƠ LỬNG */}
+         {(panelMode === 'preview' || panelMode === 'split') && (
          <div className="flex-1 h-full rounded-2xl bg-zinc-200/50 border border-zinc-200/50 shadow-inner overflow-auto p-10 flex justify-center items-start custom-scrollbar relative">
             
             <div
@@ -515,6 +603,7 @@ export default function EditorPage() {
             </div>
 
          </div>
+         )}
 
       </div>
 

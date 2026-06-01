@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import JobStatsCards from '../../../components/employer/jobs/JobStatsCards';
 import JobSearchFilter from '../../../components/employer/jobs/JobSearchFilter';
 import JobTable from '../../../components/employer/jobs/JobTable';
@@ -18,6 +19,7 @@ import RenewJobDialog from '../../../components/employer/jobs/RenewJobDialog';
 import {
   getMyJobs,
   getMyStats,
+  getJobFilters,
   createJob,
   updateJob,
   deleteJob,
@@ -118,6 +120,7 @@ export default function JobManagement() {
   const [subscriptionOptions, setSubscriptionOptions] = useState([]);
   const [allSubscriptions, setAllSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+  const [industryOptions, setIndustryOptions] = useState([]);
   const [companyStatus, setCompanyStatus] = useState(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -137,6 +140,13 @@ export default function JobManagement() {
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
 
   const isCompanyVerified = companyStatus === 'VERIFIED';
+
+  const isEntitlementStillActive = useCallback((item) => {
+    if (!item?.endDate) return true;
+    const endDate = new Date(item.endDate);
+    if (Number.isNaN(endDate.getTime())) return true;
+    return endDate >= new Date();
+  }, []);
 
   const clearFieldError = useCallback((field) => {
     setFieldErrors((prev) => {
@@ -196,6 +206,20 @@ export default function JobManagement() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  useEffect(() => {
+    const fetchIndustryOptions = async () => {
+      try {
+        const options = await getJobFilters({ skipJobFallback: true });
+        setIndustryOptions(options?.industries || []);
+      } catch (err) {
+        console.error('Lá»—i khi táº£i danh sÃ¡ch ngÃ nh:', err);
+        setIndustryOptions([]);
+      }
+    };
+
+    fetchIndustryOptions();
+  }, []);
 
   const fetchSubscriptions = useCallback(async (silent = false) => {
     if (!companyId) {
@@ -512,7 +536,7 @@ export default function JobManagement() {
     }
   };
 
-  const handleOpenMarketing = async (job) => {
+  const handleOpenMarketing = useCallback(async (job) => {
     if (!companyId) {
       showSnack('Không tìm thấy công ty của tài khoản hiện tại.', 'error');
       return;
@@ -526,7 +550,7 @@ export default function JobManagement() {
         const statusOk = String(item.status || '').toUpperCase() === 'ACTIVE';
         const scopeOk = String(item.targetScope || '').toUpperCase() === 'JOB';
         const remaining = Number(item.remainingCount || 0) > 0;
-        return statusOk && scopeOk && remaining;
+        return statusOk && scopeOk && remaining && isEntitlementStillActive(item);
       });
       setMarketingEntitlements(available);
     } catch (err) {
@@ -536,7 +560,7 @@ export default function JobManagement() {
     } finally {
       setMarketingLoading(false);
     }
-  };
+  }, [companyId, isEntitlementStillActive]);
 
   const handleCloseMarketing = () => {
     setMarketingDialog({ open: false, job: null });
@@ -573,6 +597,7 @@ export default function JobManagement() {
       showSnack(`Không thể gỡ gói hiển thị: ${backendMessage}`, 'error');
     }
   };
+
 
   const editInitialValues = useMemo(() => {
     if (dialogMode !== 'edit' || !editingJob) return undefined;
@@ -739,6 +764,7 @@ export default function JobManagement() {
             handleCreateJob(formData, isDraft);
           }
         }}
+        industryOptions={industryOptions}
         subscriptionOptions={subscriptionOptions}
         subscriptionsLoading={subscriptionsLoading}
         fieldErrors={fieldErrors}

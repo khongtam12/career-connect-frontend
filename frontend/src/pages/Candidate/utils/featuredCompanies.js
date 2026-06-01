@@ -92,6 +92,21 @@ export const mapFeaturedCompaniesFromJobs = (jobs = []) => {
   });
 };
 
+export const mapFeaturedCompanyFromDetail = (company = {}) => {
+  const companyId = company.id || company.companyId || '';
+  const name = company.name || 'Doanh nghiệp';
+  return {
+    key: companyId || normalizeText(name),
+    companyId,
+    name,
+    logo: company.logo || FALLBACK_COMPANY_LOGO,
+    location: company.address || '',
+    website: company.website || '',
+    jobCount: 0,
+    latestPostedAt: company.createdAt || null,
+  };
+};
+
 export const isBrandingJob = (job = {}) => {
   const category = String(job?.marketingPackageCategory || '').toUpperCase();
   const type = String(job?.marketingPackageType || '').toUpperCase();

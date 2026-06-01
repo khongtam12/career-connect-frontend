@@ -40,6 +40,8 @@ const formatCurrency = (v) => {
   return String(v);
 };
 
+const formatPercent = (v) => Number(v || 0).toFixed(2);
+
 const formatFullCurrency = (v) => {
   if (!v && v !== 0) return '0đ';
   return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
@@ -279,7 +281,7 @@ export default function Dashboard() {
             {card.change !== undefined ? (
               <Box sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 0.3, bgcolor: 'rgba(255,255,255,0.2)', borderRadius: 5, px: 1, py: 0.3 }}>
                 {card.change >= 0 ? <TrendingUpIcon sx={{ fontSize: 14 }} /> : <TrendingDownIcon sx={{ fontSize: 14 }} />}
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 600 }}>{Math.abs(card.change)}%</Typography>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 600 }}>{formatPercent(Math.abs(card.change))}%</Typography>
               </Box>
             ) : card.badge ? (
               <Box sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: 'rgba(255,255,255,0.25)', borderRadius: 5, px: 1.2, py: 0.4 }}>

@@ -8,15 +8,14 @@ import CTASection from './components/CTASection';
 import HowItWorks from './components/HowItWorks';
 import FeaturedCompaniesSection from './components/FeaturedCompaniesSection';
 import { getJobFilters, getJobStats, searchJobs } from '../../service/jobService';
-import { getCompanyMarketingEntitlements } from '../../service/companyService';
+import { getCompanyDetail, getFeaturedCompanyIds } from '../../service/companyService';
 import { isServiceUnavailableError } from '../../service/apiClient';
 import { categoriesData } from '../../data/categoriesData';
 import { getAppliedJobs, getSavedJobs } from './utils/jobTracker';
 import {
-  filterFeaturedCompaniesByBranding,
   getCompanyKey,
-  isBrandingEntitlementActive,
   isBrandingJob,
+  mapFeaturedCompanyFromDetail,
   mapFeaturedCompaniesFromJobs,
 } from './utils/featuredCompanies';
 import useProvinces from '../../hooks/useProvinces';
@@ -251,69 +250,45 @@ export default function Home() {
     const loadFeaturedCompanies = async () => {
       setFeaturedCompaniesLoading(true);
       try {
-        const response = await searchJobs(
-          {
-            page: 0,
-            size: 120,
-            sortBy: 'createdAt',
-            sortDir: 'desc',
-          },
-          { quietOn503: true }
-        );
+        const [jobsResponse, featuredIds] = await Promise.all([
+          searchJobs({ page: 0, size: 120, sortBy: 'createdAt', sortDir: 'desc' }, { quietOn503: true }),
+          getFeaturedCompanyIds().catch(() => []),
+        ]);
 
         setJobServiceUnavailable(false);
-        const baseJobs = response.content || [];
+        const baseJobs = jobsResponse.content || [];
         const companies = mapFeaturedCompaniesFromJobs(baseJobs);
-        const brandedCompanyKeysFromJobs = new Set(
-          baseJobs
-            .filter(isBrandingJob)
-            .map(getCompanyKey)
-            .filter(Boolean)
+        const companyMap = new Map(
+          companies.map((company) => [company.key || company.companyId, company])
         );
 
-        const brandingMap = new Map();
-        let unauthorizedBrandingApi = false;
-
-        await Promise.allSettled(
-          companies.map(async (company) => {
-            const companyKey = company.key || company.companyId;
-            if (!companyKey) {
-              return;
-            }
-
-            if (brandedCompanyKeysFromJobs.has(companyKey)) {
-              brandingMap.set(companyKey, true);
-              return;
-            }
-
-            if (!company.companyId) {
-              brandingMap.set(companyKey, false);
-              return;
-            }
-
-            try {
-              const entitlements = await getCompanyMarketingEntitlements(company.companyId, 'BRANDING');
-              brandingMap.set(
-                companyKey,
-                Array.isArray(entitlements) && entitlements.some(isBrandingEntitlementActive)
-              );
-            } catch (error) {
-              if (error?.response?.status === 401) {
-                unauthorizedBrandingApi = true;
-              }
-              brandingMap.set(companyKey, false);
-            }
-          })
+        const featuredSet = new Set(featuredIds || []);
+        const brandedByJobKeys = new Set(
+          baseJobs.filter(isBrandingJob).map(getCompanyKey).filter(Boolean)
         );
 
-        const featured = unauthorizedBrandingApi
-          ? companies.filter((company) => brandedCompanyKeysFromJobs.has(company.key || company.companyId))
-          : filterFeaturedCompaniesByBranding(companies, brandingMap, brandedCompanyKeysFromJobs);
+        const missingFeaturedIds = Array.from(featuredSet).filter((companyId) => !companyMap.has(companyId));
 
-        const resolvedFeatured = featured.length > 0 ? featured : companies;
+        if (missingFeaturedIds.length > 0) {
+          const detailResults = await Promise.allSettled(
+            missingFeaturedIds.map((companyId) => getCompanyDetail(companyId))
+          );
 
-        setFeaturedCompanies(resolvedFeatured.slice(0, 6));
-        setFeaturedCompaniesTotal(resolvedFeatured.length);
+          detailResults.forEach((result, index) => {
+            if (result.status !== 'fulfilled' || !result.value) return;
+            const company = mapFeaturedCompanyFromDetail(result.value);
+            if (!company.key) return;
+            companyMap.set(missingFeaturedIds[index], company);
+          });
+        }
+
+        const featured = Array.from(companyMap.values()).filter((company) => {
+          const key = company.key || company.companyId;
+          return featuredSet.has(key) || brandedByJobKeys.has(key);
+        });
+
+        setFeaturedCompanies(featured.slice(0, 6));
+        setFeaturedCompaniesTotal(featured.length);
       } catch (error) {
         if (isServiceUnavailableError(error)) {
           setJobServiceUnavailable(true);
@@ -321,7 +296,6 @@ export default function Home() {
           setFeaturedCompaniesTotal(0);
           return;
         }
-
         console.error('Failed to load featured companies', error);
       } finally {
         setFeaturedCompaniesLoading(false);

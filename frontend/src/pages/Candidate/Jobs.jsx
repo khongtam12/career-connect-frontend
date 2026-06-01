@@ -1,9 +1,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import JobSection from './components/JobSection';
+import QuickJobsSection from './components/QuickJobsSection';
 import { getJobFilters, searchJobs } from '../../service/jobService';
-import { categoriesData } from '../../data/categoriesData';
 import useProvinces from '../../hooks/useProvinces';
+import { Layers3 } from 'lucide-react';
+
+const FALLBACK_RANKS = [
+  'Thực tập sinh',
+  'Nhân viên',
+  'Trưởng nhóm',
+  'Phó phòng',
+  'Trưởng phòng',
+  'Phó giám đốc',
+  'Giám đốc',
+];
+
+const FALLBACK_EDUCATIONS = [
+  'Trung học phổ thông',
+  'Trung cấp',
+  'Cao Đẳng trở lên',
+  'Đại học',
+  'Đại học (đang học)',
+  'Thạc sĩ',
+  'Tiến sĩ',
+  'Không yêu cầu',
+];
 
 const normalizeIndustryLabel = (value = '') =>
   value
@@ -24,11 +46,7 @@ const resolveIndustryQuery = (filters, industries) => {
   const matchedIndustry = industries.find(
     (item) => normalizeIndustryLabel(item.name) === normalizedKeyword
   );
-  const matchedCategory = categoriesData.find(
-    (item) => normalizeIndustryLabel(item.title) === normalizedKeyword || normalizeIndustryLabel(item.industryId) === normalizedKeyword
-  );
-
-  const resolvedIndustryId = matchedIndustry?.industryId || matchedCategory?.backendIndustryId;
+  const resolvedIndustryId = matchedIndustry?.industryId;
 
   if (!resolvedIndustryId) {
     return filters;
@@ -53,6 +71,9 @@ const initialFilters = {
   experienceMax: '',
   salaryMin: '',
   salaryMax: '',
+  rank: '',
+  education: '',
+  salaryNegotiable: '',
   sortBy: 'createdAt',
   sortDir: 'desc',
 };
@@ -68,12 +89,17 @@ export default function Jobs() {
     statuses: [],
     locations: [],
     industries: [],
+    ranks: [],
+    educations: [],
   });
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [industryPriorityJobs, setIndustryPriorityJobs] = useState([]);
+  const [industryPriorityTotal, setIndustryPriorityTotal] = useState(0);
+  const [industryPriorityLoading, setIndustryPriorityLoading] = useState(false);
   const lastQueryRef = useRef(null);
   const hasFetchedRef = useRef(false);
   const provinceLocations = useMemo(
@@ -83,7 +109,17 @@ export default function Jobs() {
   const displayFilterOptions = useMemo(() => ({
     ...filterOptions,
     locations: provinceLocations.length > 0 ? provinceLocations : filterOptions.locations,
+    ranks: filterOptions.ranks.length > 0 ? filterOptions.ranks : FALLBACK_RANKS,
+    educations: filterOptions.educations.length > 0 ? filterOptions.educations : FALLBACK_EDUCATIONS,
   }), [filterOptions, provinceLocations]);
+  const currentIndustryName = useMemo(
+    () =>
+      filterOptions.industries.find((item) => item.industryId === filters.industryId)?.name || '',
+    [filterOptions.industries, filters.industryId]
+  );
+  const shouldShowIndustryPrioritySection = Boolean(
+    filters.industryId && filters.marketingPackageType !== 'INDUSTRY_PRIORITY'
+  );
 
   const paramsKey = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -96,6 +132,7 @@ export default function Jobs() {
         experienceMax: overrideFilters.experienceMax ? Number(overrideFilters.experienceMax) : undefined,
         salaryMin: overrideFilters.salaryMin ? Number(overrideFilters.salaryMin) * 1000000 : undefined,
         salaryMax: overrideFilters.salaryMax ? Number(overrideFilters.salaryMax) * 1000000 : undefined,
+        salaryNegotiable: overrideFilters.salaryNegotiable === '' ? undefined : overrideFilters.salaryNegotiable === 'true',
         page: nextPage + 1,
         size: 10,
       });
@@ -140,6 +177,9 @@ export default function Jobs() {
     if (data.experienceMax) params.set('experienceMax', data.experienceMax);
     if (data.salaryMin) params.set('salaryMin', data.salaryMin);
     if (data.salaryMax) params.set('salaryMax', data.salaryMax);
+    if (data.rank) params.set('rank', data.rank);
+    if (data.education) params.set('education', data.education);
+    if (data.salaryNegotiable) params.set('salaryNegotiable', data.salaryNegotiable);
     if (data.sortBy) params.set('sortBy', data.sortBy);
     if (data.sortDir) params.set('sortDir', data.sortDir);
     return params;
@@ -157,6 +197,13 @@ export default function Jobs() {
     applyFilters(nextPage, filters);
   };
 
+  const handleResetFilters = () => {
+    const nextFilters = { ...initialFilters };
+    setFilters(nextFilters);
+    navigate('/jobs');
+    applyFilters(0, nextFilters);
+  };
+
   useEffect(() => {
     const loadOptions = async () => {
       try {
@@ -166,6 +213,8 @@ export default function Jobs() {
           statuses: options.statuses || [],
           locations: options.locations || [],
           industries: options.industries || [],
+          ranks: options.ranks || FALLBACK_RANKS,
+          educations: options.educations || FALLBACK_EDUCATIONS,
         });
       } catch (error) {
         console.error('Failed to load job filters', error);
@@ -193,6 +242,9 @@ export default function Jobs() {
       experienceMax: searchParams.get('experienceMax') || '',
       salaryMin: searchParams.get('salaryMin') || '',
       salaryMax: searchParams.get('salaryMax') || '',
+      rank: searchParams.get('rank') || '',
+      education: searchParams.get('education') || '',
+      salaryNegotiable: searchParams.get('salaryNegotiable') || '',
       sortBy: searchParams.get('sortBy') || 'createdAt',
       sortDir: searchParams.get('sortDir') || 'desc',
     }, filterOptions.industries);
@@ -201,8 +253,75 @@ export default function Jobs() {
     applyFilters(0, nextFilters, selectedId || undefined);
   }, [paramsKey, applyFilters, searchParams, filterOptions.industries]);
 
+  useEffect(() => {
+    const loadIndustryPriorityJobs = async () => {
+      if (!shouldShowIndustryPrioritySection) {
+        setIndustryPriorityJobs([]);
+        setIndustryPriorityTotal(0);
+        setIndustryPriorityLoading(false);
+        return;
+      }
+
+      setIndustryPriorityLoading(true);
+      try {
+        const response = await searchJobs({
+          industryId: filters.industryId,
+          location: filters.location || undefined,
+          marketingPackageType: 'INDUSTRY_PRIORITY',
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+          page: 0,
+          size: 6,
+        });
+
+        setIndustryPriorityJobs(response.content || []);
+        setIndustryPriorityTotal(response.totalElements || 0);
+      } catch (error) {
+        console.error('Failed to load industry priority jobs', error);
+        setIndustryPriorityJobs([]);
+        setIndustryPriorityTotal(0);
+      } finally {
+        setIndustryPriorityLoading(false);
+      }
+    };
+
+    loadIndustryPriorityJobs();
+  }, [filters.industryId, filters.location, shouldShowIndustryPrioritySection]);
+
   return (
     <div className="min-h-screen bg-slate-50">
+      {shouldShowIndustryPrioritySection && (
+        <QuickJobsSection
+          title={
+            currentIndustryName
+              ? `Việc làm ưu tiên trong ngành ${currentIndustryName}`
+              : 'Việc làm ưu tiên trong ngành này'
+          }
+          subtitle="Những tin tuyển dụng được quảng bá nổi bật trong lĩnh vực bạn đang quan tâm"
+          icon={<Layers3 size={18} className="text-blue-600" />}
+          jobs={industryPriorityJobs}
+          total={industryPriorityTotal}
+          locations={displayFilterOptions.locations}
+          locationFilter={filters.location}
+          onLocationChange={(value) => {
+            const nextFilters = { ...filters, location: value };
+            setFilters(nextFilters);
+            const params = buildParams(nextFilters);
+            navigate(`/jobs?${params.toString()}`);
+          }}
+          onViewAll={() => {
+            const nextFilters = {
+              ...filters,
+              marketingPackageType: 'INDUSTRY_PRIORITY',
+            };
+            navigate(`/jobs?${buildParams(nextFilters).toString()}`);
+          }}
+          backgroundClassName="bg-blue-50/70"
+          accentClassName="text-blue-700"
+          emptyText="Chưa có tin tuyển dụng ưu tiên trong ngành này"
+          loading={industryPriorityLoading}
+        />
+      )}
       <JobSection
         jobs={jobs}
         totalElements={totalElements}
@@ -210,6 +329,7 @@ export default function Jobs() {
         filterOptions={displayFilterOptions}
         onChange={handleFilterChange}
         onApply={handleSearch}
+          onReset={handleResetFilters}
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}

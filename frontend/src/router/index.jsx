@@ -11,6 +11,7 @@ import SavedJobs from "../pages/Candidate/SavedJobs.jsx";
 import AppliedJobs from "../pages/Candidate/AppliedJobs.jsx";
 import CVBuilder from "../pages/Candidate/CVBuilder/index.jsx";
 import CVDashboard from "../pages/Candidate/CVDashboard/index.jsx";
+import CVTemplates from "../pages/Candidate/CVTemplates/index.jsx";
 import ChatCandidate from "../pages/Candidate/ChatCandidate.jsx";
 import CandidateProfile from "../pages/Candidate/Profile/CandidateProfile.jsx";
 import FeaturedCompanies from "../pages/Candidate/FeaturedCompanies.jsx";
@@ -95,6 +96,15 @@ export const router = createBrowserRouter([
                 element: (
                     <PrivateCandidateRouteRedirect>
                         <CVDashboard />
+                    </PrivateCandidateRouteRedirect>
+                )
+            },
+
+            {
+                path: "cv-templates",
+                element: (
+                    <PrivateCandidateRouteRedirect>
+                        <CVTemplates />
                     </PrivateCandidateRouteRedirect>
                 )
             },

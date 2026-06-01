@@ -1,8 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { isHotJob } from '../utils/jobBadges';
 import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
+import { getMyApplications } from '../../../service/applicationService';
+import { useUserStore } from '../../../stores/useUserStore';
+import { useNavigate } from 'react-router-dom';
 
 export default function JobDetailPanel({ job }) {
+  const [hasApplied, setHasApplied] = useState(false);
+  const { isAuthenticated } = useUserStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAppliedStatus = async () => {
+      if (isAuthenticated && job) {
+        try {
+          const response = await getMyApplications();
+          const apps = response.data || [];
+          const jobId = job.id || job.jobId;
+          const applied = apps.some(app => app.jobId === jobId);
+          setHasApplied(applied);
+        } catch (error) {
+          console.error("Failed to fetch applications:", error);
+        }
+      } else {
+        setHasApplied(false);
+      }
+    };
+    checkAppliedStatus();
+  }, [isAuthenticated, job]);
+
   if (!job) {
     return (
       <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center text-gray-500">
@@ -75,8 +101,17 @@ export default function JobDetailPanel({ job }) {
       </div>
 
       <div className="mt-5 flex items-center gap-3">
-        <button className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-white font-semibold hover:bg-emerald-700">
-          Ứng tuyển ngay
+        <button 
+          onClick={() => {
+            if (!hasApplied) {
+              const jobId = job.id || job.jobId;
+              if (jobId) navigate(`/job/${jobId}?apply=true`);
+            }
+          }}
+          disabled={hasApplied}
+          className={`flex-1 rounded-lg py-2.5 font-semibold transition-colors ${hasApplied ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+        >
+          {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
         </button>
         <button className="w-11 h-11 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50">❤</button>
       </div>

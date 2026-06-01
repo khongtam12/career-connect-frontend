@@ -26,6 +26,7 @@ import {
 import ApplyJobModal from './components/ApplyJobModal';
 import { isJobSaved, toggleSavedJob } from './utils/jobTracker';
 import { useUserStore } from '../../stores/useUserStore';
+import { getMyApplications } from '../../service/applicationService';
 
 /* ── Tag badge ── */
 function Tag({ children, color = 'bg-emerald-100 text-emerald-700' }) {
@@ -102,6 +103,7 @@ export default function JobDetail() {
   const [, setSavedVersion] = useState(0);
 
   const [job, setJob] = useState(null);
+  const [hasApplied, setHasApplied] = useState(false);
   const { isAuthenticated, openAuthDialog } = useUserStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -184,6 +186,24 @@ export default function JobDetail() {
 
     fetchJob();
   }, [id]);
+
+  useEffect(() => {
+    const checkAppliedStatus = async () => {
+      if (isAuthenticated && job) {
+        try {
+          const response = await getMyApplications();
+          const apps = response.data || [];
+          const applied = apps.some(app => app.jobId === id);
+          setHasApplied(applied);
+        } catch (error) {
+          console.error("Failed to fetch applications:", error);
+        }
+      } else {
+        setHasApplied(false);
+      }
+    };
+    checkAppliedStatus();
+  }, [isAuthenticated, job, id]);
 
   if (!job) {
     return (
@@ -278,7 +298,7 @@ export default function JobDetail() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Địa điểm</p>
-                        <p className="font-semibold text-gray-800">{job.location}</p>
+                        <p className="font-semibold text-gray-800">{job.workAddress}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -308,11 +328,12 @@ export default function JobDetail() {
                   {/* CTA Buttons */}
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={handleApply}
-                      className="flex-1 min-w-50 flex items-center justify-center gap-2 py-3.5 px-6 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-base hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
+                      onClick={hasApplied ? undefined : handleApply}
+                      disabled={hasApplied}
+                      className={`flex-1 min-w-50 flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-base transition-all duration-200 ${hasApplied ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'}`}
                     >
                       <Send size={18} />
-                      Ứng tuyển ngay
+                      {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
                     </button>
                     <button
                       onClick={handleToggleSave}
@@ -505,11 +526,12 @@ export default function JobDetail() {
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={handleApply}
-                      className="flex items-center gap-2 py-3 px-8 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200 transition-all duration-200 active:scale-[0.98]"
+                      onClick={hasApplied ? undefined : handleApply}
+                      disabled={hasApplied}
+                      className={`flex items-center gap-2 py-3 px-8 rounded-xl font-bold transition-all duration-200 ${hasApplied ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'}`}
                     >
                       <Send size={16} />
-                      Ứng tuyển ngay
+                      {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
                     </button>
                     <button
                       onClick={handleToggleSave}

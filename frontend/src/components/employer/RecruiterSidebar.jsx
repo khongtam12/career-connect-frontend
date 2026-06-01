@@ -14,8 +14,6 @@ const RecruiterSidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Tin đăng', icon: <FiFileText size={22} />, path: '/employer/jobs' },
     { name: 'Ứng viên', icon: <FiUsers size={22} />, path: '/employer/candidates', badge: unreadCount > 0 ? unreadCount : null },
     { name: 'Dịch vụ', icon: <FiBox size={22} />, path: '/employer/services' },
-    { name: 'Tài khoản', icon: <FiUser size={22} />, path: '/employer/company' },
-    { name: 'Hỗ trợ', icon: <FiHelpCircle size={22} />, path: '/employer/support' },
   ];
 
   const isActive = (path) => {

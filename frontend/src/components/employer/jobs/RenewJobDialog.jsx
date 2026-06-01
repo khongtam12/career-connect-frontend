@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,7 +8,6 @@ import {
   FormControl,
   Select,
   MenuItem,
-  TextField,
   Typography,
   Box,
   IconButton,
@@ -17,7 +16,6 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import AutorenewOutlinedIcon from '@mui/icons-material/AutorenewOutlined';
 import {
-  fieldSx,
   selectSx,
   sectionLabelSx,
 } from './jobDialogStyles';
@@ -31,22 +29,24 @@ export default function RenewJobDialog({
 }) {
   const [selectedSubscription, setSelectedSubscription] = useState('');
 
-  useEffect(() => {
-    if (open) {
-      setSelectedSubscription('');
-    }
-  }, [open]);
+  const handleClose = () => {
+    setSelectedSubscription('');
+    onClose?.();
+  };
 
   const handleSubmit = () => {
+    if (!selectedSubscription) return;
+
     onSubmit({
       companySubscriptionId: selectedSubscription,
     });
+    setSelectedSubscription('');
   };
 
   return (
     <Dialog 
       open={open} 
-      onClose={onClose} 
+      onClose={handleClose} 
       maxWidth="sm" 
       fullWidth
       disableScrollLock
@@ -62,7 +62,7 @@ export default function RenewJobDialog({
             Gia hạn tin tuyển dụng
           </Typography>
         </Box>
-        <IconButton onClick={onClose} size="small" sx={{ color: '#9ca3af' }}>
+        <IconButton onClick={handleClose} size="small" sx={{ color: '#9ca3af' }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -134,7 +134,7 @@ export default function RenewJobDialog({
 
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         <Button 
-          onClick={onClose} 
+          onClick={handleClose} 
           variant="outlined"
           sx={{ borderColor: '#d1d5db', color: '#6b7280', borderRadius: 2, textTransform: 'none', fontWeight: 600, px: 3, '&:hover': { borderColor: '#9ca3af', bgcolor: '#f9fafb' } }}
         >
