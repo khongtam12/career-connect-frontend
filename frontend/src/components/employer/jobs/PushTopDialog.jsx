@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -41,12 +41,6 @@ export default function PushTopDialog({
 }) {
   const [selectedEntitlementId, setSelectedEntitlementId] = useState('');
 
-  useEffect(() => {
-    if (!open) {
-      setSelectedEntitlementId('');
-    }
-  }, [open]);
-
   const selectedEntitlement = useMemo(
     () => entitlements.find((item) => item.id === selectedEntitlementId),
     [entitlements, selectedEntitlementId]
@@ -55,15 +49,26 @@ export default function PushTopDialog({
   const canSubmit = Boolean(selectedEntitlement && job);
   const hasActiveMarketing = Boolean(job?.marketingAssignmentId);
 
+  const handleClose = () => {
+    setSelectedEntitlementId('');
+    onClose?.();
+  };
+
   const handleSubmit = () => {
     if (!canSubmit) return;
     onConfirm?.(job, selectedEntitlement);
+    setSelectedEntitlementId('');
+  };
+
+  const handleRemove = () => {
+    onRemove?.(job);
+    setSelectedEntitlementId('');
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -92,7 +97,7 @@ export default function PushTopDialog({
             Áp dụng gói hiển thị cho tin
           </Typography>
         </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: '#9ca3af' }}>
+        <IconButton size="small" onClick={handleClose} sx={{ color: '#9ca3af' }}>
           <CloseIcon sx={{ fontSize: 18 }} />
         </IconButton>
       </DialogTitle>
@@ -198,7 +203,7 @@ export default function PushTopDialog({
         <Box>
           {hasActiveMarketing && (
             <Button
-              onClick={() => onRemove?.(job)}
+              onClick={handleRemove}
               color="error"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             >
@@ -208,7 +213,7 @@ export default function PushTopDialog({
         </Box>
         <Box sx={{ display: 'flex', gap: 0.8 }}>
           <Button
-            onClick={onClose}
+            onClick={handleClose}
             sx={{
               minWidth: 56,
               color: '#6b7280',
