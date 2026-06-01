@@ -1,7 +1,15 @@
 import axios from 'axios';
 import apiClient from './apiClient';
 
-const rawJobServiceURL = import.meta.env.VITE_JOB_SERVICE_URL || 'http://localhost:8082';
+const isLocalFrontendHost = (() => {
+  if (typeof window === 'undefined') return import.meta.env.DEV;
+  const { hostname } = window.location;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+})();
+
+const rawJobServiceURL =
+  import.meta.env.VITE_JOB_SERVICE_URL ||
+  (isLocalFrontendHost ? 'http://localhost:8082' : '');
 const jobServiceURL = rawJobServiceURL.replace(/\/+$/, '');
 
 const jobServiceClient = axios.create({
@@ -18,6 +26,7 @@ const jobRequestConfig = (overrides = {}) => ({
 });
 
 const shouldFallbackToDirectJobService = (error) => {
+  if (!jobServiceURL) return false;
   const status = error?.response?.status;
   return status === 503 || status === 504 || error?.code === 'ERR_NETWORK';
 };

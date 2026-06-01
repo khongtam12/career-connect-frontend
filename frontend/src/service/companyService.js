@@ -1,7 +1,15 @@
 import axios from "axios";
 import apiClient from "./apiClient";
 
-const rawCompanyServiceURL = import.meta.env.VITE_COMPANY_SERVICE_URL || 'http://localhost:8081';
+const isLocalFrontendHost = (() => {
+    if (typeof window === 'undefined') return import.meta.env.DEV;
+    const { hostname } = window.location;
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+})();
+
+const rawCompanyServiceURL =
+    import.meta.env.VITE_COMPANY_SERVICE_URL ||
+    (isLocalFrontendHost ? 'http://localhost:8081' : '');
 const companyServiceURL = rawCompanyServiceURL.replace(/\/+$/, '');
 
 const companyServiceClient = axios.create({
@@ -13,6 +21,7 @@ const companyServiceClient = axios.create({
 });
 
 const shouldFallbackToDirectCompanyService = (error) => {
+    if (!companyServiceURL) return false;
     const status = error?.response?.status;
     return status === 503 || status === 504 || error?.code === 'ERR_NETWORK';
 };

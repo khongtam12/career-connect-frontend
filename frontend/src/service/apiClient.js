@@ -1,7 +1,16 @@
 import axios from 'axios';
 import { useUserStore } from '../stores/useUserStore';
 import { toast } from 'react-toastify';
-const rawBaseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+
+const isLocalFrontendHost = (() => {
+  if (typeof window === 'undefined') return import.meta.env.DEV;
+  const { hostname } = window.location;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+})();
+
+const rawBaseURL =
+  import.meta.env.VITE_BACKEND_URL ||
+  (isLocalFrontendHost ? 'http://localhost:8080' : '');
 const baseURL = rawBaseURL.replace(/\/+$/, '');
 
 // --- Rate Limiter Config (Client Side) ---
