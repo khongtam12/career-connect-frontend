@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, MessageSquare, Plus, FileText, UploadCloud, User, Sparkles, FolderOpen } from "lucide-react";
 
 import CandidateMenu from "./CandidateMenu";
@@ -69,10 +69,19 @@ const SectionTitle = ({ children }) => (
 
 const Header = ({ rightSlot }) => {
   const [cvMenuOpen, setCvMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const hydrated = useUserStore.persist.hasHydrated();
   const user = useUserStore((s) => s.user);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
+  const logout = useUserStore((s) => s.logout);
   const unreadChatCount = useNotificationStore((s) => s.unreadChatCount);
+
+  const handleSwitchToEmployer = async () => {
+    if (isAuthenticated) {
+      await logout();
+    }
+    navigate("/employer");
+  };
 
   if (!hydrated) return null;
   return (
@@ -182,6 +191,13 @@ const Header = ({ rightSlot }) => {
           </div>
 
           <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleSwitchToEmployer}
+              className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100 lg:block"
+            >
+              Dành cho Nhà Tuyển Dụng
+            </button>
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <Link

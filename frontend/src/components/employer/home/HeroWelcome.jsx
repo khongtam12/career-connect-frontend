@@ -8,15 +8,15 @@ export default function HeroWelcome({ newApplicants = 0 }) {
   return (
     <div className="relative overflow-hidden bg-white px-6 sm:px-12 py-16 flex flex-col md:flex-row items-center justify-between gap-12">
       {/* Background soft accents */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-50 rounded-full blur-[100px] -mr-64 -mt-32 -z-10 opacity-60"></div>
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-50 rounded-full blur-[100px] -mr-64 -mt-32 -z-10 opacity-60"></div>
       
       {/* Left content */}
       <div className="flex-1 max-w-2xl z-10">
-        <div className="w-12 h-1.5 bg-purple-600 mb-8 rounded-full shadow-lg shadow-purple-200"></div>
+        <div className="w-12 h-1.5 bg-emerald-600 mb-8 rounded-full shadow-lg shadow-emerald-200"></div>
         
         <h1 className="text-4xl sm:text-5xl font-black text-gray-800 mb-6 leading-tight tracking-tight">
           Nơi gặp gỡ giữa doanh nghiệp <br /> 
-          và <span className="text-purple-600 italic">10 triệu</span> ứng viên <br />
+          và <span className="text-emerald-600 italic">10 triệu</span> ứng viên <br />
           chất lượng
         </h1>
         
@@ -28,7 +28,7 @@ export default function HeroWelcome({ newApplicants = 0 }) {
         <div className="flex flex-wrap gap-4">
           <Link 
             to="/employer/jobs"
-            className="flex items-center gap-3 bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-2xl text-base font-black transition-all duration-300 shadow-xl shadow-purple-200 hover:scale-[1.02] active:scale-95 group no-underline"
+            className="flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-2xl text-base font-black transition-all duration-300 shadow-xl shadow-emerald-200 hover:scale-[1.02] active:scale-95 group no-underline"
           >
             Đăng tin ngay!
             <FiArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />

@@ -6,18 +6,18 @@ const EmptyCandidateState = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full bg-gradient-to-br from-gray-50 to-purple-50/30 rounded-3xl p-8 shadow-sm border border-white/50 backdrop-blur-sm">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full bg-gradient-to-br from-gray-50 to-emerald-50/40 rounded-3xl p-8 shadow-sm border border-white/50 backdrop-blur-sm">
       {/* Icon Container */}
       <div className="relative mb-8 group">
         {/* Glow effect */}
-        <div className="absolute inset-0 bg-purple-400 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700"></div>
+        <div className="absolute inset-0 bg-emerald-400 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700"></div>
         
         {/* Main Icon Circle */}
-        <div className="relative h-32 w-32 bg-white rounded-full flex items-center justify-center shadow-xl shadow-purple-100 border border-purple-50 group-hover:scale-105 transition-transform duration-500 ease-out">
-          <FiUsers className="text-5xl text-purple-600" />
+        <div className="relative h-32 w-32 bg-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-100 border border-emerald-50 group-hover:scale-105 transition-transform duration-500 ease-out">
+          <FiUsers className="text-5xl text-emerald-600" />
           
           {/* Floating badge */}
-          <div className="absolute -top-2 -right-2 h-12 w-12 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg border-4 border-white animate-bounce" style={{ animationDuration: '3s' }}>
+          <div className="absolute -top-2 -right-2 h-12 w-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg border-4 border-white animate-bounce" style={{ animationDuration: '3s' }}>
             <FiFileText className="text-white text-xl" />
           </div>
         </div>
@@ -34,7 +34,7 @@ const EmptyCandidateState = () => {
       {/* Action Button */}
       <button 
         onClick={() => navigate('/employer/jobs')}
-        className="group relative inline-flex items-center justify-center px-8 py-3.5 text-base font-bold text-white transition-all duration-200 bg-purple-600 border border-transparent rounded-2xl hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600 overflow-hidden shadow-lg shadow-purple-200"
+        className="group relative inline-flex items-center justify-center px-8 py-3.5 text-base font-bold text-white transition-all duration-200 bg-emerald-600 border border-transparent rounded-2xl hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 overflow-hidden shadow-lg shadow-emerald-200"
       >
         <div className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></div>
         <span className="relative flex items-center gap-2">
