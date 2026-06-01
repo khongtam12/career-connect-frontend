@@ -104,11 +104,12 @@ export default function JobActionMenu({
         {transitions.map(({ to, label, Icon, color }) => (
           <MenuItem key={to} dense onClick={(e) => { handleClose(e); onChangeStatus?.(job, to); }}>
             <ListItemIcon>
-              <Icon sx={{ fontSize: 17, color }} />
+              {React.createElement(Icon, { sx: { fontSize: 17, color } })}
             </ListItemIcon>
-            <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color }}>
-              {label}
-            </ListItemText>
+            <ListItemText
+              primary={label}
+              primaryTypographyProps={{ fontSize: '0.84rem', color }}
+            />
           </MenuItem>
         ))}
 
@@ -117,7 +118,10 @@ export default function JobActionMenu({
             <ListItemIcon>
               <AutorenewOutlinedIcon sx={{ fontSize: 17, color: '#0ea5e9' }} />
             </ListItemIcon>
-            <ListItemText primaryTypographyProps={{ fontSize: '0.84rem', color: '#0ea5e9' }}>Gia hạn tin</ListItemText>
+            <ListItemText
+              primary="Gia hạn tin"
+              primaryTypographyProps={{ fontSize: '0.84rem', color: '#0ea5e9' }}
+            />
           </MenuItem>
         )}
 

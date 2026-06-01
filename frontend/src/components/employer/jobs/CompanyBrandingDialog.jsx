@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -35,12 +35,6 @@ export default function CompanyBrandingDialog({
 }) {
   const [selectedEntitlementId, setSelectedEntitlementId] = useState('');
 
-  useEffect(() => {
-    if (!open) {
-      setSelectedEntitlementId('');
-    }
-  }, [open]);
-
   const selectedEntitlement = useMemo(
     () => entitlements.find((item) => item.id === selectedEntitlementId),
     [entitlements, selectedEntitlementId]
@@ -49,15 +43,26 @@ export default function CompanyBrandingDialog({
   const canSubmit = Boolean(selectedEntitlement && !activeAssignment);
   const hasActiveBranding = Boolean(activeAssignment);
 
+  const handleClose = () => {
+    setSelectedEntitlementId('');
+    onClose?.();
+  };
+
   const handleSubmit = () => {
     if (!canSubmit) return;
     onConfirm?.(selectedEntitlement);
+    setSelectedEntitlementId('');
+  };
+
+  const handleRemove = () => {
+    onRemove?.(activeAssignment.id);
+    setSelectedEntitlementId('');
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -86,7 +91,7 @@ export default function CompanyBrandingDialog({
             Branding Công ty
           </Typography>
         </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: '#9ca3af' }}>
+        <IconButton size="small" onClick={handleClose} sx={{ color: '#9ca3af' }}>
           <CloseIcon sx={{ fontSize: 20 }} />
         </IconButton>
       </DialogTitle>
@@ -205,7 +210,7 @@ export default function CompanyBrandingDialog({
         <Box>
           {hasActiveBranding && (
             <Button
-              onClick={() => onRemove?.(activeAssignment.id)}
+              onClick={handleRemove}
               color="error"
               variant="text"
               sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.9rem' }}
@@ -216,7 +221,7 @@ export default function CompanyBrandingDialog({
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
-            onClick={onClose}
+            onClick={handleClose}
             sx={{
               color: '#6b7280',
               textTransform: 'none',
