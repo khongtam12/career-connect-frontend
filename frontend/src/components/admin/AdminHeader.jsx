@@ -18,7 +18,7 @@ const AdminHeader = ({ setSidebarOpen }) => {
   const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
   const logout = useUserStore((s) => s.logout);
-
+  //
   const avatarSrc =
     user?.avatar ||
     `https://ui-avatars.com/api/?name=${user?.fullName || "Admin"}&background=10B981&color=fff`;
