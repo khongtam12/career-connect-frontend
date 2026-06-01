@@ -26,6 +26,7 @@ services:
       args:
         # Biến này được inject vào lúc build (Vite đọc khi build)
         VITE_BACKEND_URL: http://localhost:8080/
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     container_name: frontend
     ports:
       - "3000:80" # Truy cập tại http://localhost:3000
