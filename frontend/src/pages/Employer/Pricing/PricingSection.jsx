@@ -29,6 +29,7 @@ import {
 import { getPackage } from '../../../service/paymentService';
 import { toast } from 'react-toastify';
 import { useCartStore } from '../../../stores/useCartStore';
+import { useUserStore } from '../../../stores/useUserStore';
 import { getMarketingPackageBadge } from '../../../lib/marketingPackageLabels';
 
 // Icons for categories
@@ -40,6 +41,7 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 
 const PricingSection = () => {
     const navigate = useNavigate();
+    const isAuthenticated = useUserStore((s) => s.isAuthenticated);
     const [selectedTab, setSelectedTab] = useState('JOB_POSTING');
     const [rawPackages, setRawPackages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -108,6 +110,10 @@ const PricingSection = () => {
     };
 
     const handleAddToCart = (id) => {
+        if (!isAuthenticated) {
+            navigate('/employer/login');
+            return;
+        }
         const item = rawPackages.find(p => p.packageId === id);
         const duration = selectedDurations[id] || '1 Tuần';
         const quantity = localQuantities[id] || 1;
@@ -141,6 +147,10 @@ const PricingSection = () => {
 
     const handleCheckout = () => {
         if (items.length === 0) return;
+        if (!isAuthenticated) {
+            navigate('/employer/login');
+            return;
+        }
         navigate('/employer/payment');
     };
 
