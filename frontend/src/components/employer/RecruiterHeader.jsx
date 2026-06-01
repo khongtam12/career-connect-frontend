@@ -1,59 +1,52 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FiBell, FiPlus, FiChevronDown, FiMenu, FiSearch, FiMessageSquare } from "react-icons/fi";
-import { useState, useRef, useEffect } from "react";
+import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiMessageSquare, FiPlus, FiSearch } from "react-icons/fi";
+import { useEffect, useRef, useState } from "react";
 import { useUserStore } from "../../stores/useUserStore";
 import NotificationModal from "./model/NotificationModal";
-import { fetchNotificationsByCompanyId, connectNotificationWebSocket } from "../../service/notificationService";
-import apiClient from "../../service/apiClient";
-import { Stomp } from '@stomp/stompjs'
-import SockJS from 'sockjs-client';
-import axios from 'axios';
+import {
+  connectNotificationWebSocket,
+  fetchNotificationsByCompanyId,
+} from "../../service/notificationService";
 import { useNotificationStore } from "../../stores/useNotificationStore";
 import UserAvatar from "../common/UserAvatar";
-
 
 const RecruiterHeader = ({ setSidebarOpen }) => {
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const ref = useRef(null);
 
   const isCandidatePage = location.pathname === "/employer/candidates";
 
   const user = useUserStore((s) => s.user);
   const logout = useUserStore((s) => s.logout);
   const unreadChatCount = useNotificationStore((s) => s.unreadChatCount);
-
-  const ref = useRef(null);
-
-  const { notifications, unreadCount, setNotifications, addNotification, setHasNewCandidate, markAllAsRead } = useNotificationStore();
-
+  const {
+    notifications,
+    unreadCount,
+    setNotifications,
+    addNotification,
+    setHasNewCandidate,
+  } = useNotificationStore();
 
   useEffect(() => {
     if (!user?.companyId) return;
 
-    // 1. Fetch thông báo cũ từ Backend 
     fetchNotificationsByCompanyId(user.companyId)
-      .then(res => {
-        setNotifications(res);
-      })
-      .catch(err => console.log(err));
+      .then((res) => setNotifications(res))
+      .catch((err) => console.log(err));
 
-    // 2. Mở kết nối STOMP Websocket qua API Gateway
     const stompClient = connectNotificationWebSocket(user.companyId, (newNoti) => {
       addNotification(newNoti);
-      // Báo hiệu cho CVManagement biết có ứng viên mới cần refetch
       setHasNewCandidate(true);
     });
 
     return () => {
       if (stompClient) stompClient.disconnect();
     };
-  }, [user]);
+  }, [addNotification, setHasNewCandidate, setNotifications, user?.companyId]);
 
-
-
-  // click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!ref.current?.contains(e.target)) {
@@ -65,43 +58,39 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-100 shadow-sm h-16 flex items-center justify-between px-6">
-
-      {/* LEFT */}
-      <div className="flex items-center gap-6 flex-1">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-gray-100 bg-white px-6 shadow-sm">
+      <div className="flex flex-1 items-center gap-6">
         <button
           onClick={() => setSidebarOpen((prev) => !prev)}
-          className="text-gray-400 p-2 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+          className="rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700"
         >
           <FiMenu size={20} />
         </button>
 
-        {/* Logo */}
-        <Link to="/employer" className="flex items-center gap-2 group">
-          <div className="bg-emerald-600 text-white p-1.5 rounded-lg group-hover:bg-emerald-700 transition">
+        <Link to="/employer" className="group flex items-center gap-2">
+          <div className="rounded-lg bg-emerald-600 p-1.5 text-white transition group-hover:bg-emerald-700">
             <FiPlus size={18} />
           </div>
-          <span className="font-black text-lg text-gray-900">
+          <span className="text-lg font-black text-gray-900">
             career<span className="text-emerald-600">connect</span>
           </span>
         </Link>
 
-        {/* SEARCH / NAV */}
         {isCandidatePage ? (
-          <div className="hidden md:flex relative max-w-sm w-full ml-4">
+          <div className="ml-4 hidden max-w-sm w-full relative md:flex">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               placeholder="Tìm kiếm ứng viên..."
             />
           </div>
         ) : (
-          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-500">
-            <NavLink to="/employer/pricing" className={({ isActive }) =>
-              isActive ? "text-emerald-600" : "hover:text-emerald-600"
-            }>
+          <nav className="hidden items-center gap-5 text-sm font-medium text-gray-500 lg:flex">
+            <NavLink
+              to="/employer/pricing"
+              className={({ isActive }) => (isActive ? "text-emerald-600" : "hover:text-emerald-600")}
+            >
               Bảng giá
             </NavLink>
             <NavLink to="/employer/candidates" className="hover:text-emerald-600">
@@ -111,19 +100,14 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
         )}
       </div>
 
-      {/* RIGHT */}
       <div className="flex items-center gap-3">
-
-        {/* Notification */}
-       <div className="relative">
-        <button
-          onClick={() => {
-            setShowNotifications((prev) => !prev);
-          }}
-          className="relative p-2 text-gray-400 hover:text-emerald-600 hover:bg-gray-50 rounded-lg"
-        >
-          {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifications((prev) => !prev)}
+            className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-emerald-600"
+          >
+            {unreadCount > 0 && (
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
             )}
             <FiBell size={20} />
           </button>
@@ -135,89 +119,64 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
           />
         </div>
 
-        {/* Chat */}
-        <Link 
-          to="/employer/chat" 
-          className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-gray-50 rounded-lg relative group"
+        <Link
+          to="/employer/chat"
+          className="group relative rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-emerald-600"
           title="Tin nhắn"
         >
           <FiMessageSquare size={20} />
           {unreadChatCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white shadow-sm group-hover:scale-110 transition-transform"></span>
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white shadow-sm transition-transform group-hover:scale-110"></span>
           )}
         </Link>
 
-        {/* Wallet */}
-        <div className="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-          <span className="text-sm font-semibold text-emerald-700">
-            5.000.000đ
-          </span>
-          <button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-0.5 rounded">
+        <div className="hidden items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-1.5 sm:flex">
+          <span className="text-sm font-semibold text-emerald-700">5.000.000đ</span>
+          <button className="rounded bg-emerald-600 px-2 py-0.5 text-xs text-white hover:bg-emerald-700">
             Nạp
           </button>
         </div>
 
-        {/* PROFILE */}
         <div ref={ref} className="relative">
           <button
-            onClick={() => setShowProfile(!showProfile)}
-            className={`flex items-center gap-2 px-2 py-1.5 rounded-xl transition ${showProfile ? "bg-gray-100" : "hover:bg-gray-50"
-              }`}
+            onClick={() => setShowProfile((prev) => !prev)}
+            className={`flex items-center gap-2 rounded-xl px-2 py-1.5 transition ${
+              showProfile ? "bg-gray-100" : "hover:bg-gray-50"
+            }`}
           >
-            <UserAvatar
-              src={user?.avatar}
-              name={user?.username}
-              className="h-9 w-9"
-            />
+            <UserAvatar src={user?.avatar} name={user?.username} className="h-9 w-9" />
 
-            <div className="hidden xl:flex flex-col items-start">
-              <span className="text-sm font-semibold text-gray-800">
-                {user?.username}
-              </span>
-              <span className="text-[11px] text-gray-400">
-                {user?.companyName}
-              </span>
+            <div className="hidden flex-col items-start xl:flex">
+              <span className="text-sm font-semibold text-gray-800">{user?.username}</span>
+              <span className="text-[11px] text-gray-400">{user?.companyName}</span>
             </div>
 
-            <FiChevronDown
-              className={`text-gray-400 transition ${showProfile ? "rotate-180" : ""
-                }`}
-            />
+            <FiChevronDown className={`text-gray-400 transition ${showProfile ? "rotate-180" : ""}`} />
           </button>
 
-          {/* DROPDOWN */}
           <div
-            className={`absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden transition-all duration-200 origin-top-right
-            ${showProfile
-                ? "opacity-100 scale-100 translate-y-0"
-                : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
-              }`}
+            className={`absolute right-0 mt-2 w-72 origin-top-right overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl transition-all duration-200 ${
+              showProfile ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-1 scale-95 opacity-0"
+            }`}
           >
-            {/* User card */}
-            <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-indigo-50 border-b">
-              <UserAvatar
-                src={user?.avatar}
-                name={user?.username}
-                className="h-10 w-10"
-              />
+            <div className="flex items-center gap-3 border-b bg-white p-4">
+              <UserAvatar src={user?.avatar} name={user?.fullName || user?.username} className="h-12 w-12" />
               <div>
-                <p className="text-sm font-bold text-gray-900">
-                  {user?.username}
-                </p>
+                <p className="text-sm font-semibold text-gray-900">{user?.fullName || user?.username}</p>
+                <p className="text-xs text-gray-500">Tài khoản nhà tuyển dụng</p>
                 <p className="text-xs text-gray-500">
-                  {user?.companyName}
+                  ID {user?.userId || user?.employerId} | {user?.email}
                 </p>
               </div>
             </div>
 
-            {/* Menu */}
             <div className="p-2 text-sm">
               <button
                 onClick={() => {
                   navigate("/employer/profile");
                   setShowProfile(false);
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100"
+                className="w-full rounded-lg px-3 py-2 text-left hover:bg-gray-100"
               >
                 Hồ sơ cá nhân
               </button>
@@ -227,7 +186,7 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
                   navigate("/employer/recruitment-account");
                   setShowProfile(false);
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100"
+                className="w-full rounded-lg px-3 py-2 text-left hover:bg-gray-100"
               >
                 Thông tin công ty
               </button>
@@ -237,26 +196,26 @@ const RecruiterHeader = ({ setSidebarOpen }) => {
                   navigate("/employer/jobs");
                   setShowProfile(false);
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100"
+                className="w-full rounded-lg px-3 py-2 text-left hover:bg-gray-100"
               >
                 Quản lý tin tuyển dụng
               </button>
 
-              <div className="border-t my-2"></div>
+              <div className="my-2 border-t"></div>
 
               <button
                 onClick={async () => {
                   await logout();
                   navigate("/employer/login");
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 font-medium"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-medium text-red-500 hover:bg-red-50"
               >
+                <FiLogOut size={16} />
                 Đăng xuất
               </button>
             </div>
           </div>
         </div>
-
       </div>
     </header>
   );

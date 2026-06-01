@@ -8,15 +8,14 @@ import CTASection from './components/CTASection';
 import HowItWorks from './components/HowItWorks';
 import FeaturedCompaniesSection from './components/FeaturedCompaniesSection';
 import { getJobFilters, getJobStats, searchJobs } from '../../service/jobService';
-import { getCompanyMarketingEntitlements, getFeaturedCompanyIds } from '../../service/companyService';
+import { getCompanyDetail, getFeaturedCompanyIds } from '../../service/companyService';
 import { isServiceUnavailableError } from '../../service/apiClient';
 import { categoriesData } from '../../data/categoriesData';
 import { getAppliedJobs, getSavedJobs } from './utils/jobTracker';
 import {
-  filterFeaturedCompaniesByBranding,
   getCompanyKey,
-  isBrandingEntitlementActive,
   isBrandingJob,
+  mapFeaturedCompanyFromDetail,
   mapFeaturedCompaniesFromJobs,
 } from './utils/featuredCompanies';
 import useProvinces from '../../hooks/useProvinces';
@@ -259,16 +258,31 @@ export default function Home() {
         setJobServiceUnavailable(false);
         const baseJobs = jobsResponse.content || [];
         const companies = mapFeaturedCompaniesFromJobs(baseJobs);
+        const companyMap = new Map(
+          companies.map((company) => [company.key || company.companyId, company])
+        );
 
-        // featuredIds = list of companyIds that have an ACTIVE COMPANY-scope branding assignment
         const featuredSet = new Set(featuredIds || []);
-
-        // Also include companies whose jobs have branding flag (backward compatibility)
         const brandedByJobKeys = new Set(
           baseJobs.filter(isBrandingJob).map(getCompanyKey).filter(Boolean)
         );
 
-        const featured = companies.filter((company) => {
+        const missingFeaturedIds = Array.from(featuredSet).filter((companyId) => !companyMap.has(companyId));
+
+        if (missingFeaturedIds.length > 0) {
+          const detailResults = await Promise.allSettled(
+            missingFeaturedIds.map((companyId) => getCompanyDetail(companyId))
+          );
+
+          detailResults.forEach((result, index) => {
+            if (result.status !== 'fulfilled' || !result.value) return;
+            const company = mapFeaturedCompanyFromDetail(result.value);
+            if (!company.key) return;
+            companyMap.set(missingFeaturedIds[index], company);
+          });
+        }
+
+        const featured = Array.from(companyMap.values()).filter((company) => {
           const key = company.key || company.companyId;
           return featuredSet.has(key) || brandedByJobKeys.has(key);
         });

@@ -2,14 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, BriefcaseBusiness, Search, Sparkles } from 'lucide-react';
 import { searchJobs } from '../../service/jobService';
-import { getCompanyMarketingEntitlements } from '../../service/companyService';
+import { getCompanyDetail, getFeaturedCompanyIds } from '../../service/companyService';
 import { isServiceUnavailableError } from '../../service/apiClient';
 import useProvinces from '../../hooks/useProvinces';
 import { formatProvinceLabel } from '../../lib/utils';
 import {
-  filterFeaturedCompaniesByBranding,
   getCompanyKey,
-  isBrandingEntitlementActive,
+  mapFeaturedCompanyFromDetail,
   mapFeaturedCompaniesFromJobs,
   isBrandingJob,
 } from './utils/featuredCompanies';
@@ -34,21 +33,27 @@ export default function FeaturedCompanies() {
 
     setLoading(true);
     try {
-      const response = await searchJobs(
-        {
-          keyword: nextKeyword || undefined,
-          location: nextLocation || undefined,
-          sortBy: 'createdAt',
-          sortDir: 'desc',
-          page: 0,
-          size: 120,
-        },
-        { quietOn503: true }
-      );
+      const [response, featuredIds] = await Promise.all([
+        searchJobs(
+          {
+            keyword: nextKeyword || undefined,
+            location: nextLocation || undefined,
+            sortBy: 'createdAt',
+            sortDir: 'desc',
+            page: 0,
+            size: 120,
+          },
+          { quietOn503: true }
+        ),
+        getFeaturedCompanyIds().catch(() => []),
+      ]);
 
       setServiceUnavailable(false);
       const baseJobs = response.content || [];
       const baseCompanies = mapFeaturedCompaniesFromJobs(baseJobs);
+      const companyMap = new Map(
+        baseCompanies.map((company) => [company.key || company.companyId, company])
+      );
       const brandedCompanyKeysFromJobs = new Set(
         baseJobs
           .filter(isBrandingJob)
@@ -56,44 +61,26 @@ export default function FeaturedCompanies() {
           .filter(Boolean)
       );
 
-      const brandingMap = new Map();
-      let unauthorizedBrandingApi = false;
+      const featuredSet = new Set(featuredIds || []);
+      const missingFeaturedIds = Array.from(featuredSet).filter((companyId) => !companyMap.has(companyId));
 
-      await Promise.allSettled(
-        baseCompanies.map(async (company) => {
-          const companyKey = company.key || company.companyId;
-          if (!companyKey) {
-            return;
-          }
+      if (missingFeaturedIds.length > 0) {
+        const detailResults = await Promise.allSettled(
+          missingFeaturedIds.map((companyId) => getCompanyDetail(companyId))
+        );
 
-          if (brandedCompanyKeysFromJobs.has(companyKey)) {
-            brandingMap.set(companyKey, true);
-            return;
-          }
+        detailResults.forEach((result, index) => {
+          if (result.status !== 'fulfilled' || !result.value) return;
+          const company = mapFeaturedCompanyFromDetail(result.value);
+          if (!company.key) return;
+          companyMap.set(missingFeaturedIds[index], company);
+        });
+      }
 
-          try {
-            if (!company.companyId) {
-              brandingMap.set(companyKey, false);
-              return;
-            }
-
-            const entitlements = await getCompanyMarketingEntitlements(company.companyId, 'BRANDING');
-            brandingMap.set(
-              companyKey,
-              Array.isArray(entitlements) && entitlements.some(isBrandingEntitlementActive)
-            );
-          } catch (error) {
-            if (error?.response?.status === 401) {
-              unauthorizedBrandingApi = true;
-            }
-            brandingMap.set(companyKey, false);
-          }
-        })
-      );
-
-      const featuredCompanies = unauthorizedBrandingApi
-        ? baseCompanies.filter((company) => brandedCompanyKeysFromJobs.has(company.key || company.companyId))
-        : filterFeaturedCompaniesByBranding(baseCompanies, brandingMap, brandedCompanyKeysFromJobs);
+      const featuredCompanies = Array.from(companyMap.values()).filter((company) => {
+        const companyKey = company.key || company.companyId;
+        return featuredSet.has(companyKey) || brandedCompanyKeysFromJobs.has(companyKey);
+      });
 
       setCompanies(featuredCompanies);
     } catch (error) {
