@@ -14,7 +14,7 @@ const baseURL = rawBaseURL.replace(/\/+$/, '');
 
 
 // --- Rate Limiter Config (Client Side) ---
-const MAX_REQUESTS = 20; // Tối đa 30 request
+const MAX_REQUESTS = 30; // Tối đa 30 request
 const WINDOW_MS = 10000; // Trong vòng 10 giây
 let requestTimestamps = [];
 
