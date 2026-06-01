@@ -12,11 +12,6 @@ RUN npm ci
 # Copy toàn bộ source code
 COPY . .
 
-ARG VITE_BACKEND_URL
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
-ARG VITE_GOOGLE_CLIENT_ID
-ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
-
 # Build production bundle
 RUN npm run build
 
