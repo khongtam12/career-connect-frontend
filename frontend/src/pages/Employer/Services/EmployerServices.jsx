@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -77,10 +77,69 @@ const TABS = [
     { key: 'EXPIRED', label: 'Đã hết hạn' },
 ];
 
+const decodeMojibake = (value) => {
+    if (!value || typeof value !== 'string') return value;
+    if (!/[ÃÄâáºá»]/.test(value)) return value;
+    try {
+        return decodeURIComponent(escape(value));
+    } catch {
+        return value;
+    }
+};
+
+const categoryLabelsVi = Object.fromEntries(
+    Object.entries(categoryLabels).map(([key, value]) => [key, decodeMojibake(value)])
+);
+
+const statusConfigVi = Object.fromEntries(
+    Object.entries(statusConfig).map(([key, value]) => [
+        key,
+        { ...value, label: decodeMojibake(value.label) },
+    ])
+);
+
+const tabsVi = TABS.map((tab) => ({ ...tab, label: decodeMojibake(tab.label) }));
+
+const categoryArt = {
+    JOB_POSTING: { start: '#dbeafe', end: '#eff6ff', accent: '#2563eb', icon: '📄', title: 'Job' },
+    HIGHLIGHT: { start: '#fef3c7', end: '#fff7ed', accent: '#d97706', icon: '🚀', title: 'Boost' },
+    EFFECT: { start: '#f3e8ff', end: '#faf5ff', accent: '#9333ea', icon: '✨', title: 'Effect' },
+    POINTS: { start: '#d1fae5', end: '#ecfdf5', accent: '#059669', icon: '🎯', title: 'Points' },
+    BRANDING: { start: '#ffe4e6', end: '#fff1f2', accent: '#e11d48', icon: '🏷️', title: 'Brand' },
+};
+
+const buildFallbackArtwork = (packageName, packageCategory) => {
+    const art = categoryArt[packageCategory] || categoryArt.JOB_POSTING;
+    const safeName = (packageName || 'Service')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .slice(0, 20);
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${art.start}"/>
+            <stop offset="100%" stop-color="${art.end}"/>
+          </linearGradient>
+        </defs>
+        <rect width="160" height="160" rx="28" fill="url(#g)"/>
+        <circle cx="122" cy="38" r="18" fill="${art.accent}" opacity="0.14"/>
+        <circle cx="34" cy="126" r="24" fill="${art.accent}" opacity="0.12"/>
+        <rect x="18" y="18" width="56" height="56" rx="18" fill="#ffffff" opacity="0.94"/>
+        <text x="46" y="54" text-anchor="middle" font-size="26">${art.icon}</text>
+        <text x="18" y="102" fill="#0f172a" font-family="Arial, sans-serif" font-size="13" font-weight="700">${art.title}</text>
+        <text x="18" y="122" fill="#334155" font-family="Arial, sans-serif" font-size="11">${safeName}</text>
+        <rect x="18" y="132" width="88" height="8" rx="4" fill="${art.accent}" opacity="0.18"/>
+      </svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
 export default function EmployerServices() {
     const navigate = useNavigate();
     const { user } = useUserStore();
     const companyId = user?.companyId;
+    const rootRef = useRef(null);
 
     const [subscriptions, setSubscriptions] = useState([]);
     const [packages, setPackages] = useState([]);
@@ -131,6 +190,40 @@ export default function EmployerServices() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        if (!rootRef.current) return;
+
+        const root = rootRef.current;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const textNodes = [];
+
+        while (walker.nextNode()) {
+            textNodes.push(walker.currentNode);
+        }
+
+        textNodes.forEach((node) => {
+            const decoded = decodeMojibake(node.nodeValue);
+            if (decoded && decoded !== node.nodeValue) {
+                node.nodeValue = decoded;
+            }
+        });
+
+        root.querySelectorAll('input[placeholder], img[alt]').forEach((element) => {
+            if (element instanceof HTMLInputElement && element.placeholder) {
+                const decoded = decodeMojibake(element.placeholder);
+                if (decoded !== element.placeholder) {
+                    element.placeholder = decoded;
+                }
+            }
+            if (element instanceof HTMLImageElement && element.alt) {
+                const decoded = decodeMojibake(element.alt);
+                if (decoded !== element.alt) {
+                    element.alt = decoded;
+                }
+            }
+        });
+    }, [loading, subscriptions, selectedSubscription, activeBrandingAssignment, searchQuery, activeTab]);
 
     // Build package lookup map
     const packageMap = useMemo(() => {
@@ -291,7 +384,7 @@ export default function EmployerServices() {
     }
 
     return (
-        <Box sx={{ width: '100%', px: { xs: 2, md: 3 } }}>
+        <Box ref={rootRef} sx={{ width: '100%', px: { xs: 2, md: 3 } }}>
             {/* Page Header */}
             <Box
                 sx={{
@@ -393,7 +486,7 @@ export default function EmployerServices() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     {/* Tabs */}
                     <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                        {TABS.map((tab) => (
+                        {tabsVi.map((tab) => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
@@ -521,7 +614,8 @@ function SubscriptionCard({ subscription, onViewDetail }) {
     const status = String(sub.status || '').toUpperCase();
     const isActive = status === 'ACTIVE';
     const catColor = categoryColors[sub.packageCategory] || categoryColors.JOB_POSTING;
-    const stConfig = statusConfig[status] || statusConfig.EXPIRED;
+    const stConfig = statusConfigVi[status] || statusConfigVi.EXPIRED;
+    const artworkUrl = sub.imageUrl || buildFallbackArtwork(decodeMojibake(sub.packageName), sub.packageCategory);
 
     const limit = sub.jobPostLimit || 0;
     const posted = sub.jobPostedCount || 0;
@@ -547,23 +641,17 @@ function SubscriptionCard({ subscription, onViewDetail }) {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 min-w-0">
-                        {sub.imageUrl ? (
-                            <img
-                                src={sub.imageUrl}
-                                alt={sub.packageName}
-                                className="w-12 h-12 rounded-xl object-contain bg-gray-50 p-1 shrink-0"
-                            />
-                        ) : (
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${catColor.bg}`}>
-                                <FiBox className={`${catColor.text}`} size={22} />
-                            </div>
-                        )}
+                        <img
+                            src={artworkUrl}
+                            alt={decodeMojibake(sub.packageName)}
+                            className="w-12 h-12 rounded-xl object-cover bg-gray-50 shrink-0 border border-white shadow-sm"
+                        />
                         <div className="min-w-0">
                             <h3 className="font-bold text-gray-900 text-[15px] truncate" title={sub.packageName}>
-                                {sub.packageName}
+                                {decodeMojibake(sub.packageName)}
                             </h3>
                             <Chip
-                                label={categoryLabels[sub.packageCategory] || sub.packageCategory}
+                                label={categoryLabelsVi[sub.packageCategory] || sub.packageCategory}
                                 size="small"
                                 sx={{
                                     mt: 0.5,
@@ -663,7 +751,8 @@ function DetailDrawer({
     const status = String(sub.status || '').toUpperCase();
     const isActive = status === 'ACTIVE';
     const catColor = categoryColors[sub.packageCategory] || categoryColors.JOB_POSTING;
-    const stConfig = statusConfig[status] || statusConfig.EXPIRED;
+    const stConfig = statusConfigVi[status] || statusConfigVi.EXPIRED;
+    const artworkUrl = sub.imageUrl || buildFallbackArtwork(decodeMojibake(sub.packageName), sub.packageCategory);
 
     const limit = sub.jobPostLimit || 0;
     const posted = sub.jobPostedCount || 0;
@@ -772,22 +861,16 @@ function DetailDrawer({
 
                     {/* Package Info */}
                     <div className="flex items-center gap-4">
-                        {sub.imageUrl ? (
-                            <img
-                                src={sub.imageUrl}
-                                alt={sub.packageName}
-                                className="w-16 h-16 rounded-2xl object-contain bg-gray-50 p-2 border border-gray-100"
-                            />
-                        ) : (
-                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${catColor.bg} border ${catColor.border}`}>
-                                <FiBox className={catColor.text} size={28} />
-                            </div>
-                        )}
+                        <img
+                            src={artworkUrl}
+                            alt={decodeMojibake(sub.packageName)}
+                            className="w-16 h-16 rounded-2xl object-cover bg-gray-50 border border-gray-100"
+                        />
                         <div className="min-w-0 flex-1">
-                            <h3 className="font-black text-gray-900 text-lg">{sub.packageName}</h3>
+                            <h3 className="font-black text-gray-900 text-lg">{decodeMojibake(sub.packageName)}</h3>
                             <div className="flex items-center gap-2 mt-1.5">
                                 <Chip
-                                    label={categoryLabels[sub.packageCategory] || sub.packageCategory}
+                                    label={categoryLabelsVi[sub.packageCategory] || sub.packageCategory}
                                     size="small"
                                     sx={{
                                         fontSize: '0.7rem',

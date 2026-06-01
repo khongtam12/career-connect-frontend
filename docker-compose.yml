@@ -2,33 +2,24 @@
 #  CAREER CONNECT - Frontend Docker Compose
 #  Repo: FE (frontend)
 #
-#  ⚠️  QUAN TRỌNG: Phải chạy BE docker-compose TRƯỚC
-#
-#  Tạo network (chỉ làm 1 lần):
-#    docker network create career-net
-#
-#  Chạy FE:
+#  Chay FE:
 #    docker-compose up --build -d
 #
-#  Truy cập: http://localhost:3000
+#  Truy cap: http://localhost:3000
 # ==============================================================
 
 networks:
   career-net:
-    external: true # ← Dùng chung với BE repo để gọi api-gateway
+    external: true
 
 services:
-
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        # Biến này được inject vào lúc build (Vite đọc khi build)
-        VITE_BACKEND_URL: http://localhost:8080/
     container_name: frontend
     ports:
-      - "3000:80" # Truy cập tại http://localhost:3000
+      - "3000:80"
     networks:
       - career-net
     restart: on-failure
