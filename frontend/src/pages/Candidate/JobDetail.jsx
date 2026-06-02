@@ -113,11 +113,19 @@ export default function JobDetail() {
   );
   const savedJobId = job?.id || job?.jobId;
   const isSaved = savedJobId ? isJobSaved(savedJobId) : false;
-  const applyOpen = manualApplyOpen || (isAuthenticated && isApplyRequest);
+  const jobDeadlineExpired = job
+    ? job.deadlineExpired === true || getDaysLeft(job.deadline) < 0
+    : false;
+  const applyOpen = !jobDeadlineExpired && (manualApplyOpen || (isAuthenticated && isApplyRequest));
   const MotionDiv = motion.div;
 
   useEffect(() => {
-    if (!isApplyRequest) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [id]);
+
+  useEffect(() => {
+    if (!job) return;
+    if (!isApplyRequest || jobDeadlineExpired) {
       applyTriggered.current = false;
       return;
     }
@@ -127,10 +135,12 @@ export default function JobDetail() {
       closable: true,
       onSuccess: () => setManualApplyOpen(true),
     });
-  }, [isApplyRequest, isAuthenticated, openAuthDialog]);
+  }, [isApplyRequest, isAuthenticated, openAuthDialog, job, jobDeadlineExpired]);
 
   // ── Handler ứng tuyển ──
   const handleApply = () => {
+    if (jobDeadlineExpired) return;
+
     if (!isAuthenticated) {
       openAuthDialog({
         closable: true,
@@ -234,8 +244,9 @@ export default function JobDetail() {
   const salaryIsHtml = salaryHtml && isHtmlString(salaryHtml);
   const benefitsIsHtml = benefitsHtml && isHtmlString(benefitsHtml);
   const workScheduleIsHtml = workScheduleHtml && isHtmlString(workScheduleHtml);
-  const deadlineExpired = job.deadlineExpired === true;
-  const daysLeft = deadlineExpired ? null : getDaysLeft(job.deadline);
+  const parsedDaysLeft = getDaysLeft(job.deadline);
+  const deadlineExpired = jobDeadlineExpired;
+  const daysLeft = deadlineExpired ? null : parsedDaysLeft;
 
   return (
     <>
@@ -328,12 +339,12 @@ export default function JobDetail() {
                   {/* CTA Buttons */}
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={hasApplied ? undefined : handleApply}
-                      disabled={hasApplied}
-                      className={`flex-1 min-w-50 flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-base transition-all duration-200 ${hasApplied ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'}`}
+                      onClick={hasApplied || deadlineExpired ? undefined : handleApply}
+                      disabled={hasApplied || deadlineExpired}
+                      className={`flex-1 min-w-50 flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-base transition-all duration-200 ${hasApplied || deadlineExpired ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'}`}
                     >
                       <Send size={18} />
-                      {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
+                      {hasApplied ? 'Đã ứng tuyển' : deadlineExpired ? 'Hết hạn ứng tuyển' : 'Ứng tuyển ngay'}
                     </button>
                     <button
                       onClick={handleToggleSave}
@@ -514,10 +525,16 @@ export default function JobDetail() {
                 {/* ── Cách thức ứng tuyển ── */}
                 <div className="mb-4">
                   <h3 className="text-base font-bold text-gray-900 mb-3">Cách thức ứng tuyển</h3>
-                  <p className="text-sm text-gray-700 mb-4">
-                    Ứng viên nộp hồ sơ trực tuyến bằng cách bấm{' '}
-                    <b className="text-emerald-600">Ứng tuyển ngay</b> dưới đây.
-                  </p>
+                  {deadlineExpired ? (
+                    <p className="text-sm font-semibold text-rose-600 mb-4">
+                      Tin tuyển dụng này đã hết hạn ứng tuyển.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-700 mb-4">
+                      Ứng viên nộp hồ sơ trực tuyến bằng cách bấm{' '}
+                      <b className="text-emerald-600">Ứng tuyển ngay</b> dưới đây.
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 mb-5">
                     Hạn nộp hồ sơ: <b className="text-gray-800">{job.deadline}</b>
                     {deadlineExpired && (
@@ -526,12 +543,12 @@ export default function JobDetail() {
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={hasApplied ? undefined : handleApply}
-                      disabled={hasApplied}
-                      className={`flex items-center gap-2 py-3 px-8 rounded-xl font-bold transition-all duration-200 ${hasApplied ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'}`}
+                      onClick={hasApplied || deadlineExpired ? undefined : handleApply}
+                      disabled={hasApplied || deadlineExpired}
+                      className={`flex items-center gap-2 py-3 px-8 rounded-xl font-bold transition-all duration-200 ${hasApplied || deadlineExpired ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-linear-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98]'}`}
                     >
                       <Send size={16} />
-                      {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
+                      {hasApplied ? 'Đã ứng tuyển' : deadlineExpired ? 'Hết hạn ứng tuyển' : 'Ứng tuyển ngay'}
                     </button>
                     <button
                       onClick={handleToggleSave}

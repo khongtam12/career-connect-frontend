@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, TextField, CircularProgress, Alert } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, TextField, CircularProgress } from '@mui/material';
 import { FiCalendar } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
@@ -9,20 +9,18 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
     const [location, setLocation] = useState('');
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
 
     const handleSubmit = async () => {
         if (!interviewDate || !interviewTime) {
-            setError('Vui lòng chọn ngày và giờ phỏng vấn');
+            toast.warning('Vui lòng chọn ngày và giờ phỏng vấn');
             return;
         }
         if (!location.trim()) {
-            setError('Vui lòng nhập địa điểm / link phỏng vấn');
+            toast.warning('Vui lòng nhập địa điểm / link phỏng vấn');
             return;
         }
 
         setLoading(true);
-        setError('');
 
         try {
             const { scheduleInterview } = await import('@/service/applicationService');
@@ -45,14 +43,13 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
             onClose();
         } catch (err) {
             console.error('Schedule interview error:', err);
-            setError(err?.response?.data?.message || 'Lỗi khi lên lịch phỏng vấn. Vui lòng thử lại.');
+            toast.error(err?.response?.data?.message || 'Lỗi khi lên lịch phỏng vấn. Vui lòng thử lại.');
         } finally {
             setLoading(false);
         }
     };
 
     const handleClose = () => {
-        setError('');
         setInterviewDate('');
         setInterviewTime('');
         setLocation('');
@@ -75,12 +72,6 @@ const ScheduleInterviewModal = ({ open, onClose, candidateName, applicationId, o
                 <Typography className="text-gray-600 text-sm">
                     Thiết lập lịch phỏng vấn cho ứng viên <span className="font-bold">{candidateName}</span>. Thông báo sẽ được gửi qua email.
                 </Typography>
-
-                {error && (
-                    <Alert severity="error" onClose={() => setError('')} sx={{ borderRadius: '10px' }}>
-                        {error}
-                    </Alert>
-                )}
 
                 <div className="flex gap-4">
                     <TextField

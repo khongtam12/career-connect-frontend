@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, TextField, CircularProgress, Alert } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, TextField, CircularProgress } from '@mui/material';
 import { FiXCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
 const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, onSuccess }) => {
     const [reason, setReason] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
 
     const handleSubmit = async () => {
         if (!reason.trim()) {
-            setError('Vui lòng nhập lý do từ chối');
+            toast.warning('Vui lòng nhập lý do từ chối');
             return;
         }
 
         setLoading(true);
-        setError('');
 
         try {
             const { rejectApplication } = await import('@/service/applicationService');
@@ -28,14 +26,13 @@ const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, o
             onClose();
         } catch (err) {
             console.error('Reject application error:', err);
-            setError(err?.response?.data?.message || 'Lỗi khi từ chối hồ sơ. Vui lòng thử lại.');
+            toast.error(err?.response?.data?.message || 'Lỗi khi từ chối hồ sơ. Vui lòng thử lại.');
         } finally {
             setLoading(false);
         }
     };
 
     const handleClose = () => {
-        setError('');
         setReason('');
         onClose();
     };
@@ -55,12 +52,6 @@ const RejectApplicationModal = ({ open, onClose, candidateName, applicationId, o
                 <Typography className="text-gray-600 text-sm mb-2">
                     Bạn đang từ chối hồ sơ của <span className="font-bold">{candidateName}</span>. Vui lòng cung cấp lý do để ứng viên có thể cải thiện trong tương lai.
                 </Typography>
-
-                {error && (
-                    <Alert severity="error" onClose={() => setError('')} sx={{ borderRadius: '10px' }}>
-                        {error}
-                    </Alert>
-                )}
 
                 <TextField
                     label="Lý do từ chối (Bắt buộc)"

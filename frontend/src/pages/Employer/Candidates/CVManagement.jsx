@@ -113,6 +113,7 @@ const statusTone = (status) => {
 const CVManagement = () => {
     const [openInterviewModal, setOpenInterviewModal] = useState(false);
     const [openRejectModal, setOpenRejectModal] = useState(false);
+    const [openAcceptConfirmModal, setOpenAcceptConfirmModal] = useState(false);
     const [candidates, setCandidates] = useState([]);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -329,7 +330,7 @@ const CVManagement = () => {
 
     const handleDownloadCV = (candidate) => {
         if (!candidate.cvUrl) {
-            alert('Không có CV để tải xuống');
+            toast.warning('Không có CV để tải xuống');
             return;
         }
 
@@ -345,32 +346,66 @@ const CVManagement = () => {
     const handleCancelInterview = async () => {
         if (!selectedCandidate) return;
 
-        const confirmed = window.confirm(`Bạn có chắc muốn hủy phỏng vấn của ${selectedCandidate.name}?`);
-        if (!confirmed) return;
+        const candidate = selectedCandidate;
+        const toastId = `cancel-interview-${candidate.id}`;
+        const confirmCancelInterview = async () => {
+            toast.dismiss(toastId);
+            setActionLoading(true);
+            try {
+                await cancelInterview(candidate.id);
+                toast.success(`Đã hủy phỏng vấn của ${candidate.name} và gửi thông báo qua email!`);
+                await fetchCandidates({ includeAi: false });
+            } catch (err) {
+                console.error('Cancel interview error:', err);
+                toast.error(err?.response?.data?.message || 'Lỗi khi hủy phỏng vấn');
+            } finally {
+                setActionLoading(false);
+            }
+        };
 
-        setActionLoading(true);
-        try {
-            await cancelInterview(selectedCandidate.id);
-            toast.success(`Đã hủy phỏng vấn của ${selectedCandidate.name} và gửi thông báo qua email!`);
-            await fetchCandidates({ includeAi: false });
-        } catch (err) {
-            console.error('Cancel interview error:', err);
-            toast.error(err?.response?.data?.message || 'Lỗi khi hủy phỏng vấn');
-        } finally {
-            setActionLoading(false);
-        }
+        toast.warning(
+            <div className="space-y-3">
+                <p className="font-semibold text-gray-900">Hủy phỏng vấn của {candidate.name}?</p>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={confirmCancelInterview}
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+                    >
+                        Hủy lịch
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => toast.dismiss(toastId)}
+                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                        Đóng
+                    </button>
+                </div>
+            </div>,
+            {
+                toastId,
+                autoClose: false,
+                closeOnClick: false,
+                draggable: false,
+            }
+        );
     };
 
-    const handleAcceptCandidate = async () => {
+    const handleAcceptCandidate = () => {
+        if (!selectedCandidate) return;
+        setOpenAcceptConfirmModal(true);
+    };
+
+    const confirmAcceptCandidate = async () => {
         if (!selectedCandidate) return;
 
-        const confirmed = window.confirm(`Bạn có chắc muốn chấp nhận ứng viên ${selectedCandidate.name}?`);
-        if (!confirmed) return;
-
+        const candidate = selectedCandidate;
         setActionLoading(true);
         try {
-            await updateApplicationStatus(selectedCandidate.id, { status: 'ACCEPTED' });
-            toast.success(`Đã chấp nhận ứng viên ${selectedCandidate.name} và gửi email thông báo!`);
+            await updateApplicationStatus(candidate.id, { status: 'ACCEPTED' });
+            toast.success(`Đã chấp nhận ứng viên ${candidate.name} và gửi email thông báo!`);
+            setOpenAcceptConfirmModal(false);
             await fetchCandidates({ includeAi: false });
         } catch (err) {
             console.error('Accept candidate error:', err);
@@ -867,6 +902,43 @@ const CVManagement = () => {
                 applicationId={selectedCandidate.id}
                 onSuccess={handleActionSuccess}
             />
+
+            {openAcceptConfirmModal && selectedCandidate && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+                        <div className="border-b border-gray-100 px-6 py-4">
+                            <h3 className="flex items-center gap-2 text-lg font-bold text-emerald-700">
+                                <FiCheckCircle /> Xác nhận chấp nhận ứng viên
+                            </h3>
+                        </div>
+                        <div className="px-6 py-5">
+                            <p className="text-sm leading-6 text-gray-600">
+                                Bạn có chắc muốn chấp nhận ứng viên{' '}
+                                <span className="font-bold text-gray-900">{selectedCandidate.name}</span>?
+                                Email thông báo sẽ được gửi đến ứng viên sau khi xác nhận.
+                            </p>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={() => setOpenAcceptConfirmModal(false)}
+                                disabled={actionLoading}
+                                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmAcceptCandidate}
+                                disabled={actionLoading}
+                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                            >
+                                <FiCheckCircle /> {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
